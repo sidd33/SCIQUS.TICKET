@@ -44,5 +44,6 @@ appsettings.Development.json
 # appsettings.json
 
 # EF migrations snapshot is OK to commit, but not the compiled output
-
-.dotnet-home
+# Local environment folders
+.dotnet-home/
+.tmp/
