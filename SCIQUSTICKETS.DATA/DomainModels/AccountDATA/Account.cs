@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
+using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 
 namespace SCIQUSTICKETS.DATA.DomainModels
 {
@@ -7,6 +9,9 @@ namespace SCIQUSTICKETS.DATA.DomainModels
     {
         [Key]
         public string AccountId { get; set; } = Guid.NewGuid().ToString();
+
+        [ForeignKey("AccountId")]
+        public virtual ApplicationUser? ApplicationUser { get; set; }
 
         public string AutoGenerateAccountId { get; set; } = string.Empty;
 
@@ -42,10 +47,16 @@ namespace SCIQUSTICKETS.DATA.DomainModels
         public bool KeyAccount { get; set; } = false;
 
         public string? CreatedByUserId { get; set; }
+        [ForeignKey("CreatedByUserId")]
+        public virtual Employee? CreatedByUser { get; set; }
 
         public string? AccountManagerId { get; set; }
+        [ForeignKey("AccountManagerId")]
+        public virtual Employee? AccountManager { get; set; }
 
         public string? CustomerSuccessManagerId { get; set; }
+        [ForeignKey("CustomerSuccessManagerId")]
+        public virtual Employee? CustomerSuccessManager { get; set; }
 
         public Guid? AccountTypesId { get; set; }
         [ForeignKey("AccountTypesId")]
