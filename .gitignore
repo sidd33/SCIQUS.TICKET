@@ -1,16 +1,46 @@
-## Build outputs & binaries
+## .NET / C# gitignore
+
+# Build output
 bin/
 obj/
-out/
 
-## IDE and editor configuration
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+project.lock.json
+project.nuget.cache
+*.nuget.props
+*.nuget.targets
+
+# Visual Studio
 .vs/
-.vscode/
-.idea/
 *.user
-*.userosscache
 *.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
 
-## Operating system files
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
 .DS_Store
 Thumbs.db
+
+# ASP.NET
+wwwroot/dist/
+
+# Secrets — never commit these
+appsettings.Development.json
+# Comment out the line below if you want to share appsettings.json with team
+# appsettings.json
+
+# EF migrations snapshot is OK to commit, but not the compiled output
