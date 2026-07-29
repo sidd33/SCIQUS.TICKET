@@ -1,7 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using SCIQUSTICKETS.DATA.Contexts;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36))));
+
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
