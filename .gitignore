@@ -1,0 +1,16 @@
+## Build outputs & binaries
+bin/
+obj/
+out/
+
+## IDE and editor configuration
+.vs/
+.vscode/
+.idea/
+*.user
+*.userosscache
+*.suo
+
+## Operating system files
+.DS_Store
+Thumbs.db
