@@ -1,4 +1,4 @@
-@SCIQUSTICKETS.WebAPI_HostAddress = http://localhost:5178
+@SCIQUSTICKETS.WebAPI_HostAddress = http://localhost:5239
 
 GET {{SCIQUSTICKETS.WebAPI_HostAddress}}/weatherforecast/
 Accept: application/json
