@@ -22,8 +22,8 @@ namespace SCIQUSTICKETS.DATA.Contexts
                 .Build();
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseSqlServer(
-                configuration.GetConnectionString("DefaultConnection"));
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            optionsBuilder.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
 
             return new AppDbContext(optionsBuilder.Options);
         }
