@@ -1,0 +1,12 @@
+{
+  "name": "sci-qus-tickets-api-tests",
+  "version": "1.0.0",
+  "description": "API tests using Playwright for SCIQUS Tickets system",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

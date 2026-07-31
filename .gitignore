@@ -47,3 +47,10 @@ appsettings.Development.json
 # Local environment folders
 .dotnet-home/
 .tmp/
+
+# Node.js / Playwright API Tests
+api-tests/node_modules/
+api-tests/test-results/
+api-tests/playwright-report/
+api-tests/playwright-report-html/
+
