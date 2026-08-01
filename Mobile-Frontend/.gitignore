@@ -1,0 +1,39 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+
+# React Native
+*.jsbundle
+
+# Android
+android/.gradle
+android/app/build
+android/build
+android/local.properties
+
+# iOS
+ios/build/
+ios/Pods/
+ios/Podfile.lock
+*.xcworkspace
+xcuserdata
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Env variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDEs
+.idea/
+.vscode/
+*.swp
