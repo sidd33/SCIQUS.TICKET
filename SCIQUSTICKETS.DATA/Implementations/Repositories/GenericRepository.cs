@@ -5,10 +5,6 @@ using System.Linq.Expressions;
 
 namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 {
-    /// <summary>
-    /// Generic repository implementation using EF Core.
-    /// All entity-specific repositories can inherit from this or use it directly.
-    /// </summary>
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
         protected readonly AppDbContext _context;
