@@ -9,7 +9,6 @@ namespace SCIQUSTICKETS.DATA.DomainModels.AuthDATA
         public bool Status { get; set; }
         public bool HasLoginAccess { get; set; } = false;
 
-        // Navigation
         public ICollection<SpecializedPolicy> SpecializedPolicies { get; set; } = new List<SpecializedPolicy>();
     }
 }

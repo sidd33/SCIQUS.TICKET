@@ -21,7 +21,6 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.AuthRequestDTOs
 
         public string? PhoneNumber { get; set; }
 
-        // Role to assign on registration (e.g. "Admin", "Employee")
         public string? Role { get; set; }
     }
 }

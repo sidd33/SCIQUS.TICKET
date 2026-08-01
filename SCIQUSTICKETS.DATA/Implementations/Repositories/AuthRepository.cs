@@ -5,10 +5,6 @@ using SCIQUSTICKETS.DATA.Interfaces.IRepositories;
 
 namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 {
-    /// <summary>
-    /// Auth-specific repository implementation.
-    /// Handles token management, user lookup, and policy queries.
-    /// </summary>
     public class AuthRepository : IAuthRepository
     {
         private readonly AppDbContext _context;
@@ -18,7 +14,6 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
             _context = context;
         }
 
-        // ── User operations ────────────────────────────────────────────
 
         public async Task<ApplicationUser?> GetUserByEmailAsync(string email)
             => await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
@@ -29,7 +24,6 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
         public async Task<bool> UserExistsAsync(string email)
             => await _context.Users.AnyAsync(u => u.Email == email);
 
-        // ── Refresh Token operations ───────────────────────────────────
 
         public async Task<RefreshToken?> GetRefreshTokenAsync(string token)
             => await _context.RefreshTokens
@@ -63,8 +57,6 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
             tokens.ForEach(t => t.IsRevoked = true);
             await _context.SaveChangesAsync();
         }
-
-        // ── Policy operations ──────────────────────────────────────────
 
         public async Task<IEnumerable<Policy>> GetPoliciesByRoleAsync(string roleId)
             => await _context.RolePolicies
