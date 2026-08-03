@@ -3,30 +3,15 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.COMMON.Constants;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
-using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
-
-// ════════════════════════════════════════════════════════════════════════════
-//  HOW TO ADD YOUR TEAM'S ENTITIES TO THIS FILE
-//  ─────────────────────────────────────────────
-//  1. Add your DbSet<YourEntity> in the "── DbSets ──" section below,
-//     inside your team's labeled block.
-//  2. Add your relationship configs and seed data in OnModelCreating,
-//     inside your team's labeled block.
-//  3. DO NOT touch or modify any other team's section.
-//  4. Run: dotnet ef migrations add YourMigrationName --project SCIQUSTICKETS.DATA
-//             --startup-project SCIQUSTICKETS.WebAPI
-// ════════════════════════════════════════════════════════════════════════════
+using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
+using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 
 namespace SCIQUSTICKETS.DATA.Contexts
 {
 	public class AppDbContext : IdentityDbContext<ApplicationUser, UserRole, string>
 	{
 		public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
-		// ════════════════════════════════════════════════════════════════
-		//  DbSets — ADD YOUR TEAM'S DbSets IN YOUR SECTION ONLY
-		// ════════════════════════════════════════════════════════════════
 
 		// ── [TEAM: AUTH/IDENTITY] ─────────────────────────────────────
 		public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -42,20 +27,28 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		// ── [END: EMPLOYEE] ───────────────────────────────────────────
 
 		// ── [TEAM: TICKETS] ───────────────────────────────────────────
-		// public DbSet<Ticket> Tickets { get; set; }
+		public DbSet<TicketType> TicketTypes { get; set; }
+		public DbSet<TicketSubType> TicketSubTypes { get; set; }
+		public DbSet<TicketPriority> TicketPriorities { get; set; }
+		public DbSet<TicketBusinessTypeImpact> TicketBusinessTypeImpacts { get; set; }
 		// ── [END: TICKETS] ────────────────────────────────────────────
+
+		// ── [TEAM: TICKET TRANSACTION] ────────────────────────────────
+		public DbSet<Ticket> Tickets { get; set; }
+		public DbSet<TicketStatus> TicketStatuses { get; set; }
+		public DbSet<TicketAssignment> TicketAssignments { get; set; }
+		public DbSet<TicketComment> TicketComments { get; set; }
+		public DbSet<TicketHistory> TicketHistories { get; set; }
+		public DbSet<TicketAttachment> TicketAttachments { get; set; }
+		public DbSet<TicketIDStore> TicketIDStores { get; set; }
+		// ── [END: TICKET TRANSACTION] ─────────────────────────────────
 
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
 
-			// ════════════════════════════════════════════════════════════
-			//  OnModelCreating — ADD YOUR CONFIG IN YOUR SECTION ONLY
-			// ════════════════════════════════════════════════════════════
-
 			// ── [TEAM: AUTH/IDENTITY] — Relationships ─────────────────
-
 			builder.Entity<RolePolicy>()
 				.HasKey(rp => new { rp.RoleId, rp.PolicyId });
 
@@ -87,7 +80,6 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.OnDelete(DeleteBehavior.Cascade);
 
 			// ── [SIDD: AUTH/IDENTITY] — Seed Data ────────────────────
-
 			builder.Entity<UserRole>().HasData(
 				new UserRole
 				{
@@ -127,12 +119,10 @@ namespace SCIQUSTICKETS.DATA.Contexts
 					UserId = SEED.AdminUserId
 				}
 			);
-
 			// ── [END: AUTH/IDENTITY] ──────────────────────────────────
 
 
 			// ── [TEAM: EMPLOYEE] — Relationships & Seed ───────────────
-
 			builder.Entity<Employee>()
 				.HasOne(e => e.ReportsToUser)
 				.WithMany()
@@ -156,47 +146,148 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithMany(g => g.Employees)
 				.HasForeignKey(e => e.GradeId)
 				.OnDelete(DeleteBehavior.Restrict);
-
-			// TODO: Employee/Department seed data — uncomment and adapt once
-			// an admin ApplicationUser/Employee pairing convention is confirmed
-			// with the Auth team (Employee.Id must equal ApplicationUser.Id).
-			//
-			// builder.Entity<Department>().HasData(
-			//     new Department
-			//     {
-			//         DepartmentId = Guid.Parse(SEED.DeptId),
-			//         Name = "Administration",
-			//         IsDeleted = false,
-			//         CreatedDate = SEED.SeedDate,
-			//         LastModifiedDate = SEED.SeedDate
-			//     }
-			// );
-			//
-			// builder.Entity<Employee>().HasData(
-			//     new Employee
-			//     {
-			//         Id = SEED.AdminUserId,
-			//         Name = SEED.AdminName,
-			//         Email = SEED.AdminEmailId,
-			//         RegisteredMobileNumber = SEED.AdminRegisteredMobileNumber,
-			//         SecondMobileNumber = SEED.AdminSecondMobileNumber,
-			//         EmployeeId = SEED.AdminEmployeeId,
-			//         Designation = SEED.AdminRole,
-			//         ProfileImageUrl = SEED.AdminProfileImageUrl,
-			//         AutoGenrateId = $"{SEED.EmployeeIdFormat}{1}",
-			//         ReportsTo = null,
-			//         DepartmentId = Guid.Parse(SEED.DeptId),
-			//         CreatedDate = SEED.SeedDate,
-			//         LastUpdatedDate = SEED.SeedDate,
-			//     }
-			// );
-
 			// ── [END: EMPLOYEE] ───────────────────────────────────────
 
 
 			// ── [TEAM: TICKETS] — Relationships & Seed ────────────────
-			// Add your Ticket config here.
+			builder.Entity<TicketSubType>()
+				.HasOne(st => st.TicketType)
+				.WithMany(tt => tt.TicketSubTypes)
+				.HasForeignKey(st => st.TicketTypeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<TicketSubType>()
+				.HasOne(st => st.Department)
+				.WithMany()
+				.HasForeignKey(st => st.DepartmentId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<TicketSubType>()
+				.HasOne(st => st.DefaultUser)
+				.WithMany()
+				.HasForeignKey(st => st.DefaultUserId)
+				.OnDelete(DeleteBehavior.Restrict);
 			// ── [END: TICKETS] ────────────────────────────────────────
+
+			builder.Entity<Ticket>()
+	.HasOne(t => t.Account)
+	.WithMany()
+	.HasForeignKey(t => t.AccountId)
+	.OnDelete(DeleteBehavior.Restrict);
+
+
+			builder.Entity<Ticket>()
+				.HasOne(t => t.TicketType)
+				.WithMany()
+				.HasForeignKey(t => t.TicketTypeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+
+			builder.Entity<Ticket>()
+				.HasOne(t => t.TicketSubType)
+				.WithMany()
+				.HasForeignKey(t => t.TicketSubTypeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+
+			builder.Entity<Ticket>()
+				.HasOne(t => t.Priority)
+				.WithMany()
+				.HasForeignKey(t => t.PriorityId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+
+			builder.Entity<Ticket>()
+				.HasOne(t => t.BusinessImpact)
+				.WithMany()
+				.HasForeignKey(t => t.BusinessImpactId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+
+			builder.Entity<Ticket>()
+				.HasOne(t => t.Status)
+				.WithMany(s => s.Tickets)
+				.HasForeignKey(t => t.StatusId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			
+			builder.Entity<Ticket>()
+				.HasOne(t => t.RaisedByEmployee)
+				.WithMany()
+				.HasForeignKey(t => t.RaisedByEmployeeId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			// // ── [TEAM: TICKET STATUS SEED] ─────────────────────────────
+
+			builder.Entity<TicketStatus>().HasData(
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"),
+					Name = "Open",
+					Description = "New ticket created",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000002"),
+					Name = "In Progress",
+					Description = "Ticket is being worked on",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000003"),
+					Name = "Pending",
+					Description = "Waiting for additional information",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000004"),
+					Name = "Resolved",
+					Description = "Solution provided",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000005"),
+					Name = "Closed",
+					Description = "Ticket closed successfully",
+					IsClosed = true,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				}
+			);
+
+			// ── [END: TICKET STATUS SEED] ───────────────────────────────
+
+			builder.Entity<TicketIDStore>().HasData(
+	new TicketIDStore
+	{
+		Id = 1,
+		Prefix = "TKT",
+		CurrentNumber = 0,
+		LastUpdatedDate = SEED.SeedDate
+	}
+);
 		}
 	}
 }

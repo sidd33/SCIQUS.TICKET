@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCIQUSTICKETS.DATA.Contexts;
 
@@ -11,9 +12,11 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803125743_AddTicketEntities")]
+    partial class AddTicketEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,6 +136,289 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.Account", b =>
+                {
+                    b.Property<string>("AccountId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("AccountManagerId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AccountProfileImg")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("AccountSince")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("AccountTypesId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("AutoGenerateAccountId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ConvertCurrencySymbol")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("CurrencyId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CustomerSuccessManagerId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("DefaultCurrencySymbol")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EmployeeCount")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("IncorporationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("IndustryTypeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("KeyAccount")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ParentAccountId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("ReferralAccountContactsId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ReferralAccountId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("RegionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("RegisteredMobileNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SecondMobileNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("AccountId");
+
+                    b.HasIndex("AccountManagerId");
+
+                    b.HasIndex("AccountTypesId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("CurrencyId");
+
+                    b.HasIndex("CustomerSuccessManagerId");
+
+                    b.HasIndex("IndustryTypeId");
+
+                    b.HasIndex("ParentAccountId");
+
+                    b.HasIndex("ReferralAccountContactsId");
+
+                    b.HasIndex("ReferralAccountId");
+
+                    b.HasIndex("RegionId");
+
+                    b.ToTable("Accounts");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddress", b =>
+                {
+                    b.Property<Guid>("AccountAddressId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("AccountId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("AddressLine")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("City")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MapUrl")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Pincode")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("PrimaryAddress")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("State")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("AccountAddressId");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("AccountAddresses");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddressType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("AccountAddressId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TypeName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountAddressId");
+
+                    b.ToTable("AccountAddressTypes");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountContacts", b =>
+                {
+                    b.Property<Guid>("AccountContactsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("AccountId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AlternateMobileNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("AssociatedSince")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Branch")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DOB")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Department")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Designation")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("MobileNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PersonName")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("PrimaryContact")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("ProfileImage")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("AccountContactsId");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("AccountContacts");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountTypes", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TypeName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccountTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", b =>
@@ -369,6 +655,38 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.Currency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CurrencyName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Currencies");
+                });
+
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA.Department", b =>
                 {
                     b.Property<Guid>("DepartmentId")
@@ -485,7 +803,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("Grades");
                 });
 
-
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.IndustryTypes", b =>
                 {
                     b.Property<Guid>("Id")
@@ -543,176 +860,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("Regions");
                 });
 
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", b =>
-                {
-                    b.Property<Guid>("TicketId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("AccountId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("AssignedToUserId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<Guid>("BusinessImpactId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsInternal")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsOpen")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime>("LastUpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("PriorityId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("RaisedByEmployeeId")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("SourceType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("StatusId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("TicketNumber")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("TicketSubTypeId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("TicketTypeId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("TicketId");
-
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("AssignedToUserId");
-
-                    b.HasIndex("BusinessImpactId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("PriorityId");
-
-                    b.HasIndex("RaisedByEmployeeId");
-
-                    b.HasIndex("StatusId");
-
-                    b.HasIndex("TicketSubTypeId");
-
-                    b.HasIndex("TicketTypeId");
-
-                    b.ToTable("Tickets");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAssignment", b =>
-                {
-                    b.Property<Guid>("TicketAssignmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("AssignedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("AssignedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("AssignedToUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("UnassignedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("TicketAssignmentId");
-
-                    b.HasIndex("AssignedByUserId");
-
-                    b.HasIndex("AssignedToUserId");
-
-                    b.HasIndex("TicketId");
-
-                    b.ToTable("TicketAssignments");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAttachment", b =>
-                {
-                    b.Property<Guid>("TicketAttachmentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ContentType")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("UploadedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("UploadedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("TicketAttachmentId");
-
-                    b.HasIndex("TicketId");
-
-                    b.HasIndex("UploadedByUserId");
-
-                    b.ToTable("TicketAttachments");
-                });
-
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketBusinessTypeImpact", b =>
                 {
                     b.Property<Guid>("TicketBusinessTypeImpactId")
@@ -747,108 +894,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("TicketBusinessTypeImpactId");
 
                     b.ToTable("TicketBusinessTypeImpacts");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketComment", b =>
-                {
-                    b.Property<Guid>("TicketCommentId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("CommentText")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("CommentedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsInternalNote")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("TicketCommentId");
-
-                    b.HasIndex("CommentedByUserId");
-
-                    b.HasIndex("TicketId");
-
-                    b.ToTable("TicketComments");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketHistory", b =>
-                {
-                    b.Property<Guid>("TicketHistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ChangeDescription")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ChangedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid?>("NewStatusId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("OldStatusId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("TicketHistoryId");
-
-                    b.HasIndex("ChangedByUserId");
-
-                    b.HasIndex("TicketId");
-
-                    b.ToTable("TicketHistories");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketIDStore", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<long>("CurrentNumber")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("LastUpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Prefix")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TicketIDStores");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CurrentNumber = 0L,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Prefix = "TKT"
-                        });
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketPriority", b =>
@@ -888,96 +933,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("TicketPriorityId");
 
                     b.ToTable("TicketPriorities");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", b =>
-                {
-                    b.Property<Guid>("TicketStatusId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("IsClosed")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime>("LastUpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("Status")
-                        .HasColumnType("tinyint(1)");
-
-                    b.HasKey("TicketStatusId");
-
-                    b.ToTable("TicketStatuses");
-
-                    b.HasData(
-                        new
-                        {
-                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000001"),
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "New ticket created",
-                            IsClosed = false,
-                            IsDeleted = false,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "Open",
-                            Status = true
-                        },
-                        new
-                        {
-                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000002"),
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Ticket is being worked on",
-                            IsClosed = false,
-                            IsDeleted = false,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "In Progress",
-                            Status = true
-                        },
-                        new
-                        {
-                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000003"),
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Waiting for additional information",
-                            IsClosed = false,
-                            IsDeleted = false,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "Pending",
-                            Status = true
-                        },
-                        new
-                        {
-                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000004"),
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Solution provided",
-                            IsClosed = false,
-                            IsDeleted = false,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "Resolved",
-                            Status = true
-                        },
-                        new
-                        {
-                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000005"),
-                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Ticket closed successfully",
-                            IsClosed = true,
-                            IsDeleted = false,
-                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "Closed",
-                            Status = true
-                        });
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketSubType", b =>
@@ -1067,7 +1022,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("TicketTypes");
                 });
 
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.UserRole", null)
@@ -1117,6 +1071,111 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.Account", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "AccountManager")
+                        .WithMany()
+                        .HasForeignKey("AccountManagerId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AccountTypes", "AccountTypes")
+                        .WithMany()
+                        .HasForeignKey("AccountTypesId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Currency", "Currency")
+                        .WithMany()
+                        .HasForeignKey("CurrencyId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "CustomerSuccessManager")
+                        .WithMany()
+                        .HasForeignKey("CustomerSuccessManagerId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.IndustryTypes", "IndustryTypes")
+                        .WithMany()
+                        .HasForeignKey("IndustryTypeId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Account", "ParentAccount")
+                        .WithMany()
+                        .HasForeignKey("ParentAccountId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AccountContacts", "ReferralAccountContacts")
+                        .WithMany()
+                        .HasForeignKey("ReferralAccountContactsId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Account", "ReferralAccount")
+                        .WithMany()
+                        .HasForeignKey("ReferralAccountId");
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Region", "Region")
+                        .WithMany()
+                        .HasForeignKey("RegionId");
+
+                    b.Navigation("AccountManager");
+
+                    b.Navigation("AccountTypes");
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("CustomerSuccessManager");
+
+                    b.Navigation("IndustryTypes");
+
+                    b.Navigation("ParentAccount");
+
+                    b.Navigation("ReferralAccount");
+
+                    b.Navigation("ReferralAccountContacts");
+
+                    b.Navigation("Region");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddress", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Account", "Account")
+                        .WithMany("Addresses")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddressType", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AccountAddress", "AccountAddress")
+                        .WithMany("AddressTypes")
+                        .HasForeignKey("AccountAddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AccountAddress");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountContacts", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Account", "Account")
+                        .WithMany("Contacts")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.RefreshToken", b =>
@@ -1203,163 +1262,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("ReportsToUser");
                 });
 
-
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "AssignedToUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedToUserId");
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketBusinessTypeImpact", "BusinessImpact")
-                        .WithMany()
-                        .HasForeignKey("BusinessImpactId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketPriority", "Priority")
-                        .WithMany()
-                        .HasForeignKey("PriorityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "RaisedByEmployee")
-                        .WithMany()
-                        .HasForeignKey("RaisedByEmployeeId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", "Status")
-                        .WithMany("Tickets")
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketSubType", "TicketSubType")
-                        .WithMany()
-                        .HasForeignKey("TicketSubTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketType", "TicketType")
-                        .WithMany()
-                        .HasForeignKey("TicketTypeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("AssignedToUser");
-
-                    b.Navigation("BusinessImpact");
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Priority");
-
-                    b.Navigation("RaisedByEmployee");
-
-                    b.Navigation("Status");
-
-                    b.Navigation("TicketSubType");
-
-                    b.Navigation("TicketType");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAssignment", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "AssignedByUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "AssignedToUser")
-                        .WithMany()
-                        .HasForeignKey("AssignedToUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
-                        .WithMany("Assignments")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("AssignedByUser");
-
-                    b.Navigation("AssignedToUser");
-
-                    b.Navigation("Ticket");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAttachment", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
-                        .WithMany("Attachments")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "UploadedByUser")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Ticket");
-
-                    b.Navigation("UploadedByUser");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketComment", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "CommentedByUser")
-                        .WithMany()
-                        .HasForeignKey("CommentedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
-                        .WithMany("Comments")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CommentedByUser");
-
-                    b.Navigation("Ticket");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketHistory", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "ChangedByUser")
-                        .WithMany()
-                        .HasForeignKey("ChangedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
-                        .WithMany("History")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChangedByUser");
-
-                    b.Navigation("Ticket");
-                });
-
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketSubType", b =>
                 {
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "DefaultUser")
@@ -1423,22 +1325,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Grade", b =>
                 {
                     b.Navigation("Employees");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", b =>
-                {
-                    b.Navigation("Assignments");
-
-                    b.Navigation("Attachments");
-
-                    b.Navigation("Comments");
-
-                    b.Navigation("History");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", b =>
-                {
-                    b.Navigation("Tickets");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketType", b =>
