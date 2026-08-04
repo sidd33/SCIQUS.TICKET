@@ -64,10 +64,10 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
                 .CountAsync(st => st.TicketTypeId == ticketTypeId && st.Status && !st.IsDeleted);
         }
 
-        public Task<bool> IsUsedByOpenTicketsAsync(Guid ticketTypeId)
-        {
-            // TODO(Module 2): query Tickets where TicketTypeId == ticketTypeId && IsOpen.
-            return Task.FromResult(false);
-        }
-    }
+		public async Task<bool> IsUsedByOpenTicketsAsync(Guid ticketTypeId)
+		{
+			return await _context.Set<Ticket>()
+				.AnyAsync(t => t.TicketTypeId == ticketTypeId && t.IsOpen && !t.IsDeleted);
+		}
+	}
 }

@@ -73,6 +73,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public bool IsDeleted { get; set; }
 
+		public DateTime? PendingClosureDate { get; set; }
+		public string? ClosureConfirmedBy { get; set; } // "Customer" / "Auto" / "Agent"
 
 		// Navigation
 		public ICollection<TicketAssignment> Assignments { get; set; }

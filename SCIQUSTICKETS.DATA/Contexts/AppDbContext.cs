@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.COMMON.Constants;
+using SCIQUSTICKETS.DATA.DomainModels;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
@@ -25,6 +26,17 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<Department> Departments { get; set; }
 		public DbSet<Grade> Grades { get; set; }
 		// ── [END: EMPLOYEE] ───────────────────────────────────────────
+
+		// ── [TEAM: ACCOUNTS / CRM] ────────────────────────────────────
+		public DbSet<Account> Accounts { get; set; }
+		public DbSet<AccountTypes> AccountTypes { get; set; }
+		public DbSet<IndustryTypes> IndustryTypes { get; set; }
+		public DbSet<Region> Regions { get; set; }
+		public DbSet<Currency> Currencies { get; set; }
+		public DbSet<AccountContacts> AccountContacts { get; set; }
+		public DbSet<AccountAddress> AccountAddresses { get; set; }
+		public DbSet<AccountAddressType> AccountAddressTypes { get; set; }
+		// ── [END: ACCOUNTS / CRM] ─────────────────────────────────────
 
 		// ── [TEAM: TICKETS] ───────────────────────────────────────────
 		public DbSet<TicketType> TicketTypes { get; set; }
@@ -149,6 +161,33 @@ namespace SCIQUSTICKETS.DATA.Contexts
 			// ── [END: EMPLOYEE] ───────────────────────────────────────
 
 
+			// ── [TEAM: ACCOUNTS / CRM] — Relationships ────────────────
+			builder.Entity<Account>()
+				.HasMany(a => a.Contacts)
+				.WithOne(c => c.Account)
+				.HasForeignKey(c => c.AccountId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<Account>()
+				.HasOne(a => a.ReferralAccountContacts)
+				.WithMany()
+				.HasForeignKey(a => a.ReferralAccountContactsId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<Account>()
+				.HasMany(a => a.Addresses)
+				.WithOne(ad => ad.Account)
+				.HasForeignKey(ad => ad.AccountId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<AccountAddress>()
+				.HasMany(ad => ad.AddressTypes)
+				.WithOne(at => at.AccountAddress)
+				.HasForeignKey(at => at.AccountAddressId)
+				.OnDelete(DeleteBehavior.Cascade);
+			// ── [END: ACCOUNTS / CRM] ─────────────────────────────────
+
+
 			// ── [TEAM: TICKETS] — Relationships & Seed ────────────────
 			builder.Entity<TicketSubType>()
 				.HasOne(st => st.TicketType)
@@ -170,11 +209,10 @@ namespace SCIQUSTICKETS.DATA.Contexts
 			// ── [END: TICKETS] ────────────────────────────────────────
 
 			builder.Entity<Ticket>()
-	.HasOne(t => t.Account)
-	.WithMany()
-	.HasForeignKey(t => t.AccountId)
-	.OnDelete(DeleteBehavior.Restrict);
-
+				.HasOne(t => t.Account)
+				.WithMany()
+				.HasForeignKey(t => t.AccountId)
+				.OnDelete(DeleteBehavior.Restrict);
 
 			builder.Entity<Ticket>()
 				.HasOne(t => t.TicketType)
@@ -182,13 +220,11 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.HasForeignKey(t => t.TicketTypeId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-
 			builder.Entity<Ticket>()
 				.HasOne(t => t.TicketSubType)
 				.WithMany()
 				.HasForeignKey(t => t.TicketSubTypeId)
 				.OnDelete(DeleteBehavior.Restrict);
-
 
 			builder.Entity<Ticket>()
 				.HasOne(t => t.Priority)
@@ -196,13 +232,11 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.HasForeignKey(t => t.PriorityId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-
 			builder.Entity<Ticket>()
 				.HasOne(t => t.BusinessImpact)
 				.WithMany()
 				.HasForeignKey(t => t.BusinessImpactId)
 				.OnDelete(DeleteBehavior.Restrict);
-
 
 			builder.Entity<Ticket>()
 				.HasOne(t => t.Status)
@@ -210,15 +244,13 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.HasForeignKey(t => t.StatusId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			
 			builder.Entity<Ticket>()
 				.HasOne(t => t.RaisedByEmployee)
 				.WithMany()
 				.HasForeignKey(t => t.RaisedByEmployeeId)
 				.OnDelete(DeleteBehavior.Restrict);
 
-			// // ── [TEAM: TICKET STATUS SEED] ─────────────────────────────
-
+			// ── [TEAM: TICKET STATUS SEED] ─────────────────────────────
 			builder.Entity<TicketStatus>().HasData(
 				new TicketStatus
 				{
@@ -274,20 +306,41 @@ namespace SCIQUSTICKETS.DATA.Contexts
 					IsDeleted = false,
 					CreatedDate = SEED.SeedDate,
 					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000006"),
+					Name = "PendingClosure",
+					Description = "Resolved, awaiting customer confirmation",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
+				},
+				new TicketStatus
+				{
+					TicketStatusId = Guid.Parse("10000000-0000-0000-0000-000000000007"),
+					Name = "Reopened",
+					Description = "Ticket reopened after closure",
+					IsClosed = false,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = SEED.SeedDate,
+					LastUpdatedDate = SEED.SeedDate
 				}
 			);
-
 			// ── [END: TICKET STATUS SEED] ───────────────────────────────
 
 			builder.Entity<TicketIDStore>().HasData(
-	new TicketIDStore
-	{
-		Id = 1,
-		Prefix = "TKT",
-		CurrentNumber = 0,
-		LastUpdatedDate = SEED.SeedDate
-	}
-);
+				new TicketIDStore
+				{
+					Id = 1,
+					Prefix = "TKT",
+					CurrentNumber = 0,
+					LastUpdatedDate = SEED.SeedDate
+				}
+			);
 		}
 	}
 }

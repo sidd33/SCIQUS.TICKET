@@ -74,13 +74,13 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
                 (excludeId == null || st.TicketSubTypeId != excludeId));
         }
 
-        public Task<bool> IsUsedByOpenTicketsAsync(Guid ticketSubTypeId)
-        {
-            // TODO(Module 2): query Tickets where TicketSubTypeId == ticketSubTypeId && IsOpen.
-            return Task.FromResult(false);
-        }
+		public async Task<bool> IsUsedByOpenTicketsAsync(Guid ticketSubTypeId)
+		{
+			return await _context.Set<Ticket>()
+				.AnyAsync(t => t.TicketSubTypeId == ticketSubTypeId && t.IsOpen && !t.IsDeleted);
+		}
 
-        public async Task<bool> IsTicketTypeActiveAsync(Guid ticketTypeId)
+		public async Task<bool> IsTicketTypeActiveAsync(Guid ticketTypeId)
         {
             return await _context.Set<TicketType>()
                 .AnyAsync(t => t.TicketTypeId == ticketTypeId && t.Status && !t.IsDeleted);

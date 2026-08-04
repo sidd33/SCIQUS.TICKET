@@ -116,6 +116,8 @@ builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Register custom authorization policies (SameUserOrAdmin, AdminOnly)
 builder.Services.AddAuthorizationPolicies();
+builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
 var app = builder.Build();
 
@@ -128,7 +130,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();   // must come before UseAuthorization
+app.UseAuthentication();
+app.UseStaticFiles(); 
 app.UseAuthorization();
 app.MapControllers();
 

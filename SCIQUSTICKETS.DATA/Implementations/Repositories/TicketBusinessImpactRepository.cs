@@ -51,10 +51,10 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
                 (excludeId == null || i.TicketBusinessTypeImpactId != excludeId));
         }
 
-        public Task<bool> IsUsedByOpenTicketsAsync(Guid ticketBusinessTypeImpactId)
-        {
-            // TODO(Module 2): query Tickets where TicketBusinessTypeImpactId == ticketBusinessTypeImpactId && IsOpen.
-            return Task.FromResult(false);
-        }
-    }
+		public async Task<bool> IsUsedByOpenTicketsAsync(Guid ticketBusinessTypeImpactId)
+		{
+			return await _context.Set<Ticket>()
+				.AnyAsync(t => t.BusinessImpactId == ticketBusinessTypeImpactId && t.IsOpen && !t.IsDeleted);
+		}
+	}
 }

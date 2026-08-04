@@ -52,10 +52,10 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
                 (excludeId == null || p.TicketPriorityId != excludeId));
         }
 
-        public Task<bool> IsUsedByOpenTicketsAsync(Guid ticketPriorityId)
-        {
-            // TODO(Module 2): query Tickets where TicketPriorityId == ticketPriorityId && IsOpen.
-            return Task.FromResult(false);
-        }
-    }
+		public async Task<bool> IsUsedByOpenTicketsAsync(Guid ticketPriorityId)
+		{
+			return await _context.Set<Ticket>()
+				.AnyAsync(t => t.PriorityId == ticketPriorityId && t.IsOpen && !t.IsDeleted);
+		}
+	}
 }
