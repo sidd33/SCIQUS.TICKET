@@ -12,8 +12,8 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260803161407_AddTicketTransactionFixed")]
-    partial class AddTicketTransactionFixed
+    [Migration("20260804053300_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -875,6 +875,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("BusinessImpactId")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("ClosureConfirmedBy")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CreatedByUserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -889,11 +892,27 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("PendingClosureDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("PriorityId")
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("RaisedByEmployeeId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<Guid>("StatusId")
                         .HasColumnType("char(36)");
@@ -923,6 +942,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("PriorityId");
+
+                    b.HasIndex("RaisedByEmployeeId");
 
                     b.HasIndex("StatusId");
 
@@ -1121,6 +1142,38 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("TicketHistories");
                 });
 
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketIDStore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("CurrentNumber")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Prefix")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TicketIDStores");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrentNumber = 0L,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Prefix = "TKT"
+                        });
+                });
+
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketPriority", b =>
                 {
                     b.Property<Guid>("TicketPriorityId")
@@ -1191,6 +1244,85 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("TicketStatusId");
 
                     b.ToTable("TicketStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000001"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "New ticket created",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Open",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000002"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Ticket is being worked on",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "In Progress",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000003"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Waiting for additional information",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Pending",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000004"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Solution provided",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Resolved",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000005"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Ticket closed successfully",
+                            IsClosed = true,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Closed",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000006"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Resolved, awaiting customer confirmation",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "PendingClosure",
+                            Status = true
+                        },
+                        new
+                        {
+                            TicketStatusId = new Guid("10000000-0000-0000-0000-000000000007"),
+                            CreatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Ticket reopened after closure",
+                            IsClosed = false,
+                            IsDeleted = false,
+                            LastUpdatedDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Name = "Reopened",
+                            Status = true
+                        });
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketSubType", b =>
@@ -1549,6 +1681,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "RaisedByEmployee")
+                        .WithMany()
+                        .HasForeignKey("RaisedByEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", "Status")
                         .WithMany("Tickets")
                         .HasForeignKey("StatusId")
@@ -1576,6 +1713,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Priority");
+
+                    b.Navigation("RaisedByEmployee");
 
                     b.Navigation("Status");
 
