@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.QueryParams;
@@ -227,6 +227,92 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				Message = "Ticket deleted successfully."
 			});
+		}
+
+
+
+		// POST: api/tickets/{id}/reassign
+		[HttpPost("{id:guid}/reassign")]
+		public async Task<IActionResult> Reassign(Guid id, [FromBody] AssignTicketRequest request)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.ReassignAsync(id, request, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Ticket reassigned successfully." });
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+		}
+
+
+
+		// POST: api/tickets/{id}/transfer
+		[HttpPost("{id:guid}/transfer")]
+		public async Task<IActionResult> TransferDepartment(Guid id, [FromBody] TransferTicketDepartmentRequest request)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.TransferDepartmentAsync(id, request, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Ticket transferred successfully." });
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+		}
+
+
+
+		// PATCH: api/tickets/{id}/priority-impact
+		[HttpPatch("{id:guid}/priority-impact")]
+		public async Task<IActionResult> ChangePriorityImpact(Guid id, [FromBody] ChangePriorityImpactRequest request)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.ChangePriorityImpactAsync(id, request, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Priority/Impact changed and SLA recalculated successfully." });
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+		}
+
+
+
+		// GET: api/tickets/my-queue
+		[HttpGet("my-queue")]
+		public async Task<ActionResult<PagedResponse<TicketResponse>>> GetMyQueue([FromQuery] TicketQueryParams queryParams)
+		{
+			var userId = GetUserId();
+			var result = await _ticketService.GetMyQueueAsync(userId, queryParams);
+			return Ok(result);
+		}
+
+
+
+		// GET: api/tickets/department-queue
+		[HttpGet("department-queue")]
+		public async Task<ActionResult<PagedResponse<TicketResponse>>> GetDepartmentQueue([FromQuery] TicketQueryParams queryParams)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.GetDepartmentQueueAsync(userId, queryParams);
+				return Ok(result);
+			}
+			catch (UnauthorizedAccessException ex)
+			{
+				return Unauthorized(new { message = ex.Message });
+			}
 		}
 
 

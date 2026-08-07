@@ -54,6 +54,8 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<TicketHistory> TicketHistories { get; set; }
 		public DbSet<TicketAttachment> TicketAttachments { get; set; }
 		public DbSet<TicketIDStore> TicketIDStores { get; set; }
+		public DbSet<SlaConfiguration> SlaConfigurations { get; set; }
+		public DbSet<TicketStateChangeHistory> TicketStateChangeHistories { get; set; }
 		// ── [END: TICKET TRANSACTION] ─────────────────────────────────
 
 		protected override void OnModelCreating(ModelBuilder builder)

@@ -26,6 +26,10 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public DateTime? UnassignedDate { get; set; }
 
+		public Guid? FromDepartmentId { get; set; }
+		public Guid? ToDepartmentId { get; set; }
+		public string Status { get; set; } = "Assigned"; // "Assigned", "Transferred", "Reassigned"
+		public bool IsAutoAssigned { get; set; } = true;
 
 		public string? Remarks { get; set; }
 

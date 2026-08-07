@@ -26,6 +26,9 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 
 		public string SourceType { get; set; } = null!;
 
+		// Department
+		public Guid DepartmentId { get; set; }
+		public string? DepartmentName { get; set; }
 
 		// Master data
 		public Guid TicketTypeId { get; set; }
@@ -41,6 +44,7 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 		public Guid PriorityId { get; set; }
 
 		public string PriorityName { get; set; } = null!;
+		public int PriorityLevel { get; set; }
 
 
 		public Guid BusinessImpactId { get; set; }
@@ -60,6 +64,12 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 		public string? AssignedToUserId { get; set; }
 
 		public string? AssignedToUserName { get; set; }
+
+		// SLA & Acceptance
+		public DateTime? SlaDueDate { get; set; }
+		public string? SlaMetStatus { get; set; }
+		public string? AcceptanceStatus { get; set; }
+		public DateTime? AcceptanceDeadlineAt { get; set; }
 
 
 		// Workflow helper

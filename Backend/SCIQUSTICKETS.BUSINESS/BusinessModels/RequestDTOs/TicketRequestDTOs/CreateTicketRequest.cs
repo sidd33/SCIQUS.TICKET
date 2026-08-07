@@ -42,5 +42,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs
 
 		[Required]
 		public Guid BusinessImpactId { get; set; }
+
+		public Guid? DepartmentId { get; set; }
+		public string? AssignedToUserId { get; set; }
 	}
 }

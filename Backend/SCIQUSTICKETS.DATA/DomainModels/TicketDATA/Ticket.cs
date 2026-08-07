@@ -33,6 +33,10 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public bool IsOpen { get; set; } = true;
 
 
+		// Department
+		public Guid DepartmentId { get; set; }
+		public Department Department { get; set; } = null!;
+
 		// Ticket Master
 		public Guid TicketTypeId { get; set; }
 		public TicketType TicketType { get; set; } = null!;
@@ -75,6 +79,19 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public DateTime? PendingClosureDate { get; set; }
 		public string? ClosureConfirmedBy { get; set; } // "Customer" / "Auto" / "Agent"
+
+		// SLA Fields
+		public DateTime? SlaDueDate { get; set; }
+		public string? SlaMetStatus { get; set; }
+		public bool? IsSlaBreached { get; set; }
+		public double? ResolutionTimeInHours { get; set; }
+		public double? OverdueHours { get; set; }
+
+		// Module 12 Acceptance Fields
+		public string? AcceptanceStatus { get; set; } // Pending, Accepted, Rejected, Expired
+		public DateTime? AcceptanceDeadlineAt { get; set; }
+		public int? AcceptanceDeadlineHours { get; set; }
+		public int CurrentFallbackAttempt { get; set; } = 1;
 
 		// Navigation
 		public ICollection<TicketAssignment> Assignments { get; set; }

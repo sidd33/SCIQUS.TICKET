@@ -111,6 +111,7 @@ builder.Services.AddScoped<ITicketPriorityService, TicketPriorityService>();
 builder.Services.AddScoped<ITicketBusinessImpactService, TicketBusinessImpactService>();
 
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<IAssignmentEngine, AssignmentEngine>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Register custom authorization policies (SameUserOrAdmin, AdminOnly)

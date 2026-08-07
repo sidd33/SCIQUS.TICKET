@@ -28,8 +28,9 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         [ForeignKey("DefaultUserId")]
         public virtual Employee? DefaultUser { get; set; }
 
-        // NOTE: RequiresAcceptance / AcceptanceDeadlineHours are added later by
-        // Module 12's AddTicketAutoRouting migration - not part of Module 1.
+        public bool? RequiresAcceptance { get; set; }
+        public int? AcceptanceDeadlineHours { get; set; }
+        public bool ManualOnly { get; set; } = false;
 
         public bool Status { get; set; } = true;
         public bool IsDeleted { get; set; } = false;

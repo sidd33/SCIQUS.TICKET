@@ -16,8 +16,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         // 0 means "no SLA applies" (Module 4: SlaDueDate = null, SlaMetStatus = "Not Applicable").
         public int SlaInHours { get; set; }
 
-        // NOTE: ResponseSlaInHours (Module 12 acceptance-deadline source) is added later
-        // by the AddTicketAutoRouting migration - not part of Module 1.
+        public int? ResponseSlaInHours { get; set; }
+        public bool ManualOnly { get; set; } = false;
 
         public bool Status { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
