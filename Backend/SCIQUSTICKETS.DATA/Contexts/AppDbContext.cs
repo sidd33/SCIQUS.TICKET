@@ -185,7 +185,6 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.OnDelete(DeleteBehavior.Cascade);
 			// ── [END: ACCOUNTS / CRM] ─────────────────────────────────
 
-<<<<<<< HEAD
 			// ── [TEAM: TICKETS] — Relationships & Seed ────────────────
 			builder.Entity<TicketSubType>()
 				.HasOne(st => st.TicketType)
