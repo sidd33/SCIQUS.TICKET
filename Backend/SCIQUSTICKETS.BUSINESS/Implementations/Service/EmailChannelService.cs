@@ -61,7 +61,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                     TicketSubTypeId = config.DefaultTicketSubTypeId,
                     AssignedToUserId = config.DefaultAssigneeId,
                     StatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"), // Open
-                    CreatedByUserId = accountContact.CreatedByUserId ?? "SYSTEM"
+                    CreatedByUserId = "SYSTEM"
                 };
 
                 _context.Tickets.Add(ticket);
@@ -98,8 +98,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 TicketCommentId = Guid.NewGuid(),
                 TicketId = ticketId,
                 CommentText = body,
-                IsCustomerVisible = true,
-                CreatedByUserId = sentByUserId ?? "SYSTEM",
+                IsInternalNote = false,
+                CommentedByUserId = sentByUserId ?? "SYSTEM",
                 CreatedDate = DateTime.UtcNow
             };
             _context.TicketComments.Add(comment);
@@ -109,9 +109,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             {
                 TicketHistoryId = Guid.NewGuid(),
                 TicketId = ticketId,
-                ActionType = "Email Sent",
-                ActionDescription = $"Reply sent to {contactEmail}",
-                CreatedByUserId = sentByUserId ?? "SYSTEM",
+                ChangeDescription = $"Email Reply sent to {contactEmail}",
+                ChangedByUserId = sentByUserId ?? "SYSTEM",
                 CreatedDate = DateTime.UtcNow
             };
             _context.TicketHistories.Add(history);
