@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCIQUSTICKETS.DATA.Contexts;
 
@@ -11,9 +12,11 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260804053300_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -702,30 +705,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("LastModifiedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("MaxConcurrentOpenTickets")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MaxConsecutiveAssignments")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int?>("RecencyCapHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TicketAutoAssignMethod")
-                        .HasColumnType("longtext");
-
-                    b.Property<double?>("W_Load")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Recency")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Severity")
-                        .HasColumnType("double");
 
                     b.HasKey("DepartmentId");
 
@@ -878,74 +860,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("Regions");
                 });
 
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.SlaConfiguration", b =>
-                {
-                    b.Property<Guid>("SlaConfigurationId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool>("AllowEmployeeReopen")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("AutoClosureHours")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("DefaultAutoAssignMethod")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("DefaultMaxConcurrentOpenTickets")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DefaultMaxConsecutiveAssignments")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DefaultRecencyCapHours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("DefaultW_Load")
-                        .HasColumnType("double");
-
-                    b.Property<double>("DefaultW_Recency")
-                        .HasColumnType("double");
-
-                    b.Property<double>("DefaultW_Severity")
-                        .HasColumnType("double");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime>("LastUpdatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("MaxFallbackAttempts")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ReopenGraceDays")
-                        .HasColumnType("int");
-
-                    b.HasKey("SlaConfigurationId");
-
-                    b.ToTable("SlaConfigurations");
-                });
-
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", b =>
                 {
                     b.Property<Guid>("TicketId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("AcceptanceDeadlineAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("AcceptanceDeadlineHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AcceptanceStatus")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("AccountId")
                         .HasColumnType("varchar(255)");
@@ -966,12 +885,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("CurrentFallbackAttempt")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("DepartmentId")
-                        .HasColumnType("char(36)");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -985,14 +898,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<bool>("IsOpen")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<bool?>("IsSlaBreached")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTime>("LastUpdatedDate")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<double?>("OverdueHours")
-                        .HasColumnType("double");
 
                     b.Property<DateTime?>("PendingClosureDate")
                         .HasColumnType("datetime(6)");
@@ -1002,15 +909,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("RaisedByEmployeeId")
                         .HasColumnType("varchar(255)");
-
-                    b.Property<double?>("ResolutionTimeInHours")
-                        .HasColumnType("double");
-
-                    b.Property<DateTime?>("SlaDueDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("SlaMetStatus")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("SourceType")
                         .IsRequired()
@@ -1043,8 +941,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("DepartmentId");
-
                     b.HasIndex("PriorityId");
 
                     b.HasIndex("RaisedByEmployeeId");
@@ -1075,26 +971,13 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<Guid?>("FromDepartmentId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<bool>("IsAutoAssigned")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Remarks")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("ToDepartmentId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime?>("UnassignedDate")
@@ -1315,15 +1198,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("int");
 
-                    b.Property<bool>("ManualOnly")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int?>("ResponseSlaInHours")
-                        .HasColumnType("int");
 
                     b.Property<int>("SlaInHours")
                         .HasColumnType("int");
@@ -1334,45 +1211,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("TicketPriorityId");
 
                     b.ToTable("TicketPriorities");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStateChangeHistory", b =>
-                {
-                    b.Property<Guid>("TicketStateChangeHistoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("ChangeType")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ChangedByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("NewValue")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("OldValue")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("TicketId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("TicketStateChangeHistoryId");
-
-                    b.HasIndex("ChangedByUserId");
-
-                    b.HasIndex("TicketId");
-
-                    b.ToTable("TicketStateChangeHistories");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", b =>
@@ -1493,9 +1331,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
-                    b.Property<int?>("AcceptanceDeadlineHours")
-                        .HasColumnType("int");
-
                     b.Property<string>("CreatedByUserId")
                         .HasColumnType("longtext");
 
@@ -1520,15 +1355,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("LastUpdatedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("ManualOnly")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool?>("RequiresAcceptance")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("Status")
                         .HasColumnType("tinyint(1)");
@@ -1846,12 +1675,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketPriority", "Priority")
                         .WithMany()
                         .HasForeignKey("PriorityId")
@@ -1888,8 +1711,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("BusinessImpact");
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Department");
 
                     b.Navigation("Priority");
 
@@ -1977,25 +1798,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
                         .WithMany("History")
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChangedByUser");
-
-                    b.Navigation("Ticket");
-                });
-
-            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStateChangeHistory", b =>
-                {
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "ChangedByUser")
-                        .WithMany()
-                        .HasForeignKey("ChangedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
-                        .WithMany()
                         .HasForeignKey("TicketId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
