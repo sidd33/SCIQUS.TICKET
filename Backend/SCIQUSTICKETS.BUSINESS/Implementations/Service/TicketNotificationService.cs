@@ -125,12 +125,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             
             // For portal tickets, account contacts could be notified, but we need their UserIds
             // Assuming Account Contact has an associated UserId if they use the portal
-            if (isCustomerVisible && ticket.SourceType == "Portal" && ticket.Account != null)
+            if (isCustomerVisible && ticket.SourceType == "Portal" && ticket.CreatedByUserId != "SYSTEM")
             {
-                var contactUserIds = ticket.Account.Contacts
-                    .Select(c => c.CreatedByUserId) // Assuming a link to ApplicationUser, adapting based on general pattern
-                    .Where(id => !string.IsNullOrEmpty(id));
-                recipients.AddRange(contactUserIds);
+                recipients.Add(ticket.CreatedByUserId);
             }
 
             await CreateNotificationAsync("CommentAdded", ticketId, actorUserId, recipients, new { IsCustomerVisible = isCustomerVisible });
@@ -175,12 +172,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
                 recipients.Add(ticket.AssignedToUserId);
 
-            if (ticket.Account != null)
+            if (ticket.CreatedByUserId != "SYSTEM")
             {
-                var contactUserIds = ticket.Account.Contacts
-                    .Select(c => c.CreatedByUserId)
-                    .Where(id => !string.IsNullOrEmpty(id));
-                recipients.AddRange(contactUserIds);
+                recipients.Add(ticket.CreatedByUserId);
             }
 
             await CreateNotificationAsync("Closed", ticketId, actorUserId, recipients);

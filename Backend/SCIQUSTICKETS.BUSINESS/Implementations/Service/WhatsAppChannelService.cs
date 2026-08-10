@@ -34,7 +34,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             // Find account
             var accountContact = await _context.AccountContacts
-                .FirstOrDefaultAsync(c => c.MobileNumber == phone || c.OfficeNumber == phone);
+                .FirstOrDefaultAsync(c => c.MobileNumber == phone || c.AlternateMobileNumber == phone);
 
             if (accountContact != null && config.AutoCreateEnabled)
             {
@@ -57,7 +57,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                     TicketSubTypeId = config.DefaultTicketSubTypeId,
                     AssignedToUserId = config.DefaultAssigneeId,
                     StatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"),
-                    CreatedByUserId = accountContact.CreatedByUserId ?? "SYSTEM"
+                    CreatedByUserId = "SYSTEM"
                 };
 
                 _context.Tickets.Add(ticket);
@@ -105,8 +105,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 TicketCommentId = Guid.NewGuid(),
                 TicketId = ticketId,
                 CommentText = body,
-                IsCustomerVisible = true,
-                CreatedByUserId = sentByUserId ?? "SYSTEM",
+                IsInternalNote = false,
+                CommentedByUserId = sentByUserId ?? "SYSTEM",
                 CreatedDate = DateTime.UtcNow
             };
             _context.TicketComments.Add(comment);
@@ -115,9 +115,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             {
                 TicketHistoryId = Guid.NewGuid(),
                 TicketId = ticketId,
-                ActionType = "WhatsApp Sent",
-                ActionDescription = $"Reply sent to {contactPhone}",
-                CreatedByUserId = sentByUserId ?? "SYSTEM",
+                ChangeDescription = $"WhatsApp Reply sent to {contactPhone}",
+                ChangedByUserId = sentByUserId ?? "SYSTEM",
                 CreatedDate = DateTime.UtcNow
             };
             _context.TicketHistories.Add(history);
