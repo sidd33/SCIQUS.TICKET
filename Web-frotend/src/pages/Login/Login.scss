@@ -1,0 +1,142 @@
+@use '../../styles/variables.scss' as *;
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, $color-bg 0%, #eef1fb 100%);
+  padding: $spacing-md;
+}
+
+.login-card {
+  background: $color-surface;
+  padding: $spacing-xl $spacing-lg;
+  border-radius: $radius;
+  box-shadow: $shadow;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $color-primary;
+    color: #fff;
+    border-radius: $radius-sm;
+    font-size: 1.3rem;
+  }
+
+  h2 { margin: 0; font-size: 1.1rem; }
+  span { font-size: 0.75rem; color: $color-text-muted; }
+}
+
+.login-toggle {
+  display: flex;
+  background: $color-bg;
+  border-radius: $radius;
+  padding: 4px;
+  margin-bottom: $spacing-lg;
+
+  button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    border-radius: $radius-sm;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: $color-secondary;
+    cursor: pointer;
+
+    &.active {
+      background: $color-surface;
+      color: $color-primary;
+      box-shadow: $shadow;
+    }
+  }
+}
+
+.login-header {
+  margin-bottom: $spacing-lg;
+  h1 { margin: 0 0 4px; font-size: 1.4rem; }
+  p { margin: 0; color: $color-text-muted; font-size: 0.9rem; }
+}
+
+.login-error {
+  background: rgba(229, 72, 77, 0.08);
+  color: $color-danger;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius;
+  font-size: 0.85rem;
+  margin-bottom: $spacing-sm;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: $spacing-sm;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: $color-secondary;
+  }
+
+  input {
+    padding: 10px 12px;
+    border: 1px solid $color-border;
+    border-radius: $radius;
+    font-size: 1rem;
+
+    &:focus {
+      outline: none;
+      border-color: $color-primary;
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12);
+    }
+  }
+}
+
+.login-form button[type="submit"] {
+  margin-top: $spacing-md;
+  padding: 11px;
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: $radius;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: $color-primary-dark; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+.register-link {
+  text-align: center;
+  margin-top: $spacing-md;
+  font-size: 0.85rem;
+  color: $color-text-muted;
+
+  a {
+    color: $color-primary;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

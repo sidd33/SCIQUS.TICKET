@@ -1,0 +1,82 @@
+@use "../styles/variables.scss" as *;
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 32px;
+}
+
+.page-header-left h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.page-header-left p {
+  margin-top: 6px;
+  color: $color-text-muted;
+}
+
+.page-header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: white;
+
+  padding: 10px 16px;
+
+  border-radius: 12px;
+
+  border: 1px solid $color-border;
+
+  width: 260px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  background: transparent;
+}
+
+
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-avatar {
+  width: 44px;
+  height: 44px;
+
+  border-radius: 50%;
+
+  background: $color-primary;
+  color: white;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-weight: 700;
+}
+
+.header-user span {
+  display: block;
+  font-weight: 600;
+}
+
+.header-user small {
+  color: $color-text-muted;
+}
