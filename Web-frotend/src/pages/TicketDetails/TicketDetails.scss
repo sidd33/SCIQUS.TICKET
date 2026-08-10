@@ -1,0 +1,161 @@
+@use "../../styles/variables" as *;
+
+.ticket-details-page {
+  display: flex;
+  flex-direction: column;
+  gap: $stack-md;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  align-self: stretch; // in case a flex/grid parent is centering children
+}
+
+.ticket-details-card {
+  display: flex;
+  flex-direction: column;
+  gap: $stack-lg;
+  width: 100%;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
+}
+
+.ticket-details-loading {
+  padding: 64px 48px;
+  text-align: center;
+  color: $color-on-surface-variant;
+  font: $type-body-md;
+}
+
+
+
+.ticket-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: $stack-md;
+  border-bottom: 1px solid $color-surface-border;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: $stack-sm;
+  }
+}
+
+.ticket-title {
+  font: $type-headline-md;
+  letter-spacing: $type-headline-md-letter-spacing;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.ticket-description {
+  font: $type-body-lg;
+  line-height: 1.6;
+  color: $color-on-surface-variant;
+  white-space: pre-wrap;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.ticket-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $stack-md;
+  border-top: 1px solid $color-surface-border;
+  padding-top: $stack-lg;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: $color-surface-variant;
+  }
+}
+
+.ticket-meta-label {
+  font: $type-label-sm;
+  color: $color-on-surface-variant;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ticket-meta-value {
+  font: $type-body-md;
+  font-weight: 500;
+  color: $color-on-surface;
+}
+
+.ticket-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: $stack-md;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    label {
+      font: $type-label-sm;
+      font-weight: 600;
+      color: $color-on-surface-variant;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    input,
+    textarea,
+    select {
+      border: 1px solid $color-surface-border;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: $type-body-md;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $color-primary;
+        box-shadow: 0 0 0 3px rgba($color-primary, 0.12);
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+  }
+}
+
+.field-error {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba($color-critical, 0.08);
+  color: $color-critical;
+  font: $type-body-sm;
+}
+
+.ticket-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $stack-sm;
+  padding-top: $stack-sm;
+}
+
+.ticket-manage-hint {
+  font: $type-body-sm;
+  color: $color-on-surface-variant;
+  padding: 4px 4px;
+
+  a {
+    color: $color-primary;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

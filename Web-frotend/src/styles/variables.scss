@@ -1,0 +1,155 @@
+// Font — must come first, used by typography tokens below
+$font-family: 'Segoe UI', system-ui, sans-serif;
+
+// Colors
+$color-primary: #4361ee;
+$color-primary-dark: #3a56d4;
+$color-secondary: #6b7280;
+$color-bg: #f8f9fc;
+$color-surface: #ffffff;
+$color-text: #1f2330;
+$color-border: #e5e7eb;
+$color-danger: #e5484d;
+
+$color-text-muted: #6b7280;
+$color-success: #16a34a;
+
+// Spacing
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-xs: 4px;
+
+$stack-sm: $spacing-sm;
+$stack-md: $spacing-md;
+$stack-lg: $spacing-lg;
+
+// Radius & shadow
+$radius: 10px;
+$radius-sm: 6px;
+$shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+
+// Typography (from DESIGN.md) — full per-property tokens
+$type-headline-lg-font-size: 32px;
+$type-headline-lg-font-weight: 700;
+$type-headline-lg-line-height: 40px;
+$type-headline-lg-letter-spacing: -0.02em;
+
+$type-headline-lg-mobile-font-size: 24px;
+$type-headline-lg-mobile-font-weight: 700;
+$type-headline-lg-mobile-line-height: 32px;
+$type-headline-lg-mobile-letter-spacing: -0.02em;
+
+$type-headline-md-font-size: 24px;
+$type-headline-md-font-weight: 600;
+$type-headline-md-line-height: 32px;
+$type-headline-md-letter-spacing: -0.01em;
+
+$type-headline-sm-font-size: 20px;
+$type-headline-sm-font-weight: 600;
+$type-headline-sm-line-height: 28px;
+$type-headline-sm-letter-spacing: normal;
+
+$type-body-lg-font-size: 16px;
+$type-body-lg-font-weight: 400;
+$type-body-lg-line-height: 24px;
+$type-body-lg-letter-spacing: normal;
+
+$type-body-md-font-size: 14px;
+$type-body-md-font-weight: 400;
+$type-body-md-line-height: 20px;
+$type-body-md-letter-spacing: normal;
+
+$type-body-sm-font-size: 12px;
+$type-body-sm-font-weight: 400;
+$type-body-sm-line-height: 16px;
+$type-body-sm-letter-spacing: normal;
+
+$type-label-md-font-size: 14px;
+$type-label-md-font-weight: 600;
+$type-label-md-line-height: 20px;
+$type-label-md-letter-spacing: 0.01em;
+
+$type-label-sm-font-size: 12px;
+$type-label-sm-font-weight: 600;
+$type-label-sm-line-height: 16px;
+$type-label-sm-letter-spacing: normal;
+
+$type-caption-font-size: 12px;
+$type-caption-font-weight: 400;
+$type-caption-line-height: 16px;
+$type-caption-letter-spacing: normal;
+
+$type-headline-lg: #{$type-headline-lg-font-weight} #{$type-headline-lg-font-size}/#{$type-headline-lg-line-height} #{$font-family};
+$type-headline-md: #{$type-headline-md-font-weight} #{$type-headline-md-font-size}/#{$type-headline-md-line-height} #{$font-family};
+$type-headline-sm: #{$type-headline-sm-font-weight} #{$type-headline-sm-font-size}/#{$type-headline-sm-line-height} #{$font-family};
+$type-body-lg: #{$type-body-lg-font-weight} #{$type-body-lg-font-size}/#{$type-body-lg-line-height} #{$font-family};
+$type-body-md: #{$type-body-md-font-weight} #{$type-body-md-font-size}/#{$type-body-md-line-height} #{$font-family};
+$type-body-sm: #{$type-body-sm-font-weight} #{$type-body-sm-font-size}/#{$type-body-sm-line-height} #{$font-family};
+$type-label-md: #{$type-label-md-font-weight} #{$type-label-md-font-size}/#{$type-label-md-line-height} #{$font-family};
+$type-label-sm: #{$type-label-sm-font-weight} #{$type-label-sm-font-size}/#{$type-label-sm-line-height} #{$font-family};
+
+// Full color palette from DESIGN.md
+$color-surface: #f7f9fb;
+$color-surface-dim: #d8dadc;
+$color-surface-bright: #f7f9fb;
+$color-surface-container-lowest: #ffffff;
+$color-surface-container-low: #f2f4f6;
+$color-surface-container: #eceef0;
+$color-surface-container-high: #e6e8ea;
+$color-surface-container-highest: #e0e3e5;
+$color-on-surface: #191c1e;
+$color-on-surface-variant: #464555;
+$color-inverse-surface: #2d3133;
+$color-inverse-on-surface: #eff1f3;
+$color-outline: #777587;
+$color-outline-variant: #c7c4d8;
+$color-surface-tint: #4d44e3;
+$color-primary: #3525cd;
+$color-on-primary: #ffffff;
+$color-primary-container: #4f46e5;
+$color-on-primary-container: #dad7ff;
+$color-inverse-primary: #c3c0ff;
+$color-secondary: #565e74;
+$color-on-secondary: #ffffff;
+$color-secondary-container: #dae2fd;
+$color-on-secondary-container: #5c647a;
+$color-tertiary: #3130c0;
+$color-on-tertiary: #ffffff;
+$color-tertiary-container: #4b4dd8;
+$color-on-tertiary-container: #d9d8ff;
+$color-error: #ba1a1a;
+$color-on-error: #ffffff;
+$color-error-container: #ffdad6;
+$color-on-error-container: #93000a;
+$color-primary-fixed: #e2dfff;
+$color-primary-fixed-dim: #c3c0ff;
+$color-on-primary-fixed: #0f0069;
+$color-on-primary-fixed-variant: #3323cc;
+$color-secondary-fixed: #dae2fd;
+$color-secondary-fixed-dim: #bec6e0;
+$color-on-secondary-fixed: #131b2e;
+$color-on-secondary-fixed-variant: #3f465c;
+$color-tertiary-fixed: #e1e0ff;
+$color-tertiary-fixed-dim: #c0c1ff;
+$color-on-tertiary-fixed: #07006c;
+$color-on-tertiary-fixed-variant: #2f2ebe;
+$color-background: #f7f9fb;
+$color-on-background: #191c1e;
+$color-surface-variant: #e0e3e5;
+$color-success: #10b981;
+$color-warning: #f59e0b;
+$color-high-priority: #f97316;
+$color-critical: #ef4444;
+$color-inactive: #94a3b8;
+$color-surface-border: #e2e8f0;
+
+// Radius scale (from DESIGN.md)
+$radius-sm: 0.25rem;
+$radius: 0.5rem;
+$radius-md: 0.75rem;
+$radius-lg: 1rem;
+$radius-xl: 1.5rem;
+$radius-full: 9999px;
+$radius-default: $radius;
