@@ -15,10 +15,20 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 	public class TicketController : ControllerBase
 	{
 		private readonly ITicketService _ticketService;
+		private readonly ITicketNotificationService _notificationService;
+		private readonly IEmailChannelService _emailChannelService;
+		private readonly IWhatsAppChannelService _whatsAppChannelService;
 
-		public TicketController(ITicketService ticketService)
+		public TicketController(
+			ITicketService ticketService,
+			ITicketNotificationService notificationService,
+			IEmailChannelService emailChannelService,
+			IWhatsAppChannelService whatsAppChannelService)
 		{
 			_ticketService = ticketService;
+			_notificationService = notificationService;
+			_emailChannelService = emailChannelService;
+			_whatsAppChannelService = whatsAppChannelService;
 		}
 
 
@@ -32,6 +42,10 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			try
 			{
 				var result = await _ticketService.CreateAsync(userId, request);
+				
+				// Module 5: Notify
+				try { await _notificationService.NotifyTicketCreatedAsync(result.Id, userId); } catch { /* ignore notification errors */ }
+
 				return Ok(result);
 			}
 			catch (InvalidOperationException ex)
@@ -109,6 +123,18 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				if (!result)
 					return NotFound();
 
+				// Module 5: Notify if closed/reopened etc
+				try 
+				{ 
+					// Simplified based on status ID. Ideally we fetch the status name.
+					if (request.StatusId.ToString().EndsWith("5")) // Closed
+						await _notificationService.NotifyClosedAsync(id, userId);
+					else if (request.StatusId.ToString().EndsWith("6")) // PendingClosure
+						await _notificationService.NotifyPendingClosureAsync(id, userId);
+					else if (request.StatusId.ToString().EndsWith("7")) // Reopened
+						await _notificationService.NotifyReopenedAsync(id, userId);
+				} catch { /* ignore */ }
+
 				return Ok(new { Message = "Ticket status updated successfully." });
 			}
 			catch (InvalidOperationException ex)
@@ -131,6 +157,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
 			if (!result)
 				return NotFound();
+
+			// Module 5: Notify Comment added
+			try { await _notificationService.NotifyCommentAddedAsync(id, userId, request.IsCustomerVisible); } catch { /* ignore */ }
 
 			return Ok(new { Message = "Comment added successfully." });
 		}
@@ -240,6 +269,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				var result = await _ticketService.ReassignAsync(id, request, userId);
 				if (!result) return NotFound();
+				
+				try { await _notificationService.NotifyAssignedAsync(id, userId); } catch { /* ignore */ }
+				
 				return Ok(new { Message = "Ticket reassigned successfully." });
 			}
 			catch (InvalidOperationException ex)
@@ -259,6 +291,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				var result = await _ticketService.TransferDepartmentAsync(id, request, userId);
 				if (!result) return NotFound();
+				
+				try { await _notificationService.NotifyTransferredAsync(id, userId); } catch { /* ignore */ }
+				
 				return Ok(new { Message = "Ticket transferred successfully." });
 			}
 			catch (InvalidOperationException ex)
@@ -278,6 +313,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				var result = await _ticketService.ChangePriorityImpactAsync(id, request, userId);
 				if (!result) return NotFound();
+				
+				try { await _notificationService.NotifyPriorityChangedAsync(id, userId); } catch { /* ignore */ }
+				
 				return Ok(new { Message = "Priority/Impact changed and SLA recalculated successfully." });
 			}
 			catch (InvalidOperationException ex)
@@ -313,6 +351,34 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				return Unauthorized(new { message = ex.Message });
 			}
+		}
+
+		// POST: api/tickets/{id}/email-reply
+		[HttpPost("{id:guid}/email-reply")]
+		public async Task<IActionResult> EmailReply(Guid id, [FromBody] string body)
+		{
+			var userId = GetUserId();
+			var success = await _emailChannelService.SendOutboundReplyAsync(id, body, userId);
+			if (!success) return BadRequest("Could not send email reply.");
+			
+			try { await _notificationService.NotifyCommentAddedAsync(id, userId, true); } catch { /* ignore */ }
+			
+			return Ok(new { Message = "Email reply sent successfully." });
+		}
+
+		// POST: api/tickets/{id}/whatsapp-reply
+		public class WhatsAppReplyRequest { public string Body { get; set; } = null!; public string? TemplateName { get; set; } }
+
+		[HttpPost("{id:guid}/whatsapp-reply")]
+		public async Task<IActionResult> WhatsAppReply(Guid id, [FromBody] WhatsAppReplyRequest request)
+		{
+			var userId = GetUserId();
+			var success = await _whatsAppChannelService.SendOutboundReplyAsync(id, request.Body, request.TemplateName, userId);
+			if (!success) return BadRequest("Could not send WhatsApp reply.");
+			
+			try { await _notificationService.NotifyCommentAddedAsync(id, userId, true); } catch { /* ignore */ }
+			
+			return Ok(new { Message = "WhatsApp reply sent successfully." });
 		}
 
 

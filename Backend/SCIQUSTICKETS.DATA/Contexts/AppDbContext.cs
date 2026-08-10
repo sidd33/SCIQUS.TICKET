@@ -57,6 +57,21 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<SlaConfiguration> SlaConfigurations { get; set; }
 		public DbSet<TicketStateChangeHistory> TicketStateChangeHistories { get; set; }
 		// ── [END: TICKET TRANSACTION] ─────────────────────────────────
+		
+		// ── [TEAM: NOTIFICATIONS] ─────────────────────────────────────
+		public DbSet<Notification> Notifications { get; set; }
+		public DbSet<NotificationUser> NotificationUsers { get; set; }
+		public DbSet<NotificationData> NotificationData { get; set; }
+		// ── [END: NOTIFICATIONS] ──────────────────────────────────────
+
+		// ── [TEAM: CHANNELS] ──────────────────────────────────────────
+		public DbSet<EmailTicketConfig> EmailTicketConfigs { get; set; }
+		public DbSet<EmailInboxMessage> EmailInboxMessages { get; set; }
+		
+		public DbSet<WhatsAppChannelConfig> WhatsAppChannelConfigs { get; set; }
+		public DbSet<WhatsAppInboxMessage> WhatsAppInboxMessages { get; set; }
+		public DbSet<WhatsAppOutboundMessage> WhatsAppOutboundMessages { get; set; }
+		// ── [END: CHANNELS] ───────────────────────────────────────────
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -248,6 +263,40 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithMany()
 				.HasForeignKey(t => t.RaisedByEmployeeId)
 				.OnDelete(DeleteBehavior.Restrict);
+
+			// ── [TEAM: NOTIFICATIONS] — Relationships ─────────────────
+			builder.Entity<NotificationUser>()
+				.HasOne(nu => nu.User)
+				.WithMany()
+				.HasForeignKey(nu => nu.UserId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<NotificationData>()
+				.HasOne(nd => nd.Notification)
+				.WithOne(n => n.NotificationData)
+				.HasForeignKey<NotificationData>(nd => nd.NotificationId)
+				.OnDelete(DeleteBehavior.Cascade);
+			// ── [END: NOTIFICATIONS] ──────────────────────────────────
+
+			// ── [TEAM: CHANNELS] — Relationships ──────────────────────
+			builder.Entity<EmailInboxMessage>()
+				.HasOne(m => m.CreatedTicket)
+				.WithMany()
+				.HasForeignKey(m => m.CreatedTicketId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<WhatsAppInboxMessage>()
+				.HasOne(m => m.CreatedTicket)
+				.WithMany()
+				.HasForeignKey(m => m.CreatedTicketId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<WhatsAppOutboundMessage>()
+				.HasOne(m => m.Ticket)
+				.WithMany()
+				.HasForeignKey(m => m.TicketId)
+				.OnDelete(DeleteBehavior.Cascade);
+			// ── [END: CHANNELS] ───────────────────────────────────────
 
 			// ── [TEAM: TICKET STATUS SEED] ─────────────────────────────
 			builder.Entity<TicketStatus>().HasData(

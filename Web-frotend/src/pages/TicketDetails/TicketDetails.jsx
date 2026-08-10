@@ -40,6 +40,11 @@ function TicketDetails() {
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [emailReply, setEmailReply] = useState("");
+  const [whatsAppReply, setWhatsAppReply] = useState("");
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+
   const loadTicket = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -82,6 +87,37 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
       setSaveError(getFriendlyErrorMessage(err));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleEmailReply(e) {
+    e.preventDefault();
+    setSendingReply(true);
+    try {
+      await api.post(`/tickets/${ticketId}/email-reply`, `"${emailReply}"`, { headers: { 'Content-Type': 'application/json' }});
+      setEmailReply("");
+      alert("Email sent!");
+      loadTicket(); // Reload ticket to see history/comments
+    } catch (err) {
+      alert("Failed to send email");
+    } finally {
+      setSendingReply(false);
+    }
+  }
+
+  async function handleWhatsAppReply(e) {
+    e.preventDefault();
+    setSendingReply(true);
+    try {
+      await api.post(`/tickets/${ticketId}/whatsapp-reply`, { body: whatsAppReply, templateName: whatsAppTemplate });
+      setWhatsAppReply("");
+      setWhatsAppTemplate("");
+      alert("WhatsApp message sent!");
+      loadTicket();
+    } catch (err) {
+      alert("Failed to send WhatsApp message");
+    } finally {
+      setSendingReply(false);
     }
   }
 
@@ -181,6 +217,50 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
           </>
         )}
       </div>
+
+      {ticket && !editing && (
+        <div className="card ticket-details-card" style={{ marginTop: '1rem' }}>
+          <h3>Communication</h3>
+          
+          {/* Example conditional display. In a real app we'd check ticket.sourceType === 'Email' etc */}
+          <div className="communication-section">
+            <h4>Email Reply</h4>
+            <form onSubmit={handleEmailReply}>
+              <textarea 
+                rows={3} 
+                value={emailReply} 
+                onChange={e => setEmailReply(e.target.value)}
+                placeholder="Type email reply here..."
+                required
+                style={{ width: '100%', marginBottom: '0.5rem' }}
+              />
+              <button type="submit" className="btn btn--primary" disabled={sendingReply}>Send Email</button>
+            </form>
+          </div>
+
+          <div className="communication-section" style={{ marginTop: '2rem' }}>
+            <h4>WhatsApp Reply</h4>
+            <form onSubmit={handleWhatsAppReply}>
+              <input 
+                type="text" 
+                placeholder="Template Name (optional, required if outside 24h window)" 
+                value={whatsAppTemplate}
+                onChange={e => setWhatsAppTemplate(e.target.value)}
+                style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem' }}
+              />
+              <textarea 
+                rows={3} 
+                value={whatsAppReply} 
+                onChange={e => setWhatsAppReply(e.target.value)}
+                placeholder="Type WhatsApp reply here..."
+                required
+                style={{ width: '100%', marginBottom: '0.5rem' }}
+              />
+              <button type="submit" className="btn btn--primary" disabled={sendingReply}>Send WhatsApp</button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {canManage && (
         <p className="ticket-manage-hint">
