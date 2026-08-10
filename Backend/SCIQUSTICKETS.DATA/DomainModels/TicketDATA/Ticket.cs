@@ -28,6 +28,9 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		// Portal / Email / WhatsApp / Internal
 		public string SourceType { get; set; } = "Portal";
+		
+		public string? SourceMessageId { get; set; }
+		public DateTime? EmailReceivedDate { get; set; }
 
 		// Derived workflow helper
 		public bool IsOpen { get; set; } = true;

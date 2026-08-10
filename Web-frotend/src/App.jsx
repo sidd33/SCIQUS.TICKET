@@ -16,6 +16,11 @@ import MyTickets from './pages/MyTickets/MyTickets';
 import Profile from './pages/Profile/Profile';
 import NotFound from './pages/NotFound/NotFound';
 
+import EmailConfig from './pages/Admin/EmailConfig/EmailConfig';
+import EmailInboxReview from './pages/Admin/EmailConfig/EmailInboxReview';
+import WhatsAppConfig from './pages/Admin/WhatsAppConfig/WhatsAppConfig';
+import WhatsAppInboxReview from './pages/Admin/WhatsAppConfig/WhatsAppInboxReview';
+
 function App() {
   const token = getToken();
   const user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -62,6 +67,12 @@ function App() {
           <Route path="/my-tickets" element={<ProtectedRoute allow={['Customer']}><MyTickets /></ProtectedRoute>} />
           <Route path="/my-tickets/:ticketId" element={<ProtectedRoute allow={['Customer']}><TicketDetails /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/email-ticket-config" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><EmailConfig /></ProtectedRoute>} />
+          <Route path="/admin/email-inbox-review" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><EmailInboxReview /></ProtectedRoute>} />
+          <Route path="/admin/whatsapp-config" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><WhatsAppConfig /></ProtectedRoute>} />
+          <Route path="/admin/whatsapp-inbox-review" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><WhatsAppInboxReview /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

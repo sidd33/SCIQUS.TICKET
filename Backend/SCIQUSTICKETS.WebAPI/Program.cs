@@ -114,6 +114,14 @@ builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IAssignmentEngine, AssignmentEngine>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 
+// Register Module 5, 6, 8 Services
+builder.Services.AddScoped<ITicketNotificationService, TicketNotificationService>();
+builder.Services.AddScoped<IEmailChannelService, EmailChannelService>();
+builder.Services.AddScoped<IWhatsAppChannelService, WhatsAppChannelService>();
+
+// Register Background Services
+builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.EmailPollingBackgroundService>();
+
 // Register custom authorization policies (SameUserOrAdmin, AdminOnly)
 builder.Services.AddAuthorizationPolicies();
 builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
