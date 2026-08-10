@@ -44,7 +44,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				var result = await _ticketService.CreateAsync(userId, request);
 				
 				// Module 5: Notify
-				try { await _notificationService.NotifyTicketCreatedAsync(result.Id, userId); } catch { /* ignore notification errors */ }
+				try { await _notificationService.NotifyTicketCreatedAsync(result.TicketId, userId); } catch { /* ignore notification errors */ }
 
 				return Ok(result);
 			}
@@ -159,7 +159,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				return NotFound();
 
 			// Module 5: Notify Comment added
-			try { await _notificationService.NotifyCommentAddedAsync(id, userId, request.IsCustomerVisible); } catch { /* ignore */ }
+			try { await _notificationService.NotifyCommentAddedAsync(id, userId, !request.IsInternalNote); } catch { /* ignore */ }
 
 			return Ok(new { Message = "Comment added successfully." });
 		}
