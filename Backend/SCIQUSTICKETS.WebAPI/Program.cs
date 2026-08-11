@@ -130,6 +130,9 @@ builder.Services.AddAuthorizationPolicies();
 builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
+builder.Services.AddScoped<ITicketReportService, TicketReportService>();
+
+builder.Services.AddScoped<IAcceptanceService, AcceptanceService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

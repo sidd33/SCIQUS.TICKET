@@ -28,6 +28,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly IAssignmentEngine _assignmentEngine;
 		private readonly ISlaService _slaService;
 		private readonly AppDbContext _context;
+		private readonly IAcceptanceService _acceptanceService;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
 			new(StringComparer.OrdinalIgnoreCase)
@@ -51,7 +52,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			IFileStorageService fileStorageService,
 			IAssignmentEngine assignmentEngine,
 			ISlaService slaService,
-			AppDbContext context)
+			AppDbContext context,
+			IAcceptanceService acceptanceService)
 		{
 			_ticketRepository = ticketRepository;
 			_ticketTypeRepository = ticketTypeRepository;
@@ -63,9 +65,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_assignmentEngine = assignmentEngine;
 			_slaService = slaService;
 			_context = context;
+			_acceptanceService = acceptanceService;
 		}
-
-		// TicketService.cs — add these two methods
 
 		public async Task<bool> ConfirmClosureAsync(Guid ticketId, string accountActorId)
 		{
@@ -191,7 +192,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				?? throw new InvalidOperationException("The 'Open' ticket status is not seeded.");
 
 			// SLA Due Date calculation (ClockStart = EmailReceivedDate ?? CreatedDate, per Module 4)
-			var tempTicketForClock = new Ticket { CreatedDate = now }; 
+			var tempTicketForClock = new Ticket { CreatedDate = now };
 			var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(tempTicketForClock, priority as TicketPriority);
 
 			// Inherit Department from SubType if not explicitly passed
@@ -245,6 +246,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 
 			var created = await _ticketRepository.CreateTicketAsync(ticket);
+
+			// Module 12: start the acceptance cycle if this assignment requires it
+			if (assignedEmployee != null && ticket.AcceptanceStatus == "Pending")
+			{
+				await _acceptanceService.StartAcceptanceCycleAsync(created, assignedEmployee, attemptNumber: 1);
+			}
 
 			// Write Initial TicketAssignment row
 			if (assignedEmployee != null)

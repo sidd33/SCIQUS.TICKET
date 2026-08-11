@@ -27,9 +27,11 @@ namespace SCIQUSTICKETS.WebAPI.BackgroundServices
 				{
 					using var scope = _serviceProvider.CreateScope();
 					var slaService = scope.ServiceProvider.GetRequiredService<ISlaService>();
+					var acceptanceService = scope.ServiceProvider.GetRequiredService<IAcceptanceService>();
 
 					await slaService.ProcessAutoClosuresAsync();
 					await slaService.ProcessBreachesAsync();
+					await acceptanceService.ProcessExpiredAsync();
 				}
 				catch (Exception ex)
 				{

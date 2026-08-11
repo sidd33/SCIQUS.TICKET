@@ -5,6 +5,7 @@ using SCIQUSTICKETS.BUSINESS.BusinessModels.QueryParams;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs;
+using SCIQUSTICKETS.BUSINESS.Implementations.Service;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 
 namespace SCIQUSTICKETS.WebAPI.Controllers
@@ -18,17 +19,21 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		private readonly ITicketNotificationService _notificationService;
 		private readonly IEmailChannelService _emailChannelService;
 		private readonly IWhatsAppChannelService _whatsAppChannelService;
+		private readonly IAcceptanceService _acceptanceService;
 
 		public TicketController(
 			ITicketService ticketService,
 			ITicketNotificationService notificationService,
 			IEmailChannelService emailChannelService,
-			IWhatsAppChannelService whatsAppChannelService)
+			IWhatsAppChannelService whatsAppChannelService,
+			 IAcceptanceService acceptanceService)
 		{
 			_ticketService = ticketService;
 			_notificationService = notificationService;
 			_emailChannelService = emailChannelService;
 			_whatsAppChannelService = whatsAppChannelService;
+			_acceptanceService = acceptanceService;
+
 		}
 
 
@@ -423,6 +428,32 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				var result = await _ticketService.RejectClosureAsync(id, reason, userId);
 				if (!result) return NotFound();
 				return Ok(new { Message = "Closure rejected, ticket reopened." });
+			}
+			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+		}
+
+		[HttpPost("{id:guid}/accept")]
+		public async Task<IActionResult> AcceptTicket(Guid id)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _acceptanceService.AcceptAsync(id, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Ticket accepted." });
+			}
+			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+		}
+
+		[HttpPost("{id:guid}/reject")]
+		public async Task<IActionResult> RejectTicket(Guid id, [FromBody] string reason)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _acceptanceService.RejectAsync(id, userId, reason);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Ticket rejected; re-routed for fallback assignment." });
 			}
 			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
 		}
