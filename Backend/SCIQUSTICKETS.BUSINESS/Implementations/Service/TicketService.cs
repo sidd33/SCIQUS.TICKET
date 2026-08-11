@@ -26,6 +26,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly ITicketAttachmentRepository _ticketAttachmentRepository;
 		private readonly IFileStorageService _fileStorageService;
 		private readonly IAssignmentEngine _assignmentEngine;
+		private readonly ISlaService _slaService;
 		private readonly AppDbContext _context;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
@@ -49,6 +50,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			ITicketAttachmentRepository ticketAttachmentRepository,
 			IFileStorageService fileStorageService,
 			IAssignmentEngine assignmentEngine,
+			ISlaService slaService,
 			AppDbContext context)
 		{
 			_ticketRepository = ticketRepository;
@@ -59,7 +61,87 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_ticketAttachmentRepository = ticketAttachmentRepository;
 			_fileStorageService = fileStorageService;
 			_assignmentEngine = assignmentEngine;
+			_slaService = slaService;
 			_context = context;
+		}
+
+		// TicketService.cs — add these two methods
+
+		public async Task<bool> ConfirmClosureAsync(Guid ticketId, string accountActorId)
+		{
+			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
+			if (ticket == null) return false;
+
+			var pendingClosureStatus = await _ticketRepository.GetStatusByNameAsync("PendingClosure");
+			if (pendingClosureStatus == null || ticket.StatusId != pendingClosureStatus.TicketStatusId)
+				throw new InvalidOperationException("Ticket is not awaiting closure confirmation.");
+
+			var closedStatus = await _ticketRepository.GetStatusByNameAsync("Closed")
+				?? throw new InvalidOperationException("The 'Closed' status is not seeded.");
+
+			var now = TimeHelper.GetIndianTime();
+			var oldStatusId = ticket.StatusId;
+
+			ticket.StatusId = closedStatus.TicketStatusId;
+			ticket.IsOpen = false;
+			ticket.LastUpdatedDate = now;
+
+			_slaService.FinalizeOnClose(ticket, "Customer");
+
+			_ticketRepository.Update(ticket);
+
+			await _ticketRepository.AddHistoryAsync(new TicketHistory
+			{
+				TicketHistoryId = Guid.NewGuid(),
+				TicketId = ticket.TicketId,
+				OldStatusId = oldStatusId,
+				NewStatusId = closedStatus.TicketStatusId,
+				ChangeDescription = "Closure confirmed by customer",
+				ChangedByUserId = accountActorId,
+				CreatedDate = now
+			});
+
+			await _context.SaveChangesAsync();
+			return true;
+		}
+
+		public async Task<bool> RejectClosureAsync(Guid ticketId, string reason, string accountActorId)
+		{
+			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
+			if (ticket == null) return false;
+
+			var pendingClosureStatus = await _ticketRepository.GetStatusByNameAsync("PendingClosure");
+			if (pendingClosureStatus == null || ticket.StatusId != pendingClosureStatus.TicketStatusId)
+				throw new InvalidOperationException("Ticket is not awaiting closure confirmation.");
+
+			var reopenedStatus = await _ticketRepository.GetStatusByNameAsync("Reopened")
+				?? throw new InvalidOperationException("The 'Reopened' status is not seeded.");
+
+			var now = TimeHelper.GetIndianTime();
+			var oldStatusId = ticket.StatusId;
+
+			ticket.StatusId = reopenedStatus.TicketStatusId;
+
+			var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+			_slaService.ApplyReopen(ticket, priority);
+			ticket.PendingClosureDate = null;
+			ticket.LastUpdatedDate = now;
+
+			_ticketRepository.Update(ticket);
+
+			await _ticketRepository.AddHistoryAsync(new TicketHistory
+			{
+				TicketHistoryId = Guid.NewGuid(),
+				TicketId = ticket.TicketId,
+				OldStatusId = oldStatusId,
+				NewStatusId = reopenedStatus.TicketStatusId,
+				ChangeDescription = $"Closure rejected by customer. Reason: {reason}",
+				ChangedByUserId = accountActorId,
+				CreatedDate = now
+			});
+
+			await _context.SaveChangesAsync();
+			return true;
 		}
 
 		public async Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams)
@@ -108,18 +190,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var openStatus = await _ticketRepository.GetStatusByNameAsync("Open")
 				?? throw new InvalidOperationException("The 'Open' ticket status is not seeded.");
 
-			// SLA Due Date calculation
-			DateTime? slaDueDate = null;
-			string? slaMetStatus = null;
-
-			if (priority is TicketPriority p && p.SlaInHours > 0)
-			{
-				slaDueDate = now.AddHours(p.SlaInHours);
-			}
-			else
-			{
-				slaMetStatus = "Not Applicable";
-			}
+			// SLA Due Date calculation (ClockStart = EmailReceivedDate ?? CreatedDate, per Module 4)
+			var tempTicketForClock = new Ticket { CreatedDate = now }; 
+			var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(tempTicketForClock, priority as TicketPriority);
 
 			// Inherit Department from SubType if not explicitly passed
 			Guid departmentId = request.DepartmentId ?? subType!.DepartmentId;
@@ -297,6 +370,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			else if (string.Equals(targetStatus.Name, "Closed", StringComparison.OrdinalIgnoreCase))
 			{
 				ticket.ClosureConfirmedBy ??= "Agent";
+				_slaService.FinalizeOnClose(ticket, ticket.ClosureConfirmedBy);
+			}
+			else if (string.Equals(targetStatus.Name, "Reopened", StringComparison.OrdinalIgnoreCase))
+			{
+				var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+				_slaService.ApplyReopen(ticket, priority);
 			}
 
 			_ticketRepository.Update(ticket);
@@ -313,6 +392,54 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			});
 
 			await _ticketRepository.SaveChangesAsync();
+			return true;
+		}
+
+		public async Task<bool> ReopenAsync(Guid ticketId, string reason, string actorUserId, bool isAgent)
+		{
+			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
+			if (ticket == null) return false;
+			if (ticket.IsOpen) throw new InvalidOperationException("Ticket is already open.");
+
+			var now = TimeHelper.GetIndianTime();
+
+			if (!isAgent)
+			{
+				var config = await _context.SlaConfigurations.AsNoTracking().FirstOrDefaultAsync(s => s.IsActive);
+				bool allowed = config?.AllowEmployeeReopen ?? false;
+				bool withinWindow = ticket.ClosedDate.HasValue
+					&& config != null
+					&& now <= ticket.ClosedDate.Value.AddDays(config.ReopenGraceDays);
+
+				if (!allowed || !withinWindow)
+					throw new InvalidOperationException(
+						"This ticket cannot be reopened. A follow-up ticket should be created instead.");
+			}
+
+			var reopenedStatus = await _ticketRepository.GetStatusByNameAsync("Reopened")
+				?? throw new InvalidOperationException("The 'Reopened' status is not seeded.");
+
+			var oldStatusId = ticket.StatusId;
+			ticket.StatusId = reopenedStatus.TicketStatusId;
+
+			var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+			_slaService.ApplyReopen(ticket, priority);
+			ticket.LastUpdatedDate = now;
+
+			_ticketRepository.Update(ticket);
+
+			await _ticketRepository.AddHistoryAsync(new TicketHistory
+			{
+				TicketHistoryId = Guid.NewGuid(),
+				TicketId = ticket.TicketId,
+				OldStatusId = oldStatusId,
+				NewStatusId = reopenedStatus.TicketStatusId,
+				ChangeDescription = $"Reopened. Reason: {reason}",
+				ChangedByUserId = actorUserId,
+				CreatedDate = now
+			});
+
+			await _context.SaveChangesAsync();
 			return true;
 		}
 
@@ -415,23 +542,16 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			if (request.PriorityId.HasValue)
 			{
-				var newPriority = await _ticketPriorityRepository.GetByIdAsync(request.PriorityId.Value);
+				var newPriority = await _ticketPriorityRepository.GetByIdAsync(request.PriorityId.Value) as TicketPriority;
 				if (newPriority == null) throw new InvalidOperationException("Invalid priority ID.");
 
 				ticket.PriorityId = request.PriorityId.Value;
 				ticket.Priority = newPriority;
 
-				// Recalculate SLA due date
-				if (newPriority.SlaInHours > 0)
-				{
-					ticket.SlaDueDate = ticket.CreatedDate.AddHours(newPriority.SlaInHours);
-					ticket.SlaMetStatus = null;
-				}
-				else
-				{
-					ticket.SlaDueDate = null;
-					ticket.SlaMetStatus = "Not Applicable";
-				}
+				// Recalculate SLA due date (ClockStart = EmailReceivedDate ?? CreatedDate, per Module 4)
+				var (newSlaDueDate, newSlaMetStatus) = _slaService.ComputeSlaDueDate(ticket, newPriority);
+				ticket.SlaDueDate = newSlaDueDate;
+				ticket.SlaMetStatus = newSlaMetStatus;
 			}
 
 			if (request.BusinessImpactId.HasValue)

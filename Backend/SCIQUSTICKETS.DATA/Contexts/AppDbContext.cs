@@ -389,6 +389,12 @@ namespace SCIQUSTICKETS.DATA.Contexts
 					LastUpdatedDate = SEED.SeedDate
 				}
 			);
+
+			builder.Entity<Ticket>()
+			.HasOne(t => t.ParentTicket)
+			.WithMany()
+			.HasForeignKey(t => t.ParentTicketId)
+			.OnDelete(DeleteBehavior.Restrict);
 		}
 	}
 }

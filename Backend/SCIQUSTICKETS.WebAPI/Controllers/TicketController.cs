@@ -381,6 +381,52 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			return Ok(new { Message = "WhatsApp reply sent successfully." });
 		}
 
+		[HttpPost("{id:guid}/reopen")]
+		public async Task<IActionResult> Reopen(Guid id, [FromBody] string reason)
+		{
+			var userId = GetUserId();
+			try
+			{
+				// TODO: derive isAgent from a real policy check once wired; true for now (agent-only surface)
+				var result = await _ticketService.ReopenAsync(id, reason, userId, isAgent: true);
+				if (!result) return NotFound();
+
+				try { await _notificationService.NotifyReopenedAsync(id, userId); } catch { }
+
+				return Ok(new { Message = "Ticket reopened successfully." });
+			}
+			catch (InvalidOperationException ex)
+			{
+				return BadRequest(new { message = ex.Message });
+			}
+		}
+
+		[HttpPost("{id:guid}/confirm-closure")]
+		public async Task<IActionResult> ConfirmClosure(Guid id)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.ConfirmClosureAsync(id, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Closure confirmed." });
+			}
+			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+		}
+
+		[HttpPost("{id:guid}/reject-closure")]
+		public async Task<IActionResult> RejectClosure(Guid id, [FromBody] string reason)
+		{
+			var userId = GetUserId();
+			try
+			{
+				var result = await _ticketService.RejectClosureAsync(id, reason, userId);
+				if (!result) return NotFound();
+				return Ok(new { Message = "Closure rejected, ticket reopened." });
+			}
+			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+		}
+
 
 
 		private string GetUserId()

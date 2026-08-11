@@ -122,6 +122,9 @@ builder.Services.AddScoped<IWhatsAppChannelService, WhatsAppChannelService>();
 // Register Background Services
 builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.EmailPollingBackgroundService>();
 
+builder.Services.AddScoped<ISlaService, SlaService>();
+builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.SlaBackgroundService>();
+
 // Register custom authorization policies (SameUserOrAdmin, AdminOnly)
 builder.Services.AddAuthorizationPolicies();
 builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
