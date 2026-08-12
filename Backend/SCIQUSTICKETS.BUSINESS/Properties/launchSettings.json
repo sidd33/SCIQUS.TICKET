@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SCIQUSTICKETS.BUSINESS": {
+      "commandName": "Project"
+    },
+    "Profile 1": {
+      "commandName": "Project"
+    }
+  }
+}

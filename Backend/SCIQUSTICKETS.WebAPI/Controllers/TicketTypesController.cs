@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketMasterRequestDTOs;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
@@ -9,7 +10,8 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
     // (see AuthorizationPolicies.cs), add [Authorize(Policy = "...")] per action
     // the same way the rest of the ticket module doc expects.
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/TicketTypes")]
+    [Authorize]
     public class TicketTypesController : ControllerBase
     {
         private readonly ITicketTypeService _ticketTypeService;

@@ -38,39 +38,21 @@ const STATUS_VARIANT = {
 
 const EMPTY_CREATE_FORM = { title: "", description: "", customerId: "", departmentId: "" };
 
-function EyeIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-}
-
-function PencilIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M9 18l6-6-6-6" />
-    </svg>
-  );
-}
+import {
+  Eye,
+  Pencil,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Search,
+  Filter,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  User,
+  Building2,
+  Ticket as TicketIcon
+} from "lucide-react";
 
 function formatTimeAgo(dateStr) {
   if (!dateStr) return "";
@@ -249,7 +231,7 @@ function Tickets() {
           </div>
           {canManage && (
             <button className="btn btn--primary" onClick={openCreateModal}>
-              + New Ticket
+              <Plus size={18} style={{ marginRight: '6px' }} /> New Ticket
             </button>
           )}
         </div>
@@ -303,46 +285,50 @@ function Tickets() {
             </thead>
             <tbody>
               {tickets.map((ticket) => (
-                <tr key={ticket.id}>
+                <tr key={ticket.id || ticket.ticketId}>
                   <td className="ticket-info-cell">
-                    <Link to={`/tickets/${ticket.id}`} className="ticket-id-link">
-                      TKT-{ticket.ticketNumber ?? ticket.id}
+                    <Link to={`/tickets/${ticket.id || ticket.ticketId}`} className="ticket-id-link">
+                      {ticket.ticketNumber ? ticket.ticketNumber : `TKT-${ticket.id}`}
                     </Link>
                     <div className="ticket-info-title">{ticket.title}</div>
                     <div className="ticket-info-meta">
-                      Created {formatTimeAgo(ticket.createdAt)}
+                      Created {formatTimeAgo(ticket.createdAt || ticket.createdDate)}
                       {ticket.departmentName && ` • ${ticket.departmentName}`}
                     </div>
                   </td>
 
                   <td>
                     <div className="reporter-cell">
-                      <span className="avatar-circle">{getInitials(ticket.customerName)}</span>
-                      <span>{ticket.customerName}</span>
+                      <span className="avatar-circle">{getInitials(ticket.customerName || ticket.accountName || ticket.raisedByEmployeeName)}</span>
+                      <span>{ticket.customerName || ticket.accountName || ticket.raisedByEmployeeName || "System / Portal"}</span>
                     </div>
                   </td>
 
                   <td>
                     <span className="status-cell">
-                      <span className={`dot dot--${STATUS_VARIANT[ticket.status] || "inactive"}`} />
-                      {STATUS_LABEL[ticket.status] || ticket.status}
+                      <span className={`dot dot--${STATUS_VARIANT[ticket.statusName || ticket.status] || "inactive"}`} />
+                      {STATUS_LABEL[ticket.statusName || ticket.status] || ticket.statusName || ticket.status}
                     </span>
                   </td>
 
                   <td>
                     <span className={`sla-cell sla-cell--${ticket.isSlaBreached ? "critical" : "success"}`}>
-                      {ticket.isSlaBreached ? "Breached" : "On Track"}
+                      {ticket.isSlaBreached ? (
+                        <><AlertCircle size={13} style={{ marginRight: '4px' }} /> Breached</>
+                      ) : (
+                        <><CheckCircle2 size={13} style={{ marginRight: '4px' }} /> On Track</>
+                      )}
                     </span>
                   </td>
 
                   <td>
                     <div className="row-actions">
-                      <Link to={`/tickets/${ticket.id}`} className="icon-btn" title="View">
-                        <EyeIcon />
+                      <Link to={`/tickets/${ticket.id || ticket.ticketId}`} className="icon-btn" title="View">
+                        <Eye size={16} />
                       </Link>
                       {canManage && (
                         <button className="icon-btn" title="Assign" onClick={() => openAssignModal(ticket)}>
-                          <PencilIcon />
+                          <Pencil size={16} />
                         </button>
                       )}
                     </div>
@@ -363,7 +349,7 @@ function Tickets() {
               disabled={pageNumber <= 1}
               onClick={() => setPageNumber((p) => p - 1)}
             >
-              <ChevronLeftIcon />
+              <ChevronLeft size={16} />
             </button>
             <span className="page-btn page-btn--active">{pageNumber}</span>
             <button
@@ -371,7 +357,7 @@ function Tickets() {
               disabled={!hasNextPage}
               onClick={() => setPageNumber((p) => p + 1)}
             >
-              <ChevronRightIcon />
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>

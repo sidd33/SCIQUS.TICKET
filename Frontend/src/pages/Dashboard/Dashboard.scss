@@ -1,0 +1,110 @@
+.dashboard-view {
+  padding: 1.5rem;
+
+  .page-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: white;
+    }
+
+    p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+
+    .kpi-card {
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .kpi-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &--blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        &--purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        &--emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        &--rose { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+      }
+
+      .kpi-content {
+        display: flex;
+        flex-direction: column;
+
+        .kpi-label {
+          font-size: 0.775rem;
+          color: var(--text-muted);
+          font-weight: 600;
+        }
+
+        .kpi-value {
+          font-size: 1.6rem;
+          font-weight: 800;
+          color: white;
+          line-height: 1.2;
+        }
+
+        .kpi-trend {
+          font-size: 0.725rem;
+          font-weight: 600;
+          display: inline-flex;
+          align-items: center;
+          gap: 2px;
+
+          &.positive { color: #34d399; }
+          &.negative { color: #f87171; }
+        }
+
+        .kpi-subtext {
+          font-size: 0.725rem;
+          color: var(--text-dim);
+        }
+      }
+    }
+  }
+
+  .table-card {
+    padding: 1.25rem;
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+
+      h3 {
+        font-size: 1.05rem;
+        color: white;
+      }
+    }
+
+    .ticket-ref {
+      font-family: var(--font-mono);
+      color: #818cf8;
+      font-weight: 600;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
