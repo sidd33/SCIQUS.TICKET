@@ -1162,6 +1162,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("BusinessImpactId")
                         .HasColumnType("char(36)");
 
+                    b.Property<DateTime?>("ClosedDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("ClosureConfirmedBy")
                         .HasColumnType("longtext");
 
@@ -1197,11 +1200,17 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<bool?>("IsSlaBreached")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<DateTime?>("LastReopenedDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<DateTime>("LastUpdatedDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<double?>("OverdueHours")
                         .HasColumnType("double");
+
+                    b.Property<Guid?>("ParentTicketId")
+                        .HasColumnType("char(36)");
 
                     b.Property<DateTime?>("PendingClosureDate")
                         .HasColumnType("datetime(6)");
@@ -1211,6 +1220,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("RaisedByEmployeeId")
                         .HasColumnType("varchar(255)");
+
+                    b.Property<int>("ReopenCount")
+                        .HasColumnType("int");
 
                     b.Property<double?>("ResolutionTimeInHours")
                         .HasColumnType("double");
@@ -1257,6 +1269,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("DepartmentId");
 
+                    b.HasIndex("ParentTicketId");
+
                     b.HasIndex("PriorityId");
 
                     b.HasIndex("RaisedByEmployeeId");
@@ -1268,6 +1282,47 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasIndex("TicketTypeId");
 
                     b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAcceptance", b =>
+                {
+                    b.Property<Guid>("TicketAcceptanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("AcceptanceDeadlineAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("AssignedEmployeeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("AttemptNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("TicketAcceptanceId");
+
+                    b.HasIndex("AssignedEmployeeId");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("TicketAcceptances");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAssignment", b =>
@@ -2319,6 +2374,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "ParentTicket")
+                        .WithMany()
+                        .HasForeignKey("ParentTicketId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketPriority", "Priority")
                         .WithMany()
                         .HasForeignKey("PriorityId")
@@ -2358,6 +2418,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Navigation("Department");
 
+                    b.Navigation("ParentTicket");
+
                     b.Navigation("Priority");
 
                     b.Navigation("RaisedByEmployee");
@@ -2367,6 +2429,25 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("TicketSubType");
 
                     b.Navigation("TicketType");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAcceptance", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "AssignedEmployee")
+                        .WithMany()
+                        .HasForeignKey("AssignedEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
+                        .WithMany()
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedEmployee");
+
+                    b.Navigation("Ticket");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAssignment", b =>

@@ -40,10 +40,12 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task<bool> ReassignAsync(Guid ticketId, AssignTicketRequest request, string actorUserId);
 		Task<bool> TransferDepartmentAsync(Guid ticketId, TransferTicketDepartmentRequest request, string actorUserId);
 		Task<bool> ChangePriorityImpactAsync(Guid ticketId, ChangePriorityImpactRequest request, string actorUserId);
-
+		Task<bool> ReopenAsync(Guid ticketId, string reason, string actorUserId, bool isAgent);
 		Task<PagedResponse<TicketResponse>> GetMyQueueAsync(string userId, TicketQueryParams queryParams);
 		Task<PagedResponse<TicketResponse>> GetDepartmentQueueAsync(string userId, TicketQueryParams queryParams);
 
+		Task<bool> ConfirmClosureAsync(Guid ticketId, string accountActorId);
+		Task<bool> RejectClosureAsync(Guid ticketId, string reason, string accountActorId);
 		Task<TicketAttachmentResponse> UploadAttachmentAsync(Guid ticketId, IFormFile file, string actorUserId);
 		Task<IEnumerable<TicketAttachmentResponse>> GetAttachmentsAsync(Guid ticketId);
 		Task<bool> DeleteAttachmentAsync(Guid ticketId, Guid attachmentId, string actorUserId, bool canManageAll);

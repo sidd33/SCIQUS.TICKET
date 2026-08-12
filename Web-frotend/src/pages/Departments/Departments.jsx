@@ -271,6 +271,19 @@ export default function Departments() {
               />
             </label>
 
+            <label>
+              Auto-Assignment Method
+              <select
+                value={editingDepartment?.ticketAutoAssignMethod || 'Auto_assignment_custom'}
+                onChange={(e) => setEditingDepartment(prev => ({ ...prev, ticketAutoAssignMethod: e.target.value }))}
+                style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #d1d5db', marginTop: '4px' }}
+              >
+                <option value="Auto_assignment_custom">Weighted Score (Multi-Factor Formula)</option>
+                <option value="RoundRobin">Round-Robin Rotation</option>
+                <option value="LoadBalanced">Load-Balanced (Fewest Open Tickets)</option>
+              </select>
+            </label>
+
             <div className="form-actions">
               <button
                 type="button"

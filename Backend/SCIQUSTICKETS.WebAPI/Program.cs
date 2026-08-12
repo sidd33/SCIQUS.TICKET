@@ -52,6 +52,18 @@ builder.Services.AddAuthentication(options =>
 	};
 });
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowFrontend", policy =>
+	{
+		policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials();
+	});
+});
+
 builder.Services.AddOpenApi();
 // Add Controllers
 builder.Services.AddControllers();
@@ -122,11 +134,17 @@ builder.Services.AddScoped<IWhatsAppChannelService, WhatsAppChannelService>();
 // Register Background Services
 builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.EmailPollingBackgroundService>();
 
+builder.Services.AddScoped<ISlaService, SlaService>();
+builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.SlaBackgroundService>();
+
 // Register custom authorization policies (SameUserOrAdmin, AdminOnly)
 builder.Services.AddAuthorizationPolicies();
 builder.Services.AddScoped<ITicketAttachmentRepository, TicketAttachmentRepository>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 
+builder.Services.AddScoped<ITicketReportService, TicketReportService>();
+
+builder.Services.AddScoped<IAcceptanceService, AcceptanceService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -139,8 +157,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<SCIQUSTICKETS.DATA.Contexts.AppDbContext>();
+    context.Database.EnsureCreated();
+    await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
+}
+
+app.UseCors("AllowFrontend");
 app.UseStaticFiles();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

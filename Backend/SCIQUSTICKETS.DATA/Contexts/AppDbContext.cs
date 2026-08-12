@@ -44,6 +44,8 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<TicketSubType> TicketSubTypes { get; set; }
 		public DbSet<TicketPriority> TicketPriorities { get; set; }
 		public DbSet<TicketBusinessTypeImpact> TicketBusinessTypeImpacts { get; set; }
+		// Add to the DbSet declarations block, near the other Ticket* DbSets:
+		public DbSet<TicketAcceptance> TicketAcceptances { get; set; }
 		// ── [END: TICKETS] ────────────────────────────────────────────
 
 		// ── [TEAM: TICKET TRANSACTION] ────────────────────────────────
@@ -276,6 +278,19 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithOne(n => n.NotificationData)
 				.HasForeignKey<NotificationData>(nd => nd.NotificationId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			// Add inside OnModelCreating, near the other Ticket relationship configs:
+			builder.Entity<TicketAcceptance>()
+				.HasOne(ta => ta.Ticket)
+				.WithMany()
+				.HasForeignKey(ta => ta.TicketId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<TicketAcceptance>()
+				.HasOne(ta => ta.AssignedEmployee)
+				.WithMany()
+				.HasForeignKey(ta => ta.AssignedEmployeeId)
+				.OnDelete(DeleteBehavior.Restrict);
 			// ── [END: NOTIFICATIONS] ──────────────────────────────────
 
 			// ── [TEAM: CHANNELS] — Relationships ──────────────────────
@@ -389,6 +404,12 @@ namespace SCIQUSTICKETS.DATA.Contexts
 					LastUpdatedDate = SEED.SeedDate
 				}
 			);
+
+			builder.Entity<Ticket>()
+			.HasOne(t => t.ParentTicket)
+			.WithMany()
+			.HasForeignKey(t => t.ParentTicketId)
+			.OnDelete(DeleteBehavior.Restrict);
 		}
 	}
 }

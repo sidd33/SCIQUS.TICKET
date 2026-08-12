@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketMasterRequestDTOs;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
@@ -8,7 +9,8 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
     // TODO: add [Authorize(Policy = "ticketmaster.view" / "ticketmaster.manage")] per action
     // once those policies are registered.
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/TicketBusinessImpacts")]
+    [Authorize]
     public class TicketBusinessImpactsController : ControllerBase
     {
         private readonly ITicketBusinessImpactService _ticketBusinessImpactService;

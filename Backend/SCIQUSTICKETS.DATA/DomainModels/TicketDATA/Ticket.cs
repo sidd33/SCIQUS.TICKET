@@ -96,6 +96,12 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public int? AcceptanceDeadlineHours { get; set; }
 		public int CurrentFallbackAttempt { get; set; } = 1;
 
+		public DateTime? ClosedDate { get; set; }
+		public int ReopenCount { get; set; } = 0;
+		public DateTime? LastReopenedDate { get; set; }
+		public Guid? ParentTicketId { get; set; }
+		public Ticket? ParentTicket { get; set; }
+
 		// Navigation
 		public ICollection<TicketAssignment> Assignments { get; set; }
 			= new List<TicketAssignment>();

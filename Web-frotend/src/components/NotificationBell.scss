@@ -1,0 +1,128 @@
+.notification-bell-container {
+  position: relative;
+
+  .bell-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #4b5563;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #f3f4f6;
+    }
+
+    .bell-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: #ef4444;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 10px;
+      border: 2px solid white;
+    }
+  }
+
+  .notification-dropdown {
+    position: absolute;
+    right: 0;
+    top: 42px;
+    width: 320px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    overflow: hidden;
+
+    .dropdown-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      h4 {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #111827;
+      }
+
+      .unread-pill {
+        font-size: 0.72rem;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-weight: 600;
+      }
+    }
+
+    .dropdown-body {
+      max-height: 320px;
+      overflow-y: auto;
+
+      .empty-notifications {
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 0.82rem;
+        color: #9ca3af;
+      }
+
+      .notification-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f9fafb;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.5rem;
+
+        &.unread {
+          background: rgba(59, 130, 246, 0.04);
+        }
+
+        .notification-text {
+          margin: 0;
+          font-size: 0.82rem;
+          color: #374151;
+        }
+
+        .notification-time {
+          font-size: 0.7rem;
+          color: #9ca3af;
+          margin-top: 2px;
+          display: block;
+        }
+
+        .notification-actions {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+
+          .action-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 3px;
+            border-radius: 4px;
+
+            &:hover {
+              background: #e5e7eb;
+              color: #111827;
+            }
+          }
+        }
+      }
+    }
+  }
+}
