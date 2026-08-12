@@ -57,7 +57,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                     TicketSubTypeId = config.DefaultTicketSubTypeId,
                     AssignedToUserId = config.DefaultAssigneeId,
                     StatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"),
-                    CreatedByUserId = "SYSTEM"
+                    CreatedByUserId = accountContact.AccountId
                 };
 
                 _context.Tickets.Add(ticket);

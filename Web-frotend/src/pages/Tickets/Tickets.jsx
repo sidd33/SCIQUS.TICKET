@@ -123,7 +123,7 @@ function Tickets() {
         },
       });
 
-      const allItems = res.data || [];
+      const allItems = res.data.items || res.data || [];
 
       // "Assigned to me" is filtered client-side since the backend doesn't
       // yet support filtering /tickets by assignedEmployeeId. This means
