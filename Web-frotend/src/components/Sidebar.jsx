@@ -10,6 +10,9 @@ import {
   Building,
   ChevronLeft,
   ChevronRight,
+  Layers,
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { isAdmin, isCustomer } from '../auth/roles';
 import { clearToken } from '../auth/tokenManager';
@@ -89,6 +92,61 @@ function Sidebar() {
               {!isCollapsed && (
                 <span className="nav-text">{admin ? 'Tickets' : 'My Queue'}</span>
               )}
+            </NavLink>
+          )}
+
+          {!customer && (
+            <NavLink
+              to="/department-queue"
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              title="Dept Queue"
+            >
+              <Building2 size={21} />
+              {!isCollapsed && <span className="nav-text">Dept Queue</span>}
+            </NavLink>
+          )}
+
+          {admin && (
+            <NavLink
+              to="/reports"
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              title="Analytics"
+            >
+              <BarChart3 size={21} />
+              {!isCollapsed && <span className="nav-text">Analytics</span>}
+            </NavLink>
+          )}
+
+          {admin && (
+            <NavLink
+              to="/admin/master-config"
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              title="Master Setup"
+            >
+              <Layers size={21} />
+              {!isCollapsed && <span className="nav-text">Master Setup</span>}
+            </NavLink>
+          )}
+
+          {admin && (
+            <NavLink
+              to="/admin/support-plans"
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              title="Support Plans"
+            >
+              <Settings size={21} />
+              {!isCollapsed && <span className="nav-text">Support Plans</span>}
+            </NavLink>
+          )}
+
+          {admin && (
+            <NavLink
+              to="/admin/sla-config"
+              className={({ isActive }) => (isActive ? 'nav-item active' : 'nav-item')}
+              title="SLA Rules"
+            >
+              <Settings size={21} />
+              {!isCollapsed && <span className="nav-text">SLA Rules</span>}
             </NavLink>
           )}
 

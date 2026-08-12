@@ -52,6 +52,18 @@ builder.Services.AddAuthentication(options =>
 	};
 });
 
+// Add CORS
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy("AllowFrontend", policy =>
+	{
+		policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
+			  .AllowAnyHeader()
+			  .AllowAnyMethod()
+			  .AllowCredentials();
+	});
+});
+
 builder.Services.AddOpenApi();
 // Add Controllers
 builder.Services.AddControllers();
@@ -148,8 +160,16 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthentication();
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<SCIQUSTICKETS.DATA.Contexts.AppDbContext>();
+    context.Database.EnsureCreated();
+    await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
+}
+
+app.UseCors("AllowFrontend");
 app.UseStaticFiles();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

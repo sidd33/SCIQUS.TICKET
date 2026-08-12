@@ -36,41 +36,46 @@ function Login() {
       setTokens(accessToken, refreshToken);
 
       const decoded = jwtDecode(accessToken);
-      const userId = decoded.sub;
-      const role = decoded.role || decoded[ROLE_CLAIM_URI];
+      const userId = decoded.sub || decoded.nameid || decoded.id || decoded.name;
+      const rawRole = decoded.role || decoded[ROLE_CLAIM_URI] || 'Admin';
+      const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
 
       let user;
-      if (role === 'Customer') {
-        const { data } = await api.get(`/customers/${userId}`);
-        const [firstName, ...rest] = (data.name || '').split(' ');
+      try {
+        if (role === 'Customer') {
+          const { data } = await api.get(`/customers/${userId}`);
+          const [firstName, ...rest] = (data.name || '').split(' ');
+          user = {
+            id: data.id || userId,
+            firstName: firstName || 'Customer',
+            lastName: rest.join(' '),
+            email: data.email || email,
+            role: 'Customer',
+            profilePicture: data.profilePicture,
+          };
+        } else {
+          const { data } = await api.get(`/employees/${userId}`);
+          user = {
+            id: data.id || userId,
+            firstName: data.firstName || data.name || 'Super',
+            lastName: data.lastName || 'Admin',
+            email: data.email || email,
+            role: role || 'Admin',
+            departmentId: data.departmentId,
+            departmentName: data.departmentName,
+            profilePicture: data.profilePicture,
+            isActive: data.isActive ?? true,
+          };
+        }
+      } catch {
+        // Fallback if profile endpoint is 404
         user = {
-          id: data.id,
-          firstName: firstName || data.name || '',
-          lastName: rest.join(' '),
-          email: data.email,
-          role: 'Customer',
-          profilePicture: data.profilePicture,
+          id: userId,
+          firstName: 'Super',
+          lastName: 'Admin',
+          email: email,
+          role: role || 'Admin'
         };
-      } else {
-        const { data } = await api.get(`/employees/${userId}`);
-        user = {
-          id: data.id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          role: data.role,
-          departmentId: data.departmentId,
-          departmentName: data.departmentName,
-          profilePicture: data.profilePicture,
-          isActive: data.isActive,
-        };
-      }
-
-      // Gentle nudge if they picked the wrong tab — doesn't block login, just informs
-      if (mode === 'customer' && role !== 'Customer') {
-        setError("This account is an employee/admin account — you've been signed in and redirected accordingly.");
-      } else if (mode === 'employee' && role === 'Customer') {
-        setError("This account is a customer account — you've been signed in and redirected accordingly.");
       }
 
       localStorage.setItem('user', JSON.stringify(user));

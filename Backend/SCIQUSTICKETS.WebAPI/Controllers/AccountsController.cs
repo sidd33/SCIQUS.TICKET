@@ -5,7 +5,7 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/Accounts")]
     public class AccountsController : ControllerBase
     {
         private readonly IAccountService _accountService;

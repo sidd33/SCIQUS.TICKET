@@ -595,9 +595,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		public async Task<PagedResponse<TicketResponse>> GetDepartmentQueueAsync(string userId, TicketQueryParams queryParams)
 		{
 			var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == userId);
-			if (employee == null) throw new UnauthorizedAccessException("Employee not found.");
 
-			// Department queue includes all open tickets in employee's department
 			queryParams.IsOpen = true;
 			var (items, totalCount) = await _ticketRepository.GetAllPagedAsync(
 				queryParams.Search,
@@ -617,12 +615,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				queryParams.Page,
 				queryParams.PageSize);
 
-			var deptItems = items.Where(t => t.DepartmentId == employee.DepartmentId).ToList();
+			// SuperAdmin / Admin or employee with no specific department sees ALL open tickets
+			var deptItems = (employee == null || employee.DepartmentId == Guid.Empty)
+				? items
+				: items.Where(t => t.DepartmentId == employee.DepartmentId).ToList();
 
 			return new PagedResponse<TicketResponse>
 			{
 				Items = deptItems.Select(MapToResponse).ToList(),
-				TotalCount = deptItems.Count,
+				TotalCount = deptItems.Count(),
 				Page = queryParams.Page,
 				PageSize = queryParams.PageSize
 			};

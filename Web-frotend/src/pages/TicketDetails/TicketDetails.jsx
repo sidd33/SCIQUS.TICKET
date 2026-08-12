@@ -1,28 +1,21 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import api from "../../api/axios";
-import { getCurrentUser, isCustomer, isAdminOrAbove } from "../../auth/roles";import { getFriendlyErrorMessage } from "../../utils/apiErrors";
-import "./TicketDetails.scss";
-
-const STATUS_OPTIONS = ["Unassigned", "Assigned", "InProgress", "Completed", "Closed", "Reopened"];
-
-const STATUS_BADGE = {
-  Unassigned: "badge--critical",
-  Assigned: "badge--warning",
-  InProgress: "badge--high-priority",
-  Completed: "badge--success",
-  Closed: "badge--inactive",
-  Reopened: "badge--warning",
-};
-
-const STATUS_LABEL = {
-  Unassigned: "Unassigned",
-  Assigned: "Assigned",
-  InProgress: "In Progress",
-  Completed: "Completed",
-  Closed: "Closed",
-  Reopened: "Reopened",
-};
+import {
+  ArrowLeft,
+  Edit,
+  Mail,
+  MessageSquare,
+  Send,
+  Clock,
+  AlertTriangle,
+  CheckCircle2,
+  User,
+  Building,
+  Calendar,
+  Lock,
+  Shield,
+  FileText,
+  RefreshCw,
+  Tag
+} from "lucide-react";
 
 function TicketDetails() {
     const { ticketId } = useParams();
@@ -139,18 +132,26 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
 
   return (
     <div className="ticket-details-page">
-      <button className="btn btn--ghost" onClick={() => navigate(-1)}>← Back</button>
+      <button className="btn btn--ghost" onClick={() => navigate(-1)} style={{ display: 'inline-flex', alignItems: 'center', marginBottom: '1rem' }}>
+        <ArrowLeft size={16} style={{ marginRight: '6px' }} /> Back
+      </button>
 
       <div className="card ticket-details-card">
         <div className="ticket-details-header">
           <div>
-            <span className={`badge ${STATUS_BADGE[ticket.status] || "badge--inactive"}`}>
-              {STATUS_LABEL[ticket.status] || ticket.status}
+            <span className={`badge ${STATUS_BADGE[ticket.statusName || ticket.status] || "badge--inactive"}`}>
+              {STATUS_LABEL[ticket.statusName || ticket.status] || ticket.statusName || ticket.status}
             </span>
-            {ticket.isSlaBreached && <span className="badge badge--critical">SLA Breached</span>}
+            {ticket.isSlaBreached && (
+              <span className="badge badge--critical" style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '6px' }}>
+                <AlertTriangle size={13} style={{ marginRight: '4px' }} /> SLA Breached
+              </span>
+            )}
           </div>
           {!editing && (
-            <button className="btn btn--secondary" onClick={() => setEditing(true)}>Edit</button>
+            <button className="btn btn--secondary" onClick={() => setEditing(true)} style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <Edit size={15} style={{ marginRight: '6px' }} /> Edit
+            </button>
           )}
         </div>
 
@@ -198,20 +199,20 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
 
             <div className="ticket-meta-grid">
               <div>
-                <span className="ticket-meta-label">Customer</span>
-                <span className="ticket-meta-value">{ticket.customerName}</span>
+                <span className="ticket-meta-label"><User size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Customer</span>
+                <span className="ticket-meta-value">{ticket.customerName || ticket.accountName || ticket.raisedByEmployeeName || "Portal User"}</span>
               </div>
               <div>
-                <span className="ticket-meta-label">Customer email</span>
-                <span className="ticket-meta-value">{ticket.customerEmail}</span>
+                <span className="ticket-meta-label"><Mail size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Customer email</span>
+                <span className="ticket-meta-value">{ticket.customerEmail || ticket.createdByUserName || "N/A"}</span>
               </div>
               <div>
-                <span className="ticket-meta-label">Created</span>
-                <span className="ticket-meta-value">{new Date(ticket.createdAt).toLocaleString()}</span>
+                <span className="ticket-meta-label"><Calendar size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Created</span>
+                <span className="ticket-meta-value">{new Date(ticket.createdAt || ticket.createdDate).toLocaleString()}</span>
               </div>
               <div>
-                <span className="ticket-meta-label">SLA deadline</span>
-                <span className="ticket-meta-value">{new Date(ticket.slaStartTime).toLocaleString()}</span>
+                <span className="ticket-meta-label"><Clock size={13} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> SLA deadline</span>
+                <span className="ticket-meta-value">{ticket.slaDueDate ? new Date(ticket.slaDueDate).toLocaleString() : (ticket.slaStartTime ? new Date(ticket.slaStartTime).toLocaleString() : "N/A")}</span>
               </div>
             </div>
           </>
@@ -220,11 +221,12 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
 
       {ticket && !editing && (
         <div className="card ticket-details-card" style={{ marginTop: '1rem' }}>
-          <h3>Communication</h3>
+          <h3>Communication & Channels</h3>
           
-          {/* Example conditional display. In a real app we'd check ticket.sourceType === 'Email' etc */}
           <div className="communication-section">
-            <h4>Email Reply</h4>
+            <h4 style={{ display: 'flex', alignItems: 'center' }}>
+              <Mail size={16} style={{ marginRight: '6px' }} /> Email Reply
+            </h4>
             <form onSubmit={handleEmailReply}>
               <textarea 
                 rows={3} 
@@ -234,12 +236,16 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
                 required
                 style={{ width: '100%', marginBottom: '0.5rem' }}
               />
-              <button type="submit" className="btn btn--primary" disabled={sendingReply}>Send Email</button>
+              <button type="submit" className="btn btn--primary" disabled={sendingReply} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <Send size={15} style={{ marginRight: '6px' }} /> Send Email
+              </button>
             </form>
           </div>
 
           <div className="communication-section" style={{ marginTop: '2rem' }}>
-            <h4>WhatsApp Reply</h4>
+            <h4 style={{ display: 'flex', alignItems: 'center' }}>
+              <MessageSquare size={16} style={{ marginRight: '6px' }} /> WhatsApp Reply
+            </h4>
             <form onSubmit={handleWhatsAppReply}>
               <input 
                 type="text" 
@@ -256,7 +262,9 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
                 required
                 style={{ width: '100%', marginBottom: '0.5rem' }}
               />
-              <button type="submit" className="btn btn--primary" disabled={sendingReply}>Send WhatsApp</button>
+              <button type="submit" className="btn btn--primary" disabled={sendingReply} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <Send size={15} style={{ marginRight: '6px' }} /> Send WhatsApp
+              </button>
             </form>
           </div>
         </div>

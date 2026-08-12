@@ -11,7 +11,7 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/tickets")]
 	[Authorize]
 	public class TicketController : ControllerBase
 	{
