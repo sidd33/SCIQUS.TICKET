@@ -48,6 +48,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task<bool> RejectClosureAsync(Guid ticketId, string reason, string accountActorId);
 		Task<TicketAttachmentResponse> UploadAttachmentAsync(Guid ticketId, IFormFile file, string actorUserId);
 		Task<IEnumerable<TicketAttachmentResponse>> GetAttachmentsAsync(Guid ticketId);
+		Task<IEnumerable<TicketCommentResponse>> GetCommentsAsync(Guid ticketId);
 		Task<bool> DeleteAttachmentAsync(Guid ticketId, Guid attachmentId, string actorUserId, bool canManageAll);
 	}
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.COMMON.Constants;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels;
@@ -252,6 +253,24 @@ namespace SCIQUSTICKETS.WebAPI
                 }
             }
 
+            // Seed test Account Contact for WhatsApp
+            var acmeAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Email == "customer.acme@acmecorp.com");
+            if (acmeAccount != null && !context.AccountContacts.Any(c => c.MobileNumber == "+16315551181"))
+            {
+                context.AccountContacts.Add(new AccountContacts
+                {
+                    AccountContactsId = Guid.NewGuid(),
+                    AccountId = acmeAccount.AccountId,
+                    PersonName = "Test User",
+                    Email = "test@acmecorp.com",
+                    MobileNumber = "+16315551181",
+                    IsDeleted = false,
+                    CreatedDate = DateTime.UtcNow,
+                    LastUpdatedDate = DateTime.UtcNow
+                });
+                await context.SaveChangesAsync();
+            }
+
             // 6. Ensure Ticket Statuses Exist
             var openStatusId = Guid.Parse("10000000-0000-0000-0000-000000000001");
             var inProgressStatusId = Guid.Parse("10000000-0000-0000-0000-000000000002");
@@ -435,6 +454,34 @@ namespace SCIQUSTICKETS.WebAPI
                         await context.SaveChangesAsync();
                     }
                 }
+            }
+
+            // 12. Seed WhatsApp Channel Config
+            if (!context.WhatsAppChannelConfigs.Any())
+            {
+                var priorityObj = context.TicketPriorities.FirstOrDefault();
+                var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
+                var deptObj = context.Departments.FirstOrDefault();
+                var typeObj = context.TicketTypes.FirstOrDefault();
+                var subTypeObj = context.TicketSubTypes.FirstOrDefault();
+
+                context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
+                {
+                    WhatsAppChannelConfigId = Guid.NewGuid(),
+                    Provider = 0, // Meta Cloud API
+                    BusinessPhoneNumberId = "1264781743381359",
+                    // Temporary Access Token (Expires in 24 hours)
+                    EncryptedApiToken = "EAAbjZAv1XkAUBSFCFrUBJslGDa763YL3yfmAqC470e2HOCUh6RBaYvYWy05O2SPNNgGyGrnl9pQcPl6kSZB7M5dZCJ4ckZCdZAlVZBDzdvvVSPGBGAAx76JZCkZBifM4ZA1uJ3r7nro7RHq92h8eZA472jE7ppdSwRKYxDHsZANwqNpvNmjjnxwaZCpaBYXLQwQElhM9SxQ5yDSdHA8ZC4mVALZAZBYR7A9FI1xh23RyqDlj5Epx7FyLAbrRcpMPhM76FA2dQRqdZA1yA8SAGtM7J0YFAzBnbfAZD", 
+                    WebhookVerifyToken = "sciqus_secret_token_123",
+                    IsEnabled = true,
+                    AutoCreateEnabled = true,
+                    DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
+                    DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
+                    DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
+                    DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
+                    DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
+                });
+                await context.SaveChangesAsync();
             }
         }
     }

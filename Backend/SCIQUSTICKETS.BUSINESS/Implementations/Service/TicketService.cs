@@ -29,6 +29,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly ISlaService _slaService;
 		private readonly AppDbContext _context;
 		private readonly IAcceptanceService _acceptanceService;
+		private readonly ITicketTimelineService _timelineService;
+		private readonly ISupportPlanService _supportPlanService;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
 			new(StringComparer.OrdinalIgnoreCase)
@@ -53,7 +55,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			IAssignmentEngine assignmentEngine,
 			ISlaService slaService,
 			AppDbContext context,
-			IAcceptanceService acceptanceService)
+			IAcceptanceService acceptanceService,
+			ITicketTimelineService timelineService,
+			ISupportPlanService supportPlanService)
 		{
 			_ticketRepository = ticketRepository;
 			_ticketTypeRepository = ticketTypeRepository;
@@ -66,6 +70,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_slaService = slaService;
 			_context = context;
 			_acceptanceService = acceptanceService;
+			_timelineService = timelineService;
+			_supportPlanService = supportPlanService;
 		}
 
 		public async Task<bool> ConfirmClosureAsync(Guid ticketId, string accountActorId)
@@ -182,6 +188,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 		public async Task<TicketResponse> CreateAsync(string userId, CreateTicketRequest request)
 		{
+			if (!string.IsNullOrEmpty(request.AccountId) && !request.IsInternal)
+			{
+				bool hasQuota = await _supportPlanService.HasAvailableQuotaAsync(request.AccountId);
+				if (!hasQuota)
+				{
+					throw new InvalidOperationException("Ticket creation failed: Support plan quota exhausted or no active plan found.");
+				}
+			}
+
 			await ValidateReferencesAsync(request.TicketTypeId, request.TicketSubTypeId, request.PriorityId, request.BusinessImpactId);
 
 			var subType = await _ticketSubTypeRepository.GetByIdAsync(request.TicketSubTypeId);
@@ -191,7 +206,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var openStatus = await _ticketRepository.GetStatusByNameAsync("Open")
 				?? throw new InvalidOperationException("The 'Open' ticket status is not seeded.");
 
-			// SLA Due Date calculation (ClockStart = EmailReceivedDate ?? CreatedDate, per Module 4)
+			// SLA Due Date calculation
 			var tempTicketForClock = new Ticket { CreatedDate = now };
 			var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(tempTicketForClock, priority as TicketPriority);
 
@@ -252,6 +267,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			{
 				await _acceptanceService.StartAcceptanceCycleAsync(created, assignedEmployee, attemptNumber: 1);
 			}
+
+			if (!string.IsNullOrEmpty(request.AccountId) && !request.IsInternal)
+			{
+				await _supportPlanService.ConsumeQuotaAsync(request.AccountId, ticket.TicketId);
+			}
+
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Created, null, null, "Ticket created", userId);
 
 			// Write Initial TicketAssignment row
 			if (assignedEmployee != null)
@@ -555,7 +577,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				ticket.PriorityId = request.PriorityId.Value;
 				ticket.Priority = newPriority;
 
-				// Recalculate SLA due date (ClockStart = EmailReceivedDate ?? CreatedDate, per Module 4)
 				var (newSlaDueDate, newSlaMetStatus) = _slaService.ComputeSlaDueDate(ticket, newPriority);
 				ticket.SlaDueDate = newSlaDueDate;
 				ticket.SlaMetStatus = newSlaMetStatus;
@@ -773,6 +794,26 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_ticketRepository.Update(ticket);
 			await _ticketRepository.SaveChangesAsync();
 			return true;
+		}
+
+		public async Task<IEnumerable<TicketCommentResponse>> GetCommentsAsync(Guid ticketId)
+		{
+			var ticket = await _ticketRepository.GetByIdWithDetailsAsync(ticketId);
+			if (ticket == null) return Enumerable.Empty<TicketCommentResponse>();
+
+			return ticket.Comments
+				.Where(c => !c.IsDeleted)
+				.OrderBy(c => c.CreatedDate)
+				.Select(c => new TicketCommentResponse
+				{
+					TicketCommentId = c.TicketCommentId,
+					TicketId = c.TicketId,
+					Comment = c.CommentText,
+					IsInternalNote = c.IsInternalNote,
+					CreatedByUserId = c.CommentedByUserId,
+					CreatedByUserName = c.CommentedByUser?.UserName,
+					CreatedDate = c.CreatedDate
+				});
 		}
 
 		private static TicketResponse MapToResponse(Ticket t)

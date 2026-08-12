@@ -1,3 +1,11 @@
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import api from "../../api/axios";
+import { getCurrentUser, isCustomer, isAdminOrAbove } from "../../auth/roles";
+import { getFriendlyErrorMessage } from "../../utils/apiErrors";
+import "./TicketDetails.scss";
+import TicketTimeline from "./TicketTimeline";
+
 import {
   ArrowLeft,
   Edit,
@@ -268,6 +276,9 @@ const res = await api.put(`/tickets/${ticketId}`, payload);
             </form>
           </div>
         </div>
+      )}
+      {ticket && !editing && (
+        <TicketTimeline ticketId={ticketId} />
       )}
 
       {canManage && (

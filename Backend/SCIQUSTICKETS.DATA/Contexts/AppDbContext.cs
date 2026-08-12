@@ -5,6 +5,7 @@ using SCIQUSTICKETS.COMMON.Constants;
 using SCIQUSTICKETS.DATA.DomainModels;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
+using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 
@@ -44,9 +45,14 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<TicketSubType> TicketSubTypes { get; set; }
 		public DbSet<TicketPriority> TicketPriorities { get; set; }
 		public DbSet<TicketBusinessTypeImpact> TicketBusinessTypeImpacts { get; set; }
-		// Add to the DbSet declarations block, near the other Ticket* DbSets:
 		public DbSet<TicketAcceptance> TicketAcceptances { get; set; }
-		// ── [END: TICKETS] ────────────────────────────────────────────
+		// 🎫 [END: TICKET TRANSACTION] 
+
+		// 🎫 [TEAM: SUPPORT PLANS] 
+		public DbSet<SupportPlan> SupportPlans { get; set; }
+		public DbSet<AccountSupportPlan> AccountSupportPlans { get; set; }
+		public DbSet<SupportPlanConsumption> SupportPlanConsumptions { get; set; }
+		// 🎫 [END: SUPPORT PLANS] 
 
 		// ── [TEAM: TICKET TRANSACTION] ────────────────────────────────
 		public DbSet<Ticket> Tickets { get; set; }
@@ -74,7 +80,7 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<WhatsAppInboxMessage> WhatsAppInboxMessages { get; set; }
 		public DbSet<WhatsAppOutboundMessage> WhatsAppOutboundMessages { get; set; }
 		// ── [END: CHANNELS] ───────────────────────────────────────────
-
+		public DbSet<FaqArticle> FaqArticles { get; set; }
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
@@ -410,6 +416,38 @@ namespace SCIQUSTICKETS.DATA.Contexts
 			.WithMany()
 			.HasForeignKey(t => t.ParentTicketId)
 			.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<FaqArticle>()
+			.HasOne(f => f.TicketType)
+			.WithMany()
+			.HasForeignKey(f => f.TicketTypeId)
+			.OnDelete(DeleteBehavior.Restrict);
+
+			// 🎫 [TEAM: SUPPORT PLANS] ── Relationships ────────────────
+			builder.Entity<AccountSupportPlan>()
+				.HasOne(asp => asp.Account)
+				.WithMany()
+				.HasForeignKey(asp => asp.AccountId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<AccountSupportPlan>()
+				.HasOne(asp => asp.SupportPlan)
+				.WithMany(sp => sp.AccountSupportPlans)
+				.HasForeignKey(asp => asp.SupportPlanId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<SupportPlanConsumption>()
+				.HasOne(spc => spc.AccountSupportPlan)
+				.WithMany(asp => asp.Consumptions)
+				.HasForeignKey(spc => spc.AccountSupportPlanId)
+				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<SupportPlanConsumption>()
+				.HasOne(spc => spc.Ticket)
+				.WithMany()
+				.HasForeignKey(spc => spc.TicketId)
+				.OnDelete(DeleteBehavior.Restrict);
+			// 🎫 [END: SUPPORT PLANS] ──────────────────────────────────
 		}
 	}
 }

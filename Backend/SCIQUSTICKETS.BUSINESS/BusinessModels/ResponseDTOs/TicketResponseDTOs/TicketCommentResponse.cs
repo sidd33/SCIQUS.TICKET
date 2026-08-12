@@ -15,5 +15,7 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 
 
 		public DateTime CreatedDate { get; set; }
+
+		public bool IsInternalNote { get; set; }
 	}
 }
