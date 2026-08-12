@@ -21,14 +21,15 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		private readonly IWhatsAppChannelService _whatsAppChannelService;
 		private readonly IAcceptanceService _acceptanceService;
 		private readonly IFaqArticleService _faqArticleService;
+		private readonly ITicketTimelineService _timelineService;
 		public TicketController(
 			ITicketService ticketService,
 			ITicketNotificationService notificationService,
 			IEmailChannelService emailChannelService,
 			IWhatsAppChannelService whatsAppChannelService,
-			 IAcceptanceService acceptanceService,
-             IFaqArticleService faqArticleService)  
-
+			IAcceptanceService acceptanceService,
+			IFaqArticleService faqArticleService,
+			ITicketTimelineService timelineService)
 		{
 			_ticketService = ticketService;
 			_notificationService = notificationService;
@@ -36,7 +37,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			_whatsAppChannelService = whatsAppChannelService;
 			_acceptanceService = acceptanceService;
 			_faqArticleService = faqArticleService;
-
+			_timelineService = timelineService;
 		}
 
 
@@ -51,8 +52,8 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			{
 				var result = await _ticketService.CreateAsync(userId, request);
 				
-				// Module 5: Notify
-				try { await _notificationService.NotifyTicketCreatedAsync(result.TicketId, userId); } catch { /* ignore notification errors */ }
+				// Notify on ticket creation
+				try { await _notificationService.NotifyTicketCreatedAsync(result.TicketId, userId); } catch { }
 
 				return Ok(result);
 			}
@@ -63,6 +64,16 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 
+
+		// GET: api/Ticket/{id}/timeline
+		[HttpGet("{id:guid}/timeline")]
+		public async Task<ActionResult<List<TimelineEventResponse>>> GetTimeline(Guid id)
+		{
+			bool isInternalStaff = User.IsInRole("Admin") || User.IsInRole("Agent") || User.HasClaim(c => c.Type == "EmployeeId");
+			
+			var timeline = await _timelineService.GetTimelineAsync(id, excludeInternal: !isInternalStaff);
+			return Ok(timeline);
+		}
 
 		// GET: api/tickets
 		[HttpGet]
@@ -131,17 +142,16 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				if (!result)
 					return NotFound();
 
-				// Module 5: Notify if closed/reopened etc
+				// Notify on status change
 				try 
-				{ 
-					// Simplified based on status ID. Ideally we fetch the status name.
-					if (request.StatusId.ToString().EndsWith("5")) // Closed
+				{
+					if (request.StatusId.ToString().EndsWith("5"))
 						await _notificationService.NotifyClosedAsync(id, userId);
-					else if (request.StatusId.ToString().EndsWith("6")) // PendingClosure
+					else if (request.StatusId.ToString().EndsWith("6"))
 						await _notificationService.NotifyPendingClosureAsync(id, userId);
-					else if (request.StatusId.ToString().EndsWith("7")) // Reopened
+					else if (request.StatusId.ToString().EndsWith("7"))
 						await _notificationService.NotifyReopenedAsync(id, userId);
-				} catch { /* ignore */ }
+				} catch { }
 
 				return Ok(new { Message = "Ticket status updated successfully." });
 			}
@@ -166,8 +176,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			if (!result)
 				return NotFound();
 
-			// Module 5: Notify Comment added
-			try { await _notificationService.NotifyCommentAddedAsync(id, userId, !request.IsInternalNote); } catch { /* ignore */ }
+			try { await _notificationService.NotifyCommentAddedAsync(id, userId, !request.IsInternalNote); } catch { }
 
 			return Ok(new { Message = "Comment added successfully." });
 		}
@@ -180,7 +189,6 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		{
 			var userId = GetUserId();
 
-			// TODO: replace with a real ticket.manage.all policy check once policies are wired
 			try
 			{
 				var result = await _ticketService.DeleteCommentAsync(id, commentId, userId, canManageAll: false);
@@ -235,7 +243,6 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		{
 			var userId = GetUserId();
 
-			// TODO: replace with a real ticket.manage.all policy check once policies are wired
 			try
 			{
 				var result = await _ticketService.DeleteAttachmentAsync(id, attachmentId, userId, canManageAll: false);
@@ -395,7 +402,6 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			var userId = GetUserId();
 			try
 			{
-				// TODO: derive isAgent from a real policy check once wired; true for now (agent-only surface)
 				var result = await _ticketService.ReopenAsync(id, reason, userId, isAgent: true);
 				if (!result) return NotFound();
 

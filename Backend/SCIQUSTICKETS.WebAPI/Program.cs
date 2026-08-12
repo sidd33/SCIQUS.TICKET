@@ -125,6 +125,8 @@ builder.Services.AddScoped<ITicketBusinessImpactService, TicketBusinessImpactSer
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
 builder.Services.AddScoped<IAssignmentEngine, AssignmentEngine>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<ITicketTimelineService, TicketTimelineService>();
+builder.Services.AddScoped<ISupportPlanService, SupportPlanService>();
 
 // Register Module 5, 6, 8 Services
 builder.Services.AddScoped<ITicketNotificationService, TicketNotificationService>();
@@ -133,6 +135,7 @@ builder.Services.AddScoped<IWhatsAppChannelService, WhatsAppChannelService>();
 
 // Register Background Services
 builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.EmailPollingBackgroundService>();
+builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.SupportPlanExpiryJob>();
 
 builder.Services.AddScoped<ISlaService, SlaService>();
 builder.Services.AddHostedService<SCIQUSTICKETS.WebAPI.BackgroundServices.SlaBackgroundService>();

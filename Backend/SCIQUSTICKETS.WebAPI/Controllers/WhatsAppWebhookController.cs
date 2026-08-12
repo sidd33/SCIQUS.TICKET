@@ -51,37 +51,74 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             var signature = Request.Headers["X-Hub-Signature-256"].ToString();
             
             var config = await _context.WhatsAppChannelConfigs.FirstOrDefaultAsync();
-            if (config == null || !_whatsAppService.ValidateWebhookSignature(payload, signature, "SECRET_PLACEHOLDER"))
+            if (config == null || !_whatsAppService.ValidateWebhookSignature(payload, signature, config.WebhookVerifyToken))
             {
                 return Unauthorized();
             }
 
             try
             {
-                // Parse payload and create WhatsAppInboxMessage
-                // This is a simplified placeholder parsing.
-                var message = new WhatsAppInboxMessage
+                using var jsonDoc = JsonDocument.Parse(payload);
+                var root = jsonDoc.RootElement;
+                if (root.TryGetProperty("entry", out var entryArray) && entryArray.GetArrayLength() > 0)
                 {
-                    WhatsAppInboxMessageId = Guid.NewGuid(),
-                    ProviderMessageId = Guid.NewGuid().ToString(), // Placeholder
-                    FromPhone = "+1234567890", // Placeholder
-                    Body = "Webhook payload received",
-                    ReceivedDate = DateTime.UtcNow
-                };
+                    var entry = entryArray[0];
+                    if (entry.TryGetProperty("changes", out var changesArray) && changesArray.GetArrayLength() > 0)
+                    {
+                        var value = changesArray[0].GetProperty("value");
+                        if (value.TryGetProperty("messages", out var messagesArray) && messagesArray.GetArrayLength() > 0)
+                        {
+                            var messageData = messagesArray[0];
+                            string fromPhone = messageData.GetProperty("from").GetString() ?? "";
+                            string providerMsgId = messageData.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
+                            string msgType = messageData.GetProperty("type").GetString() ?? "text";
+                            
+                            string body = "";
+                            if (msgType == "text" && messageData.TryGetProperty("text", out var textNode))
+                            {
+                                body = textNode.GetProperty("body").GetString() ?? "";
+                            }
+                            else
+                            {
+                                body = $"[Received media type: {msgType}]";
+                            }
 
-                _context.WhatsAppInboxMessages.Add(message);
-                await _context.SaveChangesAsync();
+                            string fromName = "";
+                            if (value.TryGetProperty("contacts", out var contactsArray) && contactsArray.GetArrayLength() > 0)
+                            {
+                                var contact = contactsArray[0];
+                                if (contact.TryGetProperty("profile", out var profile))
+                                {
+                                    fromName = profile.GetProperty("name").GetString() ?? "";
+                                }
+                            }
 
-                // Process the message to create a ticket or thread it
-                await _whatsAppService.ProcessInboxMessageAsync(message);
-                await _context.SaveChangesAsync();
+                            var message = new WhatsAppInboxMessage
+                            {
+                                WhatsAppInboxMessageId = Guid.NewGuid(),
+                                ProviderMessageId = providerMsgId,
+                                FromPhone = fromPhone,
+                                FromName = fromName,
+                                MessageType = msgType,
+                                Body = body,
+                                ReceivedDate = DateTime.UtcNow
+                            };
+
+                            _context.WhatsAppInboxMessages.Add(message);
+                            await _context.SaveChangesAsync();
+
+                            await _whatsAppService.ProcessInboxMessageAsync(message);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+                }
                 
                 return Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 // Log exception
-                return StatusCode(500);
+                return StatusCode(500, ex.Message);
             }
         }
     }

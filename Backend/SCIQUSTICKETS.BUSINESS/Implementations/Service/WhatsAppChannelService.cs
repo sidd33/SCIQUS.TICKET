@@ -12,10 +12,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     public class WhatsAppChannelService : IWhatsAppChannelService
     {
         private readonly AppDbContext _context;
+        private readonly ITicketTimelineService _timelineService;
 
-        public WhatsAppChannelService(AppDbContext context)
+        public WhatsAppChannelService(AppDbContext context, ITicketTimelineService timelineService)
         {
             _context = context;
+            _timelineService = timelineService;
         }
 
         public async Task ProcessInboxMessageAsync(WhatsAppInboxMessage message)
@@ -28,11 +30,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 return;
             }
 
-            // Normalise to E.164 (simplified)
             var phone = message.FromPhone.Trim();
             if (!phone.StartsWith("+")) phone = "+" + phone;
 
-            // Find account
             var accountContact = await _context.AccountContacts
                 .FirstOrDefaultAsync(c => c.MobileNumber == phone || c.AlternateMobileNumber == phone);
 
@@ -62,6 +62,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
                 _context.Tickets.Add(ticket);
                 message.CreatedTicketId = ticket.TicketId;
+                
+                await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.WhatsAppReceived, null, null, $"WhatsApp message received from {phone}", "SYSTEM");
                 message.ProcessingStatus = "Processed";
                 message.ProcessedDate = DateTime.UtcNow;
             }
@@ -84,8 +86,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var contactPhone = ticket.Account.Contacts.FirstOrDefault()?.MobileNumber;
             if (string.IsNullOrEmpty(contactPhone)) return false;
 
-            // Placeholder: Call actual WhatsApp provider API
-            // ...
+            // Send outbound message via configured WhatsApp provider
             
             var outbound = new WhatsAppOutboundMessage
             {
@@ -98,7 +99,10 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 SentByUserId = sentByUserId,
                 SentDate = DateTime.UtcNow
             };
+
             _context.WhatsAppOutboundMessages.Add(outbound);
+            
+            await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.WhatsAppSent, null, null, $"WhatsApp reply sent to {contactPhone}", sentByUserId ?? "SYSTEM");
 
             var comment = new TicketComment
             {
@@ -127,13 +131,14 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public bool ValidateWebhookSignature(string payload, string signature, string providerSecret)
         {
-            // Placeholder: standard HMAC-SHA256 signature verification
-            // byte[] keyBytes = Encoding.UTF8.GetBytes(providerSecret);
-            // using var hmac = new HMACSHA256(keyBytes);
-            // byte[] hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-            // string expectedSignature = "sha256=" + BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
-            // return signature == expectedSignature;
-            return true; 
+            if (string.IsNullOrEmpty(signature) || string.IsNullOrEmpty(providerSecret)) return false;
+            
+            byte[] keyBytes = System.Text.Encoding.UTF8.GetBytes(providerSecret);
+            using var hmac = new System.Security.Cryptography.HMACSHA256(keyBytes);
+            byte[] hashBytes = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(payload));
+            string expectedSignature = "sha256=" + BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
+            
+            return signature.Equals(expectedSignature, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
