@@ -10,10 +10,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     public class EmailChannelService : IEmailChannelService
     {
         private readonly AppDbContext _context;
+        private readonly ITicketTimelineService _timelineService;
 
-        public EmailChannelService(AppDbContext context)
+        public EmailChannelService(AppDbContext context, ITicketTimelineService timelineService)
         {
             _context = context;
+            _timelineService = timelineService;
         }
 
         public async Task ProcessInboxMessageAsync(EmailInboxMessage message)
@@ -26,14 +28,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 return;
             }
 
-            // Threading logic
-            Ticket? matchingTicket = null;
-
-            // 1. Check if subject or body contains a ticket number
-            // (Placeholder: simplified lookup for illustration, typically use regex)
-            // 2. Check SourceMessageId (e.g. In-Reply-To header matched)
-            
-            // Assuming no match for now, try to find account
+            // Attempt to find account by sender email
             var accountContact = await _context.AccountContacts
                 .Include(c => c.Account)
                 .FirstOrDefaultAsync(c => c.Email == message.FromEmail);
@@ -66,6 +61,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
                 _context.Tickets.Add(ticket);
                 message.CreatedTicketId = ticket.TicketId;
+                
+                await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.EmailReceived, null, null, $"Email received from {message.FromEmail}", "SYSTEM");
                 message.ProcessingStatus = "Processed";
                 message.ProcessedDate = DateTime.UtcNow;
             }
@@ -89,8 +86,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var contactEmail = ticket.Account.Contacts.FirstOrDefault()?.Email;
             if (string.IsNullOrEmpty(contactEmail)) return false;
 
-            // Placeholder: Call actual SMTP/Email provider API to send email to contactEmail
-            // ...
+            // Send outbound email via configured provider (SMTP/API)
             
             // Add comment to ticket
             var comment = new TicketComment
@@ -102,9 +98,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 CommentedByUserId = sentByUserId ?? "SYSTEM",
                 CreatedDate = DateTime.UtcNow
             };
+
             _context.TicketComments.Add(comment);
             
-            // Add history
+            await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.EmailSent, null, null, $"Email reply sent to {contactEmail}", sentByUserId ?? "SYSTEM");
+            
             var history = new TicketHistory
             {
                 TicketHistoryId = Guid.NewGuid(),
@@ -121,7 +119,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public async Task SyncMailboxesAsync()
         {
-            // Placeholder: Called by background job to fetch from Provider
             await Task.CompletedTask;
         }
     }

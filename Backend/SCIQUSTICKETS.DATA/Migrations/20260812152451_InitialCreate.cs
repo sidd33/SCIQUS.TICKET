@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
@@ -15,6 +15,25 @@ namespace SCIQUSTICKETS.DATA.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "AccountTypes",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TypeName = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountTypes", x => x.Id);
+                })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -178,6 +197,60 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "SlaConfigurations",
+                columns: table => new
+                {
+                    SlaConfigurationId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultAutoAssignMethod = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    DefaultW_Load = table.Column<double>(type: "double", nullable: false),
+                    DefaultW_Severity = table.Column<double>(type: "double", nullable: false),
+                    DefaultW_Recency = table.Column<double>(type: "double", nullable: false),
+                    DefaultRecencyCapHours = table.Column<int>(type: "int", nullable: false),
+                    DefaultMaxConsecutiveAssignments = table.Column<int>(type: "int", nullable: false),
+                    DefaultMaxConcurrentOpenTickets = table.Column<int>(type: "int", nullable: false),
+                    MaxFallbackAttempts = table.Column<int>(type: "int", nullable: false),
+                    AutoClosureHours = table.Column<int>(type: "int", nullable: false),
+                    AllowEmployeeReopen = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    ReopenGraceDays = table.Column<int>(type: "int", nullable: false),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SlaConfigurations", x => x.SlaConfigurationId);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "SupportPlans",
+                columns: table => new
+                {
+                    SupportPlanId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    TicketQuota = table.Column<int>(type: "int", nullable: false),
+                    PeriodType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ValidityDays = table.Column<int>(type: "int", nullable: true),
+                    BlockWhenExhausted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    Status = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    CreatedByUserId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SupportPlans", x => x.SupportPlanId);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "TicketBusinessTypeImpacts",
                 columns: table => new
                 {
@@ -227,6 +300,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Level = table.Column<int>(type: "int", nullable: false),
                     SlaInHours = table.Column<int>(type: "int", nullable: false),
+                    ResponseSlaInHours = table.Column<int>(type: "int", nullable: true),
+                    ManualOnly = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     Status = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
@@ -415,6 +490,34 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    NotificationId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    EventType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EntityType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EntityId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    RedirectUrl = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ActorUserId = table.Column<string>(type: "varchar(255)", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.NotificationId);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_ActorUserId",
+                        column: x => x.ActorUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "RefreshTokens",
                 columns: table => new
                 {
@@ -488,6 +591,85 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         column: x => x.PolicyId,
                         principalTable: "Policies",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "FaqArticles",
+                columns: table => new
+                {
+                    FaqArticleId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TicketTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Title = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Body = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Status = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FaqArticles", x => x.FaqArticleId);
+                    table.ForeignKey(
+                        name: "FK_FaqArticles_TicketTypes_TicketTypeId",
+                        column: x => x.TicketTypeId,
+                        principalTable: "TicketTypes",
+                        principalColumn: "TicketTypeId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "NotificationData",
+                columns: table => new
+                {
+                    NotificationDataId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    NotificationId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    PayloadJson = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NotificationData", x => x.NotificationDataId);
+                    table.ForeignKey(
+                        name: "FK_NotificationData_Notifications_NotificationId",
+                        column: x => x.NotificationId,
+                        principalTable: "Notifications",
+                        principalColumn: "NotificationId",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "NotificationUsers",
+                columns: table => new
+                {
+                    NotificationUserId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    NotificationId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    UserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsRead = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    ReadDate = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NotificationUsers", x => x.NotificationUserId);
+                    table.ForeignKey(
+                        name: "FK_NotificationUsers_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_NotificationUsers_Notifications_NotificationId",
+                        column: x => x.NotificationId,
+                        principalTable: "Notifications",
+                        principalColumn: "NotificationId",
                         onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
@@ -684,6 +866,41 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "AccountSupportPlans",
+                columns: table => new
+                {
+                    AccountSupportPlanId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    AccountId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SupportPlanId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    StartDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    Status = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    CreatedByUserId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AccountSupportPlans", x => x.AccountSupportPlanId);
+                    table.ForeignKey(
+                        name: "FK_AccountSupportPlans_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_AccountSupportPlans_SupportPlans_SupportPlanId",
+                        column: x => x.SupportPlanId,
+                        principalTable: "SupportPlans",
+                        principalColumn: "SupportPlanId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Departments",
                 columns: table => new
                 {
@@ -692,6 +909,14 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     DepartmentHeadId = table.Column<string>(type: "varchar(255)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    TicketAutoAssignMethod = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    W_Load = table.Column<double>(type: "double", nullable: true),
+                    W_Severity = table.Column<double>(type: "double", nullable: true),
+                    W_Recency = table.Column<double>(type: "double", nullable: true),
+                    RecencyCapHours = table.Column<int>(type: "int", nullable: true),
+                    MaxConsecutiveAssignments = table.Column<int>(type: "int", nullable: true),
+                    MaxConcurrentOpenTickets = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     LastModifiedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
@@ -769,6 +994,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     DepartmentId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     DefaultUserId = table.Column<string>(type: "varchar(255)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    RequiresAcceptance = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    AcceptanceDeadlineHours = table.Column<int>(type: "int", nullable: true),
+                    ManualOnly = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     Status = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
@@ -803,6 +1031,70 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "EmailTicketConfigs",
+                columns: table => new
+                {
+                    EmailTicketConfigId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Provider = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EmailAddress = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EncryptedAccessToken = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EncryptedRefreshToken = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    AutoCreateEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    PollingIntervalMinutes = table.Column<int>(type: "int", nullable: false),
+                    IsAuthValid = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    LastPollDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    LastError = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    DefaultPriorityId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultBusinessImpactId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultDepartmentId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultTicketTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultTicketSubTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultAssigneeId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailTicketConfigs", x => x.EmailTicketConfigId);
+                    table.ForeignKey(
+                        name: "FK_EmailTicketConfigs_Departments_DefaultDepartmentId",
+                        column: x => x.DefaultDepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmailTicketConfigs_TicketBusinessTypeImpacts_DefaultBusiness~",
+                        column: x => x.DefaultBusinessImpactId,
+                        principalTable: "TicketBusinessTypeImpacts",
+                        principalColumn: "TicketBusinessTypeImpactId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmailTicketConfigs_TicketPriorities_DefaultPriorityId",
+                        column: x => x.DefaultPriorityId,
+                        principalTable: "TicketPriorities",
+                        principalColumn: "TicketPriorityId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmailTicketConfigs_TicketSubTypes_DefaultTicketSubTypeId",
+                        column: x => x.DefaultTicketSubTypeId,
+                        principalTable: "TicketSubTypes",
+                        principalColumn: "TicketSubTypeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_EmailTicketConfigs_TicketTypes_DefaultTicketTypeId",
+                        column: x => x.DefaultTicketTypeId,
+                        principalTable: "TicketTypes",
+                        principalColumn: "TicketTypeId",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "Tickets",
                 columns: table => new
                 {
@@ -820,7 +1112,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     IsInternal = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     SourceType = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    SourceMessageId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EmailReceivedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     IsOpen = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    DepartmentId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     TicketTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     TicketSubTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     PriorityId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
@@ -835,7 +1131,22 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     PendingClosureDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     ClosureConfirmedBy = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SlaDueDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    SlaMetStatus = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsSlaBreached = table.Column<bool>(type: "tinyint(1)", nullable: true),
+                    ResolutionTimeInHours = table.Column<double>(type: "double", nullable: true),
+                    OverdueHours = table.Column<double>(type: "double", nullable: true),
+                    AcceptanceStatus = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    AcceptanceDeadlineAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    AcceptanceDeadlineHours = table.Column<int>(type: "int", nullable: true),
+                    CurrentFallbackAttempt = table.Column<int>(type: "int", nullable: false),
+                    ClosedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    ReopenCount = table.Column<int>(type: "int", nullable: false),
+                    LastReopenedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    ParentTicketId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci")
                 },
                 constraints: table =>
                 {
@@ -856,6 +1167,12 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         column: x => x.CreatedByUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Departments_DepartmentId",
+                        column: x => x.DepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Tickets_Employees_RaisedByEmployeeId",
@@ -893,6 +1210,173 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         principalTable: "TicketTypes",
                         principalColumn: "TicketTypeId",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Tickets_Tickets_ParentTicketId",
+                        column: x => x.ParentTicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "WhatsAppChannelConfigs",
+                columns: table => new
+                {
+                    WhatsAppChannelConfigId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Provider = table.Column<int>(type: "int", nullable: false),
+                    BusinessPhoneNumberId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EncryptedApiToken = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    WebhookVerifyToken = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    AutoCreateEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsAuthValid = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    LastError = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    DefaultPriorityId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultBusinessImpactId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultDepartmentId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultTicketTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultTicketSubTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    DefaultAssigneeId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WhatsAppChannelConfigs", x => x.WhatsAppChannelConfigId);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppChannelConfigs_Departments_DefaultDepartmentId",
+                        column: x => x.DefaultDepartmentId,
+                        principalTable: "Departments",
+                        principalColumn: "DepartmentId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppChannelConfigs_TicketBusinessTypeImpacts_DefaultBusi~",
+                        column: x => x.DefaultBusinessImpactId,
+                        principalTable: "TicketBusinessTypeImpacts",
+                        principalColumn: "TicketBusinessTypeImpactId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppChannelConfigs_TicketPriorities_DefaultPriorityId",
+                        column: x => x.DefaultPriorityId,
+                        principalTable: "TicketPriorities",
+                        principalColumn: "TicketPriorityId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppChannelConfigs_TicketSubTypes_DefaultTicketSubTypeId",
+                        column: x => x.DefaultTicketSubTypeId,
+                        principalTable: "TicketSubTypes",
+                        principalColumn: "TicketSubTypeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppChannelConfigs_TicketTypes_DefaultTicketTypeId",
+                        column: x => x.DefaultTicketTypeId,
+                        principalTable: "TicketTypes",
+                        principalColumn: "TicketTypeId",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "EmailInboxMessages",
+                columns: table => new
+                {
+                    EmailInboxMessageId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ProviderMessageId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FromEmail = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FromName = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Subject = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Body = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    EmailReceivedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ProcessingStatus = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FailureReason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedTicketId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ProcessedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EmailInboxMessages", x => x.EmailInboxMessageId);
+                    table.ForeignKey(
+                        name: "FK_EmailInboxMessages_Tickets_CreatedTicketId",
+                        column: x => x.CreatedTicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "SupportPlanConsumptions",
+                columns: table => new
+                {
+                    SupportPlanConsumptionId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    AccountSupportPlanId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TicketId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ConsumedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    IsRefunded = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsOverage = table.Column<bool>(type: "tinyint(1)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SupportPlanConsumptions", x => x.SupportPlanConsumptionId);
+                    table.ForeignKey(
+                        name: "FK_SupportPlanConsumptions_AccountSupportPlans_AccountSupportPl~",
+                        column: x => x.AccountSupportPlanId,
+                        principalTable: "AccountSupportPlans",
+                        principalColumn: "AccountSupportPlanId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_SupportPlanConsumptions_Tickets_TicketId",
+                        column: x => x.TicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "TicketAcceptances",
+                columns: table => new
+                {
+                    TicketAcceptanceId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TicketId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    AssignedEmployeeId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Status = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    AssignedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    AcceptanceDeadlineAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    RespondedAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    RejectionReason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    AttemptNumber = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TicketAcceptances", x => x.TicketAcceptanceId);
+                    table.ForeignKey(
+                        name: "FK_TicketAcceptances_Employees_AssignedEmployeeId",
+                        column: x => x.AssignedEmployeeId,
+                        principalTable: "Employees",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_TicketAcceptances_Tickets_TicketId",
+                        column: x => x.TicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -908,6 +1392,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     AssignedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UnassignedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    FromDepartmentId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    ToDepartmentId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    Status = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsAutoAssigned = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     Remarks = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false)
@@ -1036,6 +1525,119 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "TicketStateChangeHistories",
+                columns: table => new
+                {
+                    TicketStateChangeHistoryId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TicketId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ChangeType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    OldValue = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    NewValue = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Reason = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChangedByUserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TicketStateChangeHistories", x => x.TicketStateChangeHistoryId);
+                    table.ForeignKey(
+                        name: "FK_TicketStateChangeHistories_AspNetUsers_ChangedByUserId",
+                        column: x => x.ChangedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TicketStateChangeHistories_Tickets_TicketId",
+                        column: x => x.TicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "WhatsAppInboxMessages",
+                columns: table => new
+                {
+                    WhatsAppInboxMessageId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ProviderMessageId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FromPhone = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FromName = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MessageType = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Body = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MediaUrl = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ReceivedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ProcessingStatus = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FailureReason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedTicketId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    ProcessedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WhatsAppInboxMessages", x => x.WhatsAppInboxMessageId);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppInboxMessages_Tickets_CreatedTicketId",
+                        column: x => x.CreatedTicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "WhatsAppOutboundMessages",
+                columns: table => new
+                {
+                    WhatsAppOutboundMessageId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    TicketId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    ToPhone = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Body = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    TemplateName = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ProviderMessageId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Status = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SentByUserId = table.Column<string>(type: "varchar(255)", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SentDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    FailureReason = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WhatsAppOutboundMessages", x => x.WhatsAppOutboundMessageId);
+                    table.ForeignKey(
+                        name: "FK_WhatsAppOutboundMessages_AspNetUsers_SentByUserId",
+                        column: x => x.SentByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_WhatsAppOutboundMessages_Tickets_TicketId",
+                        column: x => x.TicketId,
+                        principalTable: "Tickets",
+                        principalColumn: "TicketId",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
                 columns: new[] { "Id", "ConcurrencyStamp", "CreatedDate", "IsDeleted", "LastModifiedDate", "Name", "NormalizedName" },
@@ -1136,6 +1738,16 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 column: "RegionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AccountSupportPlans_AccountId",
+                table: "AccountSupportPlans",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AccountSupportPlans_SupportPlanId",
+                table: "AccountSupportPlans",
+                column: "SupportPlanId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -1178,6 +1790,36 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 column: "DepartmentHeadId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_EmailInboxMessages_CreatedTicketId",
+                table: "EmailInboxMessages",
+                column: "CreatedTicketId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailTicketConfigs_DefaultBusinessImpactId",
+                table: "EmailTicketConfigs",
+                column: "DefaultBusinessImpactId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailTicketConfigs_DefaultDepartmentId",
+                table: "EmailTicketConfigs",
+                column: "DefaultDepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailTicketConfigs_DefaultPriorityId",
+                table: "EmailTicketConfigs",
+                column: "DefaultPriorityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailTicketConfigs_DefaultTicketSubTypeId",
+                table: "EmailTicketConfigs",
+                column: "DefaultTicketSubTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_EmailTicketConfigs_DefaultTicketTypeId",
+                table: "EmailTicketConfigs",
+                column: "DefaultTicketTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Employees_DepartmentId",
                 table: "Employees",
                 column: "DepartmentId");
@@ -1193,6 +1835,32 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 column: "ReportsTo");
 
             migrationBuilder.CreateIndex(
+                name: "IX_FaqArticles_TicketTypeId",
+                table: "FaqArticles",
+                column: "TicketTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationData_NotificationId",
+                table: "NotificationData",
+                column: "NotificationId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_ActorUserId",
+                table: "Notifications",
+                column: "ActorUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationUsers_NotificationId",
+                table: "NotificationUsers",
+                column: "NotificationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationUsers_UserId",
+                table: "NotificationUsers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_UserId",
                 table: "RefreshTokens",
                 column: "UserId");
@@ -1206,6 +1874,26 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 name: "IX_SpecializedPolicies_PolicyId",
                 table: "SpecializedPolicies",
                 column: "PolicyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupportPlanConsumptions_AccountSupportPlanId",
+                table: "SupportPlanConsumptions",
+                column: "AccountSupportPlanId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SupportPlanConsumptions_TicketId",
+                table: "SupportPlanConsumptions",
+                column: "TicketId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketAcceptances_AssignedEmployeeId",
+                table: "TicketAcceptances",
+                column: "AssignedEmployeeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketAcceptances_TicketId",
+                table: "TicketAcceptances",
+                column: "TicketId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketAssignments_AssignedByUserId",
@@ -1273,6 +1961,16 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 column: "CreatedByUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tickets_DepartmentId",
+                table: "Tickets",
+                column: "DepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_ParentTicketId",
+                table: "Tickets",
+                column: "ParentTicketId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_PriorityId",
                 table: "Tickets",
                 column: "PriorityId");
@@ -1298,6 +1996,16 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 column: "TicketTypeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TicketStateChangeHistories_ChangedByUserId",
+                table: "TicketStateChangeHistories",
+                column: "ChangedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketStateChangeHistories_TicketId",
+                table: "TicketStateChangeHistories",
+                column: "TicketId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TicketSubTypes_DefaultUserId",
                 table: "TicketSubTypes",
                 column: "DefaultUserId");
@@ -1311,6 +2019,46 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 name: "IX_TicketSubTypes_TicketTypeId",
                 table: "TicketSubTypes",
                 column: "TicketTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppChannelConfigs_DefaultBusinessImpactId",
+                table: "WhatsAppChannelConfigs",
+                column: "DefaultBusinessImpactId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppChannelConfigs_DefaultDepartmentId",
+                table: "WhatsAppChannelConfigs",
+                column: "DefaultDepartmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppChannelConfigs_DefaultPriorityId",
+                table: "WhatsAppChannelConfigs",
+                column: "DefaultPriorityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppChannelConfigs_DefaultTicketSubTypeId",
+                table: "WhatsAppChannelConfigs",
+                column: "DefaultTicketSubTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppChannelConfigs_DefaultTicketTypeId",
+                table: "WhatsAppChannelConfigs",
+                column: "DefaultTicketTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppInboxMessages_CreatedTicketId",
+                table: "WhatsAppInboxMessages",
+                column: "CreatedTicketId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppOutboundMessages_SentByUserId",
+                table: "WhatsAppOutboundMessages",
+                column: "SentByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WhatsAppOutboundMessages_TicketId",
+                table: "WhatsAppOutboundMessages",
+                column: "TicketId");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AccountAddresses_Accounts_AccountId",
@@ -1388,13 +2136,37 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "EmailInboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "EmailTicketConfigs");
+
+            migrationBuilder.DropTable(
+                name: "FaqArticles");
+
+            migrationBuilder.DropTable(
+                name: "NotificationData");
+
+            migrationBuilder.DropTable(
+                name: "NotificationUsers");
+
+            migrationBuilder.DropTable(
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
                 name: "RolePolicies");
 
             migrationBuilder.DropTable(
+                name: "SlaConfigurations");
+
+            migrationBuilder.DropTable(
                 name: "SpecializedPolicies");
+
+            migrationBuilder.DropTable(
+                name: "SupportPlanConsumptions");
+
+            migrationBuilder.DropTable(
+                name: "TicketAcceptances");
 
             migrationBuilder.DropTable(
                 name: "TicketAssignments");
@@ -1412,7 +2184,22 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 name: "TicketIDStores");
 
             migrationBuilder.DropTable(
+                name: "TicketStateChangeHistories");
+
+            migrationBuilder.DropTable(
+                name: "WhatsAppChannelConfigs");
+
+            migrationBuilder.DropTable(
+                name: "WhatsAppInboxMessages");
+
+            migrationBuilder.DropTable(
+                name: "WhatsAppOutboundMessages");
+
+            migrationBuilder.DropTable(
                 name: "AccountAddresses");
+
+            migrationBuilder.DropTable(
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -1421,7 +2208,13 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 name: "Policies");
 
             migrationBuilder.DropTable(
+                name: "AccountSupportPlans");
+
+            migrationBuilder.DropTable(
                 name: "Tickets");
+
+            migrationBuilder.DropTable(
+                name: "SupportPlans");
 
             migrationBuilder.DropTable(
                 name: "TicketBusinessTypeImpacts");

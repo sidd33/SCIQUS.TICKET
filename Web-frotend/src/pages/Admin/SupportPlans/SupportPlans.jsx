@@ -1,55 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Award, Plus, Edit2, Trash2, CheckCircle2, UserCheck, ShieldCheck } from 'lucide-react';
+import { Award, Plus, CheckCircle2, UserCheck, ShieldCheck, Loader } from 'lucide-react';
 import api from '../../../api/axios';
 import './SupportPlans.scss';
 
 export default function SupportPlans() {
-  const [plans, setPlans] = useState([
-    { id: '1', name: 'Basic Support Plan', maxTickets: 10, blockWhenExhausted: true, price: '$0/mo', activeAccounts: 5 },
-    { id: '2', name: 'Silver Support Plan', maxTickets: 50, blockWhenExhausted: false, price: '$299/mo', activeAccounts: 18 },
-    { id: '3', name: 'Gold Support Plan', maxTickets: 200, blockWhenExhausted: false, price: '$799/mo', activeAccounts: 8 },
-    { id: '4', name: 'Platinum Enterprise', maxTickets: 1000, blockWhenExhausted: false, price: '$1999/mo', activeAccounts: 2 }
-  ]);
-
+  const [plans, setPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(true);
   const [accounts, setAccounts] = useState([]);
   const [selectedAccId, setSelectedAccId] = useState('');
-  const [selectedPlanId, setSelectedPlanId] = useState('2');
+  const [selectedPlanId, setSelectedPlanId] = useState('');
+  const [startDate, setStartDate] = useState('');
   const [assigning, setAssigning] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    async function loadAccounts() {
+    async function load() {
       try {
-        const res = await api.get('/accounts', { params: { pageNumber: 1, pageSize: 100 } });
-        setAccounts(res.data.items || res.data || []);
+        const [plansRes, accsRes] = await Promise.all([
+          api.get('/supportplan'),
+          api.get('/accounts', { params: { pageNumber: 1, pageSize: 100 } }),
+        ]);
+        setPlans(plansRes.data || []);
+        setAccounts(accsRes.data.items || accsRes.data || []);
+        if ((plansRes.data || []).length > 0) {
+          setSelectedPlanId(plansRes.data[0].supportPlanId || plansRes.data[0].id);
+        }
       } catch {
-        // fallback
+        setError('Failed to load support plans or accounts.');
+      } finally {
+        setPlansLoading(false);
       }
     }
-    loadAccounts();
+    load();
   }, []);
 
-  const handleAssignPlan = (e) => {
+  const handleAssignPlan = async (e) => {
     e.preventDefault();
-    if (!selectedAccId) return;
-
+    if (!selectedAccId || !selectedPlanId) return;
     setAssigning(true);
-    setTimeout(() => {
+    setMessage('');
+    setError('');
+    try {
+      await api.post('/supportplan/assign', {
+        accountId: selectedAccId,
+        supportPlanId: selectedPlanId,
+        startDate: startDate || new Date().toISOString(),
+      });
       setMessage('Support plan assigned to account successfully with quota tracking!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to assign support plan.');
+    } finally {
       setAssigning(false);
-    }, 600);
+    }
   };
 
   return (
     <div className="support-plans-page">
       <div className="page-header">
         <div>
-          <h1><Award size={22} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Support Plans & Ticket Entitlements</h1>
+          <h1><Award size={22} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> Support Plans &amp; Ticket Entitlements</h1>
           <p>Module 13 — Define account support tiers, annual/monthly ticket quotas, overage policies, and account assignments.</p>
         </div>
       </div>
 
       {message && <div className="success-banner"><CheckCircle2 size={16} /> {message}</div>}
+      {error && <div className="field-error">{error}</div>}
 
       {/* Plan Assignment Box */}
       <div className="card assign-card">
@@ -57,32 +73,34 @@ export default function SupportPlans() {
         <form onSubmit={handleAssignPlan} className="assign-form">
           <div className="field">
             <label>Select Customer Account</label>
-            <select
-              value={selectedAccId}
-              onChange={(e) => setSelectedAccId(e.target.value)}
-              required
-            >
+            <select value={selectedAccId} onChange={(e) => setSelectedAccId(e.target.value)} required>
               <option value="">Select Account...</option>
               {accounts.map(acc => (
-                <option key={acc.id || acc.accountId} value={acc.id || acc.accountId}>{acc.accountName || acc.name}</option>
+                <option key={acc.accountId || acc.id} value={acc.accountId || acc.id}>
+                  {acc.accountName || acc.name}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="field">
             <label>Select Support Plan Tier</label>
-            <select
-              value={selectedPlanId}
-              onChange={(e) => setSelectedPlanId(e.target.value)}
-              required
-            >
+            <select value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} required>
+              <option value="">Select Plan...</option>
               {plans.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.maxTickets} tickets/yr · {p.price})</option>
+                <option key={p.supportPlanId || p.id} value={p.supportPlanId || p.id}>
+                  {p.name} ({p.maxTicketsPerYear ?? p.maxTickets} tickets/yr)
+                </option>
               ))}
             </select>
           </div>
 
-          <button type="submit" className="btn btn--primary" disabled={assigning || !selectedAccId}>
+          <div className="field">
+            <label>Start Date</label>
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          </div>
+
+          <button type="submit" className="btn btn--primary" disabled={assigning || !selectedAccId || !selectedPlanId}>
             {assigning ? 'Assigning Plan...' : 'Assign Plan & Entitlements'}
           </button>
         </form>
@@ -91,34 +109,38 @@ export default function SupportPlans() {
       {/* Plans List Table */}
       <div className="card table-card">
         <h3><ShieldCheck size={18} /> Active Support Plan Definitions</h3>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Plan Name</th>
-              <th>Monthly / Annual Quota</th>
-              <th>Exhausted Policy</th>
-              <th>Tier Pricing</th>
-              <th>Assigned Accounts</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map(p => (
-              <tr key={p.id}>
-                <td><strong>{p.name}</strong></td>
-                <td><span className="badge badge--info">{p.maxTickets} tickets</span></td>
-                <td>
-                  {p.blockWhenExhausted ? (
-                    <span className="badge badge--danger">Block Ticket Creation</span>
-                  ) : (
-                    <span className="badge badge--success">Allow Overage ($50/ticket)</span>
-                  )}
-                </td>
-                <td><strong>{p.price}</strong></td>
-                <td>{p.activeAccounts} accounts</td>
+        {plansLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}><Loader size={20} /></div>
+        ) : plans.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', padding: '1rem' }}>No support plans configured yet.</p>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Plan Name</th>
+                <th>Annual Quota</th>
+                <th>Exhausted Policy</th>
+                <th>Duration (months)</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {plans.map(p => (
+                <tr key={p.supportPlanId || p.id}>
+                  <td><strong>{p.name}</strong></td>
+                  <td><span className="badge badge--info">{p.maxTicketsPerYear ?? p.maxTickets} tickets</span></td>
+                  <td>
+                    {p.blockWhenExhausted ? (
+                      <span className="badge badge--danger">Block Ticket Creation</span>
+                    ) : (
+                      <span className="badge badge--success">Allow Overage</span>
+                    )}
+                  </td>
+                  <td>{p.durationMonths ?? 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
