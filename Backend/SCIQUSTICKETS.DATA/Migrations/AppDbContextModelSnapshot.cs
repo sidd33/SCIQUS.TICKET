@@ -1002,6 +1002,46 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("EmailTicketConfigs");
                 });
 
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.FaqArticle", b =>
+                {
+                    b.Property<Guid>("FaqArticleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("Status")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("TicketTypeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("FaqArticleId");
+
+                    b.HasIndex("TicketTypeId");
+
+                    b.ToTable("FaqArticles");
+                });
+
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Notification", b =>
                 {
                     b.Property<Guid>("NotificationId")
@@ -2304,6 +2344,17 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("DefaultTicketSubType");
 
                     b.Navigation("DefaultTicketType");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.FaqArticle", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketType", "TicketType")
+                        .WithMany()
+                        .HasForeignKey("TicketTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TicketType");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Notification", b =>

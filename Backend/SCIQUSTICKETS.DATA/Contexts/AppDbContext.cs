@@ -74,7 +74,7 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<WhatsAppInboxMessage> WhatsAppInboxMessages { get; set; }
 		public DbSet<WhatsAppOutboundMessage> WhatsAppOutboundMessages { get; set; }
 		// ── [END: CHANNELS] ───────────────────────────────────────────
-
+		public DbSet<FaqArticle> FaqArticles { get; set; }
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
@@ -409,6 +409,12 @@ namespace SCIQUSTICKETS.DATA.Contexts
 			.HasOne(t => t.ParentTicket)
 			.WithMany()
 			.HasForeignKey(t => t.ParentTicketId)
+			.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<FaqArticle>()
+			.HasOne(f => f.TicketType)
+			.WithMany()
+			.HasForeignKey(f => f.TicketTypeId)
 			.OnDelete(DeleteBehavior.Restrict);
 		}
 	}

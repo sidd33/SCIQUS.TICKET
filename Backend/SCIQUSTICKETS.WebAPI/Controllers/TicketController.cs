@@ -20,19 +20,22 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		private readonly IEmailChannelService _emailChannelService;
 		private readonly IWhatsAppChannelService _whatsAppChannelService;
 		private readonly IAcceptanceService _acceptanceService;
-
+		private readonly IFaqArticleService _faqArticleService;
 		public TicketController(
 			ITicketService ticketService,
 			ITicketNotificationService notificationService,
 			IEmailChannelService emailChannelService,
 			IWhatsAppChannelService whatsAppChannelService,
-			 IAcceptanceService acceptanceService)
+			 IAcceptanceService acceptanceService,
+             IFaqArticleService faqArticleService)  
+
 		{
 			_ticketService = ticketService;
 			_notificationService = notificationService;
 			_emailChannelService = emailChannelService;
 			_whatsAppChannelService = whatsAppChannelService;
 			_acceptanceService = acceptanceService;
+			_faqArticleService = faqArticleService;
 
 		}
 
@@ -456,6 +459,19 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 				return Ok(new { Message = "Ticket rejected; re-routed for fallback assignment." });
 			}
 			catch (InvalidOperationException ex) { return BadRequest(new { message = ex.Message }); }
+		}
+		[HttpGet("{id:guid}/comments")]
+		public async Task<IActionResult> GetComments(Guid id)
+		{
+			var result = await _ticketService.GetCommentsAsync(id);
+			return Ok(result);
+		}
+
+		[HttpGet("faq-suggestions")]
+		public async Task<IActionResult> GetFaqSuggestions([FromQuery] Guid ticketTypeId, [FromQuery] Guid? subTypeId, [FromQuery] string? query)
+		{
+			var result = await _faqArticleService.GetSuggestionsAsync(ticketTypeId, subTypeId, query);
+			return Ok(result);
 		}
 
 

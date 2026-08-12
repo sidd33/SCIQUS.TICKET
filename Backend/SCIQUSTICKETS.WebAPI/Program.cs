@@ -133,6 +133,9 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<ITicketReportService, TicketReportService>();
 
 builder.Services.AddScoped<IAcceptanceService, AcceptanceService>();
+builder.Services.AddScoped<IFaqArticleService, FaqArticleService>();
+builder.Services.AddScoped<IPortalTicketService, PortalTicketService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

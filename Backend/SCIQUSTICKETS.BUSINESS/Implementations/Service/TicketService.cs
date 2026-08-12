@@ -774,6 +774,27 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
+		// TicketService.cs — add
+		public async Task<IEnumerable<TicketCommentResponse>> GetCommentsAsync(Guid ticketId)
+		{
+			var ticket = await _ticketRepository.GetByIdWithDetailsAsync(ticketId);
+			if (ticket == null) return Enumerable.Empty<TicketCommentResponse>();
+
+			return ticket.Comments
+				.Where(c => !c.IsDeleted)
+				.OrderBy(c => c.CreatedDate)
+				.Select(c => new TicketCommentResponse
+				{
+					TicketCommentId = c.TicketCommentId,
+					TicketId = c.TicketId,
+					Comment = c.CommentText,
+					IsInternalNote = c.IsInternalNote,
+					CreatedByUserId = c.CommentedByUserId,
+					CreatedByUserName = c.CommentedByUser?.UserName,
+					CreatedDate = c.CreatedDate
+				});
+		}
+
 		private static TicketResponse MapToResponse(Ticket t)
 		{
 			return new TicketResponse
