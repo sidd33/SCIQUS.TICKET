@@ -84,5 +84,7 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 		public DateTime CreatedDate { get; set; }
 
 		public DateTime LastUpdatedDate { get; set; }
+
+		public bool IsAwaitingAcceptance { get; set; }
 	}
 }

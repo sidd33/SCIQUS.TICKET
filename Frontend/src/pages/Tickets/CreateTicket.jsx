@@ -29,21 +29,31 @@ export default function CreateTicket({ isPortal = false }) {
   useEffect(() => {
     async function loadMasterData() {
       try {
-        const [tRes, stRes, pRes, iRes, accRes] = await Promise.all([
-          api.get('/TicketTypes', { params: { includeInactive: false } }),
-          api.get('/TicketSubTypes', { params: { includeInactive: false } }),
-          api.get('/TicketPriorities', { params: { includeInactive: false } }),
-          api.get('/TicketBusinessImpacts', { params: { includeInactive: false } }),
-          api.get('/Accounts', { params: { pageNumber: 1, pageSize: 100 } })
-        ]);
-        setTypes(tRes.data || []);
-        setSubTypes(stRes.data || []);
-        setPriorities(pRes.data || []);
-        setImpacts(iRes.data || []);
-        setAccounts(accRes.data.items || accRes.data || []);
+       const [typesRes, subTypesRes, prioritiesRes, impactsRes] = await Promise.all([
+  api.get("/TicketTypes"),
+  api.get("/TicketSubTypes"),
+  api.get("/TicketPriorities"),
+  api.get("/TicketBusinessImpacts")
+]);
 
-        if (pRes.data?.length > 0) setSelectedPriorityId(pRes.data[0].id || pRes.data[0].priorityId);
-        if (iRes.data?.length > 0) setSelectedImpactId(iRes.data[0].id || iRes.data[0].businessImpactId);
+setTypes(typesRes.data.items || []);
+setSubTypes(subTypesRes.data.items || []);
+setPriorities(prioritiesRes.data.items || []);
+setImpacts(impactsRes.data.items || []);
+
+if (prioritiesRes.data.items?.length > 0) {
+  const firstPriority = prioritiesRes.data.items[0];
+  setSelectedPriorityId(
+    firstPriority.ticketPriorityId || firstPriority.id
+  );
+}
+
+if (impactsRes.data.items?.length > 0) {
+  const firstImpact = impactsRes.data.items[0];
+  setSelectedImpactId(
+    firstImpact.ticketBusinessTypeImpactId || firstImpact.businessImpactId || firstImpact.id
+  );
+}
       } catch {
         // fallback
       }
@@ -70,16 +80,15 @@ export default function CreateTicket({ isPortal = false }) {
     setError('');
     try {
       const payload = {
-        title,
-        description,
-        ticketTypeId: selectedTypeId,
-        ticketSubTypeId: selectedSubTypeId,
-        priorityId: selectedPriorityId,
-        businessImpactId: selectedImpactId,
-        accountId: selectedAccountId || null,
-        isInternal: !selectedAccountId && !isPortal
-      };
-
+  title,
+  description,
+  ticketTypeId: selectedTypeId,
+  ticketSubTypeId: selectedSubTypeId,
+  priorityId: selectedPriorityId,
+  businessImpactId: selectedImpactId,
+  accountId: selectedAccountId || null,
+  isInternal: !selectedAccountId && !isPortal
+};
       const res = await api.post('/tickets', payload);
       const newTicketId = res.data.id || res.data.ticketId;
 
@@ -139,21 +148,27 @@ export default function CreateTicket({ isPortal = false }) {
               <label>Priority Severity *</label>
               <select required value={selectedPriorityId} onChange={(e) => setSelectedPriorityId(e.target.value)}>
                 {priorities.map(p => (
-                  <option key={p.id || p.priorityId} value={p.id || p.priorityId}>
-                    {p.name} ({p.slaInHours ? `${p.slaInHours}h SLA` : 'Default SLA'})
-                  </option>
-                ))}
+  <option
+    key={p.ticketPriorityId}
+    value={p.ticketPriorityId}
+  >
+    {p.name} ({p.slaInHours}h SLA)
+  </option>
+))}
               </select>
             </div>
 
             <div className="form-group">
               <label>Business Impact *</label>
               <select required value={selectedImpactId} onChange={(e) => setSelectedImpactId(e.target.value)}>
-                {impacts.map(imp => (
-                  <option key={imp.id || imp.businessImpactId} value={imp.id || imp.businessImpactId}>
-                    {imp.description || imp.name}
-                  </option>
-                ))}
+               {impacts.map(imp => (
+  <option
+    key={imp.ticketBusinessTypeImpactId}
+    value={imp.ticketBusinessTypeImpactId}
+  >
+    {imp.description || imp.name}
+  </option>
+))}
               </select>
             </div>
           </div>

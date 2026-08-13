@@ -54,5 +54,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		[HttpGet("channel-mix")]
 		public async Task<IActionResult> GetChannelMix([FromQuery] TicketReportQueryParams query)
 			=> Ok(await _reportService.GetChannelMixAsync(query));
+
+
 	}
 }

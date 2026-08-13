@@ -20,14 +20,13 @@ namespace SCIQUSTICKETS.DATA.Interfaces.IRepositories
 			string? sortBy,
 			bool sortDescending,
 			int page,
-			int pageSize);
+			int pageSize,
+			string? ownershipUserId = null,
+			Guid? ownershipDepartmentId = null);
 
 		Task<Ticket?> GetByIdWithDetailsAsync(Guid ticketId);
-
 		Task<Ticket> CreateTicketAsync(Ticket ticket);
-
 		Task<bool> ExistsAsync(Guid ticketId);
-
 		Task<bool> HasOpenTicketsForAccountAsync(string accountId);
 
 		Task AddCommentAsync(TicketComment comment);

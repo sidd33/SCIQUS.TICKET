@@ -1,21 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, Save, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import api from '../../../api/axios';
 
 export default function WhatsAppConfig() {
-  const [phoneNumberId, setPhoneNumberId] = useState('10948291048192');
-  const [verifyToken, setVerifyToken] = useState('SCIQUS_WHATSAPP_TOKEN_2026');
-  const [accessToken, setAccessToken] = useState('EAAG...meta_cloud_access_token');
+  const [phoneNumberId, setPhoneNumberId] = useState('');
+  const [verifyToken, setVerifyToken] = useState('');
+  const [accessToken, setAccessToken] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
-  const handleSave = (e) => {
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await api.get('/WhatsAppConfig');
+        if (response.data) {
+          setPhoneNumberId(response.data.businessPhoneNumberId || '');
+        }
+      } catch (error) {
+        console.error('Failed to fetch WhatsApp config:', error);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleSave = async (e) => {
     e.preventDefault();
     setSaving(true);
-    setTimeout(() => {
+    try {
+      await api.post('/WhatsAppConfig', {
+        provider: 'Meta',
+        businessPhoneNumberId: phoneNumberId,
+        webhookVerifyToken: verifyToken,
+        encryptedApiToken: accessToken
+      });
       setMessage('WhatsApp Cloud API integration settings saved!');
+      setVerifyToken('');
+      setAccessToken('');
+    } catch (error) {
+      console.error('Failed to save config', error);
+      setMessage('Failed to save settings.');
+    } finally {
       setSaving(false);
-    }, 600);
+    }
   };
 
   return (
@@ -40,12 +67,12 @@ export default function WhatsAppConfig() {
 
         <div className="form-group">
           <label>Webhook Verify Token</label>
-          <input value={verifyToken} onChange={(e) => setVerifyToken(e.target.value)} required />
+          <input value={verifyToken} onChange={(e) => setVerifyToken(e.target.value)} placeholder="Leave blank to keep existing" />
         </div>
 
         <div className="form-group">
           <label>Meta Cloud API Permanent Access Token</label>
-          <textarea rows={3} value={accessToken} onChange={(e) => setAccessToken(e.target.value)} required />
+          <textarea rows={3} value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="Leave blank to keep existing" />
         </div>
 
         <div style={{ marginTop: '1.5rem' }}>

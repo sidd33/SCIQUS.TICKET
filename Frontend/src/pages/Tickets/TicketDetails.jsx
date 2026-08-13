@@ -29,27 +29,46 @@ export default function TicketDetails() {
   const [isInternalComment, setIsInternalComment] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
 
+  const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
+const currentUserId = storedUser?.id;
+
   useEffect(() => {
     loadTicketDetails();
   }, [ticketId]);
 
   async function loadTicketDetails() {
-    setLoading(true);
+  setLoading(true);
+
+  try {
+    // Load the ticket itself first
+    const tRes = await api.get(`/tickets/${ticketId}`);
+    setTicket(tRes.data);
+
+    // Load comments separately
     try {
-      const [tRes, cRes, hRes] = await Promise.all([
-        api.get(`/tickets/${ticketId}`),
-        api.get(`/tickets/${ticketId}/comments`),
-        api.get(`/tickets/${ticketId}/history`)
-      ]);
-      setTicket(tRes.data);
-      setComments(cRes.data || []);
-      setHistories(hRes.data || []);
-    } catch {
-      // fallback
-    } finally {
-      setLoading(false);
+      const cRes = await api.get(`/tickets/${ticketId}/comments`);
+      setComments(cRes.data?.items || cRes.data || []);
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+      setComments([]);
     }
+
+    // Load timeline separately
+    try {
+      const hRes = await api.get(`/tickets/${ticketId}/timeline`);
+      setHistories(hRes.data?.items || hRes.data || []);
+    } catch (err) {
+      console.error('Failed to load ticket timeline:', err);
+      setHistories([]);
+    }
+
+  } catch (err) {
+    console.error('Failed to load ticket:', err);
+    setTicket(null);
+  } finally {
+    setLoading(false);
   }
+}
 
   const handlePostComment = async (e) => {
     e.preventDefault();
@@ -97,9 +116,17 @@ export default function TicketDetails() {
           <div>
             <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span>{ticket.ticketNumber || `TKT-${ticket.id?.substring(0, 6)}`}</span>
-              <span className={`badge badge--${(ticket.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
-                {ticket.statusName || 'Open'}
-              </span>
+              <span
+  className={`badge badge--${
+    ticket.acceptanceStatus === 'Pending'
+      ? 'awaiting-acceptance'
+      : (ticket.statusName || 'Open').toLowerCase().replace(' ', '')
+  }`}
+>
+  {ticket.acceptanceStatus === 'Pending'
+    ? 'Awaiting Acceptance'
+    : ticket.statusName || 'Open'}
+</span>
             </h1>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.9rem', color: 'white' }}>{ticket.title}</p>
           </div>
@@ -119,8 +146,13 @@ export default function TicketDetails() {
       </div>
 
       {ticket.acceptanceStatus === 'Pending' && (
-        <AcceptanceBar ticketId={ticket.id || ticketId} deadline={ticket.acceptanceDeadlineAt} onAction={loadTicketDetails} />
-      )}
+<AcceptanceBar 
+  ticketId={ticket.id || ticketId} 
+  deadline={ticket.acceptanceDeadlineAt} 
+  assignedToUserId={ticket.assignedToUserId} 
+  currentUserId={currentUserId} 
+  onAction={loadTicketDetails} 
+/>      )}
 
       {ticket.statusName === 'PendingClosure' && (
         <ConfirmationBanner ticketId={ticket.id || ticketId} onAction={loadTicketDetails} />
