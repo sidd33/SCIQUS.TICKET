@@ -104,18 +104,19 @@ namespace SCIQUSTICKETS.WebAPI
 
             if (!context.Employees.Any(e => e.Id == adminUser.Id))
             {
-                context.Employees.Add(new Employee
-                {
-                    Id = adminUser.Id,
-                    Name = "Super Admin",
-                    Email = adminEmail,
-                    AutoGenrateId = "ADM-0001",
-                    EmployeeId = "ADM-0001",
-                    Designation = "System Super Administrator",
-                    CreatedDate = DateTime.UtcNow,
-                    LastUpdatedDate = DateTime.UtcNow,
-                    IsDeleted = false
-                });
+				context.Employees.Add(new Employee
+				{
+					Id = adminUser.Id,
+					Name = "Super Admin",
+					Email = adminEmail,
+					AutoGenrateId = "ADM-0001",
+					EmployeeId = "ADM-0001",
+					Designation = "System Super Administrator",
+					DepartmentId = dept1Id,   // ADD THIS
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow,
+					IsDeleted = false
+				}); ;
                 await context.SaveChangesAsync();
             }
 

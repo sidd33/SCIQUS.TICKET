@@ -12,8 +12,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 {
 	public interface ITicketService
 	{
-		Task<PagedResponse<TicketResponse>> GetAllAsync(
-			TicketQueryParams queryParams);
+		Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams, string? userId = null, bool canViewAll = true);
 
 		Task<TicketResponse?> GetByIdAsync(Guid ticketId);
 

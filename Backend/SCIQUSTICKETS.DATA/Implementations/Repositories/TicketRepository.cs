@@ -11,22 +11,24 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 		public TicketRepository(AppDbContext context) : base(context) { }
 
 		public async Task<(IEnumerable<Ticket> Items, int TotalCount)> GetAllPagedAsync(
-			string? search,
-			Guid? ticketTypeId,
-			Guid? ticketSubTypeId,
-			Guid? priorityId,
-			Guid? businessImpactId,
-			Guid? statusId,
-			string? accountId,
-			string? assignedToUserId,
-			bool? isInternal,
-			bool? isOpen,
-			DateTime? fromDate,
-			DateTime? toDate,
-			string? sortBy,
-			bool sortDescending,
-			int page,
-			int pageSize)
+	string? search,
+	Guid? ticketTypeId,
+	Guid? ticketSubTypeId,
+	Guid? priorityId,
+	Guid? businessImpactId,
+	Guid? statusId,
+	string? accountId,
+	string? assignedToUserId,
+	bool? isInternal,
+	bool? isOpen,
+	DateTime? fromDate,
+	DateTime? toDate,
+	string? sortBy,
+	bool sortDescending,
+	int page,
+	int pageSize,
+	string? ownershipUserId = null,
+	Guid? ownershipDepartmentId = null)
 		{
 			var query = _dbSet
 				.Include(t => t.TicketType)
@@ -55,6 +57,15 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 			if (isOpen.HasValue) query = query.Where(t => t.IsOpen == isOpen);
 			if (fromDate.HasValue) query = query.Where(t => t.CreatedDate >= fromDate);
 			if (toDate.HasValue) query = query.Where(t => t.CreatedDate <= toDate);
+
+			// Server-side ownership scoping — only applied when caller does NOT have manage-all rights.
+			// A ticket is visible if it's assigned to the caller OR sits in the caller's department.
+			if (!string.IsNullOrWhiteSpace(ownershipUserId) || ownershipDepartmentId.HasValue)
+			{
+				query = query.Where(t =>
+					(ownershipUserId != null && t.AssignedToUserId == ownershipUserId) ||
+					(ownershipDepartmentId.HasValue && t.DepartmentId == ownershipDepartmentId.Value));
+			}
 
 			query = sortBy?.ToLower() switch
 			{

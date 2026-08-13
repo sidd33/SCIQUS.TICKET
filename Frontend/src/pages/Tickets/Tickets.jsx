@@ -126,9 +126,13 @@ export default function Tickets() {
                     <td>{t.departmentName || 'IT Support'}</td>
                     <td>{t.assignedToUserName || 'Unassigned'}</td>
                     <td>
-                      <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
-                        {t.statusName || 'Open'}
-                      </span>
+                      {t.acceptanceStatus === 'Pending' ? (
+                        <span className="badge badge--awaiting-acceptance">Awaiting Acceptance</span>
+                      ) : (
+                        <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
+                          {t.statusName || 'Open'}
+                        </span>
+                      )}
                     </td>
                     <td><strong>{t.priorityName || 'Medium'}</strong></td>
                     <td>

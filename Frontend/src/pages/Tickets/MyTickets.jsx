@@ -11,8 +11,9 @@ export default function MyTickets() {
   useEffect(() => {
     async function loadMyTickets() {
       try {
-        const res = await api.get('/tickets/my-tickets', { params: { pageSize: 50 } });
-        setTickets(res.data.items || res.data || []);
+const res = await api.get('/tickets', {
+  params: { pageSize: 50 }
+});        setTickets(res.data.items || res.data || []);
       } catch {
         // fallback
       } finally {

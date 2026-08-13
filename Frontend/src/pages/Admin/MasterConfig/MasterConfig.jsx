@@ -21,10 +21,10 @@ export default function MasterConfig() {
         api.get('/TicketPriorities', { params: { includeInactive: true } }),
         api.get('/TicketBusinessImpacts', { params: { includeInactive: true } })
       ]);
-      setTypes(tRes.data || []);
-      setSubTypes(stRes.data || []);
-      setPriorities(pRes.data || []);
-      setImpacts(iRes.data || []);
+      setTypes(tRes.data.items || []);
+setSubTypes(stRes.data.items || []);
+setPriorities(pRes.data.items || []);
+setImpacts(iRes.data.items || []);
     } catch {
       // fallback
     }
@@ -114,37 +114,52 @@ export default function MasterConfig() {
               </thead>
               <tbody>
                 {priorities.map(p => (
-                  <tr key={p.id || p.priorityId}>
-                    <td><strong>{p.name}</strong></td>
-                    <td>Level {p.level || 1}</td>
-                    <td><span className="badge badge--progress">{p.slaInHours || 24} Hours</span></td>
-                    <td>{p.responseSlaInHours || 2} Hours</td>
-                  </tr>
-                ))}
+  <tr key={p.ticketPriorityId}>
+    <td><strong>{p.name}</strong></td>
+    <td>Level {p.level}</td>
+    <td>
+      <span className="badge badge--progress">
+        {p.slaInHours} Hours
+      </span>
+    </td>
+    <td>Not configured</td>
+  </tr>
+))}
               </tbody>
             </table>
           )}
 
           {activeTab === 'impacts' && (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Impact Title</th>
-                  <th>Scope Description</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {impacts.map(imp => (
-                  <tr key={imp.id || imp.businessImpactId}>
-                    <td><strong>{imp.name}</strong></td>
-                    <td>{imp.description}</td>
-                    <td><span className="badge badge--resolved">Active</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+  <table className="data-table">
+    <thead>
+      <tr>
+        <th>Impact Title</th>
+        <th>Scope Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {impacts.map(imp => (
+        <tr key={imp.ticketBusinessTypeImpactId}>
+          <td>
+            <strong>{imp.name}</strong>
+          </td>
+
+          <td>
+            {imp.description || "—"}
+          </td>
+
+          <td>
+            <span className={`badge ${imp.status ? "badge--resolved" : "badge--error"}`}>
+              {imp.status ? "Active" : "Inactive"}
+            </span>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
         </div>
       </div>
     </div>

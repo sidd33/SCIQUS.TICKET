@@ -151,8 +151,18 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
-		public async Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams)
+		public async Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams, string? userId = null, bool canViewAll = true)
 		{
+			string? ownershipUserId = null;
+			Guid? ownershipDepartmentId = null;
+
+			if (!canViewAll && !string.IsNullOrEmpty(userId))
+			{
+				var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == userId);
+				ownershipUserId = userId;
+				ownershipDepartmentId = employee?.DepartmentId;
+			}
+
 			var (items, totalCount) = await _ticketRepository.GetAllPagedAsync(
 				queryParams.Search,
 				queryParams.TicketTypeId,
@@ -169,7 +179,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				queryParams.SortBy,
 				queryParams.SortDescending,
 				queryParams.Page,
-				queryParams.PageSize);
+				queryParams.PageSize,
+				ownershipUserId,
+				ownershipDepartmentId);
 
 			return new PagedResponse<TicketResponse>
 			{
@@ -606,11 +618,14 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
-		public async Task<PagedResponse<TicketResponse>> GetMyQueueAsync(string userId, TicketQueryParams queryParams)
+		public async Task<PagedResponse<TicketResponse>> GetMyQueueAsync(
+	string userId,
+	TicketQueryParams queryParams)
 		{
 			queryParams.AssignedToUserId = userId;
 			queryParams.IsOpen = true;
-			return await GetAllAsync(queryParams);
+
+			return await GetAllAsync(queryParams, userId, false);
 		}
 
 		public async Task<PagedResponse<TicketResponse>> GetDepartmentQueueAsync(string userId, TicketQueryParams queryParams)
@@ -852,6 +867,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				SlaMetStatus = t.SlaMetStatus,
 				AcceptanceStatus = t.AcceptanceStatus,
 				AcceptanceDeadlineAt = t.AcceptanceDeadlineAt,
+
+				IsAwaitingAcceptance =
+	string.Equals(t.Status?.Name, "Open", StringComparison.OrdinalIgnoreCase)
+	&& string.Equals(t.AcceptanceStatus, "Pending", StringComparison.OrdinalIgnoreCase),
+
 				CreatedDate = t.CreatedDate,
 				LastUpdatedDate = t.LastUpdatedDate
 			};

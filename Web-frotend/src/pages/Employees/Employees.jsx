@@ -54,8 +54,19 @@ export default function Employees() {
           departmentId: departmentFilter || undefined,
         },
       });
-      setEmployees(res.data.items);
-      setTotalPages(res.data.totalPages || 1);
+      const mappedEmployees = (res.data.items || []).map((emp) => {
+  const nameParts = (emp.name || "").trim().split(/\s+/);
+
+  return {
+    ...emp,
+    firstName: nameParts[0] || "",
+    lastName: nameParts.slice(1).join(" ") || "",
+    profilePicture: emp.profileImageUrl || null,
+  };
+});
+
+setEmployees(mappedEmployees);
+setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.log(err);
     } finally {
