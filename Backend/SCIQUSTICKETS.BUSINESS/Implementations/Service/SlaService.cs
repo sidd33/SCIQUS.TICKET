@@ -1,6 +1,7 @@
 ﻿// SCIQUSTICKETS.BUSINESS/Implementations/Service/SlaService.cs
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
+using SCIQUSTICKETS.COMMON.Constants;
 using SCIQUSTICKETS.COMMON.Helpers;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
@@ -10,7 +11,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 	public class SlaService : ISlaService
 	{
 		private readonly AppDbContext _context;
-		private const string SystemActorId = "SYSTEM";
 
 		public SlaService(AppDbContext context)
 		{
@@ -91,7 +91,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					TicketHistoryId = Guid.NewGuid(),
 					TicketId = ticket.TicketId,
 					ChangeDescription = "SLA breached",
-					ChangedByUserId = SystemActorId,
+					ChangedByUserId = SEED.SystemActorUserId,
 					CreatedDate = now
 				});
 				// NOTE: Module 5 notification hook (assignee + dept manager) goes here
@@ -138,7 +138,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					OldStatusId = oldStatusId,
 					NewStatusId = closedStatus.TicketStatusId,
 					ChangeDescription = "Auto-closed (no customer response)",
-					ChangedByUserId = SystemActorId,
+					ChangedByUserId = SEED.SystemActorUserId,
 					CreatedDate = now
 				});
 				// NOTE: Module 5 notification hook (assignee + account contact) goes here.

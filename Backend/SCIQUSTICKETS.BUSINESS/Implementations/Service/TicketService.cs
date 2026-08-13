@@ -33,16 +33,22 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly ISupportPlanService _supportPlanService;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
-			new(StringComparer.OrdinalIgnoreCase)
-			{
-				["Open"] = new[] { "In Progress", "Closed" },
-				["In Progress"] = new[] { "Pending", "Resolved", "Closed" },
-				["Pending"] = new[] { "In Progress", "Resolved", "Closed" },
-				["Resolved"] = new[] { "PendingClosure", "In Progress", "Closed" },
-				["PendingClosure"] = new[] { "Closed", "Reopened" },
-				["Closed"] = new[] { "Reopened" },
-				["Reopened"] = new[] { "In Progress" }
-			};
+	new(StringComparer.OrdinalIgnoreCase)
+	{
+		["Open"] = new[] { "In Progress", "PendingClosure" },
+
+		["In Progress"] = new[] { "Pending", "PendingClosure" },
+
+		["Pending"] = new[] { "In Progress", "PendingClosure" },
+
+		["Resolved"] = new[] { "PendingClosure", "In Progress" },
+
+		["PendingClosure"] = new[] { "Closed", "Reopened" },
+
+		["Closed"] = new[] { "Reopened" },
+
+		["Reopened"] = new[] { "In Progress" }
+	};
 
 		public TicketService(
 			ITicketRepository ticketRepository,
@@ -151,16 +157,31 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
-		public async Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams, string? userId = null, bool canViewAll = true)
+		public async Task<PagedResponse<TicketResponse>> GetAllAsync(
+	TicketQueryParams queryParams,
+	string? userId = null,
+	bool canViewAll = true,
+	bool isCustomer = false)
 		{
 			string? ownershipUserId = null;
 			Guid? ownershipDepartmentId = null;
+			string? createdByUserId = null;
 
 			if (!canViewAll && !string.IsNullOrEmpty(userId))
 			{
-				var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == userId);
-				ownershipUserId = userId;
-				ownershipDepartmentId = employee?.DepartmentId;
+				if (isCustomer)
+				{
+					createdByUserId = userId;
+				}
+				else
+				{
+					var employee = await _context.Employees
+						.AsNoTracking()
+						.FirstOrDefaultAsync(e => e.Id == userId);
+
+					ownershipUserId = userId;
+					ownershipDepartmentId = employee?.DepartmentId;
+				}
 			}
 
 			var (items, totalCount) = await _ticketRepository.GetAllPagedAsync(
@@ -181,7 +202,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				queryParams.Page,
 				queryParams.PageSize,
 				ownershipUserId,
-				ownershipDepartmentId);
+				ownershipDepartmentId,
+				createdByUserId);
 
 			return new PagedResponse<TicketResponse>
 			{

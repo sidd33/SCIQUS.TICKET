@@ -28,7 +28,8 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 	int page,
 	int pageSize,
 	string? ownershipUserId = null,
-	Guid? ownershipDepartmentId = null)
+	Guid? ownershipDepartmentId = null,
+	string? createdByUserId = null)
 		{
 			var query = _dbSet
 				.Include(t => t.TicketType)
@@ -65,6 +66,10 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 				query = query.Where(t =>
 					(ownershipUserId != null && t.AssignedToUserId == ownershipUserId) ||
 					(ownershipDepartmentId.HasValue && t.DepartmentId == ownershipDepartmentId.Value));
+			}
+			if (!string.IsNullOrWhiteSpace(createdByUserId))
+			{
+				query = query.Where(t => t.CreatedByUserId == createdByUserId);
 			}
 
 			query = sortBy?.ToLower() switch

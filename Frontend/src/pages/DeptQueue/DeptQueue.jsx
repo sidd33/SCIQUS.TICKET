@@ -71,11 +71,17 @@ export default function DeptQueue() {
                       </Link>
                     </td>
                     <td>{t.assignedToUserName || 'Unassigned Queue'}</td>
-                    <td>
-                      <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
-                        {t.statusName || 'Open'}
-                      </span>
-                    </td>
+                   <td>
+  {t.acceptanceStatus === 'Pending' ? (
+    <span className="badge badge--awaiting-acceptance">
+      Awaiting Acceptance
+    </span>
+  ) : (
+    <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
+      {t.statusName || 'Open'}
+    </span>
+  )}
+</td>
                     <td><strong>{t.priorityName || 'Medium'}</strong></td>
                     <td>
                       <SlaBadge dueDate={t.slaDueDate} isBreached={t.isSlaBreached} statusName={t.statusName} />

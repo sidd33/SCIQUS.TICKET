@@ -81,9 +81,14 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 	[FromQuery] TicketQueryParams queryParams)
 		{
 			var userId = GetUserId();
-			bool canViewAll = User.IsInRole("Admin"); // TODO: replace with real ticket.manage.all policy once policies are wired
+			bool canViewAll = User.IsInRole("Admin");
+			bool isCustomer = User.IsInRole("Customer");
 
-			var result = await _ticketService.GetAllAsync(queryParams, userId, canViewAll);
+			var result = await _ticketService.GetAllAsync(
+				queryParams,
+				userId,
+				canViewAll,
+				isCustomer);
 
 			return Ok(result);
 		}

@@ -35,7 +35,7 @@ export default function AcceptanceBar({
     if (!reason.trim()) return;
     setSubmitting(true);
     try {
-      await api.post(`/tickets/${ticketId}/reject`, { reason });
+await api.post(`/tickets/${ticketId}/reject`, reason);
       if (onAction) onAction();
     } catch {
       alert('Failed to reject assignment');

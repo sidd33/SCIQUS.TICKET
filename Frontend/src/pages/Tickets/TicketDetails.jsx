@@ -89,14 +89,28 @@ const currentUserId = storedUser?.id;
     }
   };
 
-  const handleStatusTransition = async (statusIdName) => {
-    try {
-      await api.patch(`/tickets/${ticketId}/status`, { status: statusIdName });
-      loadTicketDetails();
-    } catch {
-      alert('Failed to update status');
-    }
-  };
+ const handleStatusTransition = async (statusName) => {
+  try {
+   const statusIds = {
+  'Open': '10000000-0000-0000-0000-000000000001',
+  'In Progress': '10000000-0000-0000-0000-000000000002',
+  'Pending': '10000000-0000-0000-0000-000000000003',
+  'Resolved': '10000000-0000-0000-0000-000000000004',
+  'Closed': '10000000-0000-0000-0000-000000000005',
+  'PendingClosure': '10000000-0000-0000-0000-000000000006',
+  'Reopened': '10000000-0000-0000-0000-000000000007'
+};;
+
+    await api.patch(`/tickets/${ticketId}/status`, {
+      statusId: statusIds[statusName]
+    });
+
+    await loadTicketDetails();
+  } catch (err) {
+    console.error('Failed to update status:', err.response?.data || err);
+    alert(err.response?.data?.message || 'Failed to update status');
+  }
+};
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Loading ticket details...</div>;
@@ -133,16 +147,64 @@ const currentUserId = storedUser?.id;
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button className="btn btn--secondary btn--sm" onClick={() => setShowReassignModal(true)}>
-            <UserCheck size={14} /> Assign / Reassign
-          </button>
-          <button className="btn btn--secondary btn--sm" onClick={() => setShowTransferModal(true)}>
-            <ArrowRightLeft size={14} /> Transfer Dept
-          </button>
-          <button className="btn btn--secondary btn--sm" onClick={() => setShowPriorityModal(true)}>
-            <ShieldAlert size={14} /> Priority / SLA
-          </button>
-        </div>
+  <button
+    className="btn btn--secondary btn--sm"
+    onClick={() => setShowReassignModal(true)}
+  >
+    <UserCheck size={14} /> Assign / Reassign
+  </button>
+
+  <button
+    className="btn btn--secondary btn--sm"
+    onClick={() => setShowTransferModal(true)}
+  >
+    <ArrowRightLeft size={14} /> Transfer Dept
+  </button>
+
+  <button
+    className="btn btn--secondary btn--sm"
+    onClick={() => setShowPriorityModal(true)}
+  >
+    <ShieldAlert size={14} /> Priority / SLA
+  </button>
+
+  {/* Resolve */}
+{/* Request Closure */}
+{(
+  ticket.statusName === 'Open' ||
+  ticket.statusName === 'In Progress' ||
+  ticket.statusName === 'Pending' ||
+  ticket.statusName === 'Resolved'
+) && (
+  <button
+    className="btn btn--primary btn--sm"
+    onClick={() => handleStatusTransition('PendingClosure')}
+  >
+    <CheckCircle2 size={14} /> Request Closure
+  </button>
+)}
+
+  
+
+
+{/* Reopen */}
+{ticket.statusName === 'Closed' && (
+  <button
+    className="btn btn--secondary btn--sm"
+    onClick={async () => {
+      try {
+        await api.post(`/tickets/${ticketId}/reopen`);
+        await loadTicketDetails();
+      } catch (err) {
+        console.error('Failed to reopen ticket:', err.response?.data || err);
+        alert(err.response?.data?.message || 'Failed to reopen ticket');
+      }
+    }}
+  >
+    <RotateCcw size={14} /> Reopen
+  </button>
+)}
+</div>
       </div>
 
       {ticket.acceptanceStatus === 'Pending' && (
@@ -189,7 +251,70 @@ const currentUserId = storedUser?.id;
                 <div><span style={{ color: 'var(--text-muted)' }}>Assigned Agent:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.assignedToUserName || 'Unassigned'}</strong></div>
                 <div><span style={{ color: 'var(--text-muted)' }}>Priority Severity:</span> <strong style={{ color: '#fbbf24', display: 'block' }}>{ticket.priorityName || 'Medium'}</strong></div>
                 <div><span style={{ color: 'var(--text-muted)' }}>Business Impact:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.businessImpactName || 'Single User'}</strong></div>
+                
                 <div><span style={{ color: 'var(--text-muted)' }}>SLA Countdown:</span> <div style={{ marginTop: '4px' }}><SlaBadge dueDate={ticket.slaDueDate} isBreached={ticket.isSlaBreached} statusName={ticket.statusName} /></div></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Business Impact:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.businessImpactName || 'Single User'}</strong></div>
+
+<div><span style={{ color: 'var(--text-muted)' }}>SLA Countdown:</span> <div style={{ marginTop: '4px' }}><SlaBadge dueDate={ticket.slaDueDate} isBreached={ticket.isSlaBreached} statusName={ticket.statusName} /></div></div>
+
+<div>
+  <span style={{ color: 'var(--text-muted)' }}>Assignment Log:</span>
+
+  <div
+    style={{
+      marginTop: '6px',
+      padding: '0.75rem',
+      background: 'rgba(99, 102, 241, 0.08)',
+      border: '1px solid var(--bg-card-border)',
+      borderRadius: '8px',
+      fontSize: '0.8rem'
+    }}
+  >
+    {histories.filter(h =>
+      (h.changeDescription || h.description || '')
+        .toLowerCase()
+        .includes('assign')
+    ).length === 0 ? (
+      <span style={{ color: 'var(--text-dim)' }}>
+        No assignment history available
+      </span>
+    ) : (
+      histories
+        .filter(h =>
+          (h.changeDescription || h.description || '')
+            .toLowerCase()
+            .includes('assign')
+        )
+        .map((h, index) => (
+          <div
+            key={h.id || h.ticketHistoryId || index}
+            style={{
+              marginBottom: index === 0 ? '0' : '0.6rem',
+              paddingBottom: index === 0 ? '0' : '0.6rem',
+              borderBottom:
+                index === 0 ? 'none' : '1px solid var(--bg-card-border)'
+            }}
+          >
+            <div style={{ color: 'white' }}>
+              ✓ {h.changeDescription || h.description}
+            </div>
+
+            <div
+              style={{
+                color: 'var(--text-dim)',
+                marginTop: '3px',
+                fontSize: '0.75rem'
+              }}
+            >
+              {h.createdDate
+                ? new Date(h.createdDate).toLocaleString()
+                : ''}
+            </div>
+          </div>
+        ))
+    )}
+  </div>
+</div>
               </div>
             </div>
           </div>

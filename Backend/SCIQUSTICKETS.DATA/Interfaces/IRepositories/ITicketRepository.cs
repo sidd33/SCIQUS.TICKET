@@ -22,7 +22,8 @@ namespace SCIQUSTICKETS.DATA.Interfaces.IRepositories
 			int page,
 			int pageSize,
 			string? ownershipUserId = null,
-			Guid? ownershipDepartmentId = null);
+			Guid? ownershipDepartmentId = null,
+			string? createdByUserId = null);
 
 		Task<Ticket?> GetByIdWithDetailsAsync(Guid ticketId);
 		Task<Ticket> CreateTicketAsync(Ticket ticket);
