@@ -8,7 +8,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 {
     public interface ITicketTimelineService
     {
-        Task WriteHistoryAsync(Guid ticketId, TicketChangeType changeType, string? oldValue, string? newValue, string description, string actorId);
+        Task WriteHistoryAsync(Guid ticketId, TicketChangeType changeType, string? oldValue, string? newValue, string description, string actorId, bool isAccountActor = false);
         Task<List<TimelineEventResponse>> GetTimelineAsync(Guid ticketId, bool excludeInternal);
     }
 }

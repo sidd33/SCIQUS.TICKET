@@ -13,11 +13,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     {
         private readonly AppDbContext _context;
         private readonly ITicketTimelineService _timelineService;
+        private readonly ITicketService _ticketService;
+        private readonly ITicketNotificationService _notificationService;
 
-        public WhatsAppChannelService(AppDbContext context, ITicketTimelineService timelineService)
+        public WhatsAppChannelService(AppDbContext context, ITicketTimelineService timelineService, ITicketService ticketService, ITicketNotificationService notificationService)
         {
             _context = context;
             _timelineService = timelineService;
+            _ticketService = ticketService;
+            _notificationService = notificationService;
         }
 
         public async Task ProcessInboxMessageAsync(WhatsAppInboxMessage message)
@@ -36,41 +40,63 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var accountContact = await _context.AccountContacts
                 .FirstOrDefaultAsync(c => c.MobileNumber == phone || c.AlternateMobileNumber == phone);
 
-            if (accountContact != null && config.AutoCreateEnabled)
-            {
-                var ticket = new Ticket
-                {
-                    TicketId = Guid.NewGuid(),
-                    TicketNumber = $"TKT-{DateTime.UtcNow.Ticks}",
-                    Title = "WhatsApp Message from " + phone,
-                    Description = message.Body ?? "[Media]",
-                    AccountId = accountContact.AccountId,
-                    SourceType = "WhatsApp",
-                    SourceMessageId = message.ProviderMessageId,
-                    CreatedDate = DateTime.UtcNow,
-                    LastUpdatedDate = DateTime.UtcNow,
-                    
-                    PriorityId = config.DefaultPriorityId,
-                    BusinessImpactId = config.DefaultBusinessImpactId,
-                    DepartmentId = config.DefaultDepartmentId,
-                    TicketTypeId = config.DefaultTicketTypeId,
-                    TicketSubTypeId = config.DefaultTicketSubTypeId,
-                    AssignedToUserId = config.DefaultAssigneeId,
-                    StatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"),
-                    CreatedByUserId = accountContact.AccountId
-                };
+            var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
 
-                _context.Tickets.Add(ticket);
-                message.CreatedTicketId = ticket.TicketId;
-                
-                await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.WhatsAppReceived, null, null, $"WhatsApp message received from {phone}", "SYSTEM");
-                message.ProcessingStatus = "Processed";
-                message.ProcessedDate = DateTime.UtcNow;
+            if (accountContact != null)
+            {
+                // Check for existing open ticket for this account
+                var recentOpenTicket = await _context.Tickets
+                    .Where(t => t.AccountId == accountContact.AccountId && t.IsOpen)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .FirstOrDefaultAsync();
+
+                if (recentOpenTicket != null)
+                {
+                    // Append as comment
+                    await _ticketService.AddCommentAsync(recentOpenTicket.TicketId, new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.AddTicketCommentRequest
+                    {
+                        Comment = message.Body ?? "[Media]",
+                        IsInternalNote = false
+                    }, accountContact.AccountId);
+
+                    message.CreatedTicketId = recentOpenTicket.TicketId;
+                    message.ProcessingStatus = "Processed";
+                    message.ProcessedDate = now;
+                }
+                else if (config.AutoCreateEnabled)
+                {
+                    // Create new ticket using core TicketService
+                    var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                    {
+                        Title = "WhatsApp Message from " + phone,
+                        Description = message.Body ?? "[Media]",
+                        AccountId = accountContact.AccountId,
+                        SourceType = "WhatsApp",
+                        TicketTypeId = config.DefaultTicketTypeId,
+                        TicketSubTypeId = config.DefaultTicketSubTypeId,
+                        PriorityId = config.DefaultPriorityId,
+                        BusinessImpactId = config.DefaultBusinessImpactId,
+                        DepartmentId = config.DefaultDepartmentId,
+                        AssignedToUserId = config.DefaultAssigneeId,
+                        IsInternal = false
+                    };
+
+                    var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
+                    
+                    message.CreatedTicketId = createdTicket.TicketId;
+                    message.ProcessingStatus = "Processed";
+                    message.ProcessedDate = now;
+                }
+                else
+                {
+                    message.ProcessingStatus = "Failed";
+                    message.FailureReason = "No open ticket found and auto-create is disabled.";
+                }
             }
             else
             {
                 message.ProcessingStatus = "Failed";
-                message.FailureReason = accountContact == null ? "Account not found." : "Auto-create is disabled.";
+                message.FailureReason = "Account not found.";
             }
         }
 
@@ -87,6 +113,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (string.IsNullOrEmpty(contactPhone)) return false;
 
             // Send outbound message via configured WhatsApp provider
+            var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
             
             var outbound = new WhatsAppOutboundMessage
             {
@@ -97,7 +124,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 TemplateName = templateName,
                 Status = "Sent",
                 SentByUserId = sentByUserId,
-                SentDate = DateTime.UtcNow
+                SentDate = now
             };
 
             _context.WhatsAppOutboundMessages.Add(outbound);
@@ -111,7 +138,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 CommentText = body,
                 IsInternalNote = false,
                 CommentedByUserId = sentByUserId ?? "SYSTEM",
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = now
             };
             _context.TicketComments.Add(comment);
             
@@ -121,11 +148,14 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 TicketId = ticketId,
                 ChangeDescription = $"WhatsApp Reply sent to {contactPhone}",
                 ChangedByUserId = sentByUserId ?? "SYSTEM",
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = now
             };
             _context.TicketHistories.Add(history);
 
             await _context.SaveChangesAsync();
+            
+            await _notificationService.NotifyCommentAddedAsync(ticketId, sentByUserId ?? "SYSTEM", isCustomerVisible: true);
+            
             return true;
         }
 

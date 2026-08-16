@@ -23,6 +23,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		[ForeignKey("ChangedByUserId")]
 		public virtual ApplicationUser ChangedByUser { get; set; } = null!;
 
+		public string? ChangedByAccountId { get; set; }
+
 		public DateTime CreatedDate { get; set; }
 	}
 }

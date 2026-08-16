@@ -17,6 +17,7 @@ namespace SCIQUSTICKETS.COMMON.Enums
         WhatsAppReceived,
         Reopened,
         AutoClosed,
-        SlaBreached
+        SlaBreached,
+        Deleted
     }
 }

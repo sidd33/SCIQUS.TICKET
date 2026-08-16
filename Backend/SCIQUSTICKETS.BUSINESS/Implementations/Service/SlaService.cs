@@ -1,4 +1,4 @@
-﻿// SCIQUSTICKETS.BUSINESS/Implementations/Service/SlaService.cs
+// SCIQUSTICKETS.BUSINESS/Implementations/Service/SlaService.cs
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 using SCIQUSTICKETS.COMMON.Constants;
@@ -11,10 +11,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 	public class SlaService : ISlaService
 	{
 		private readonly AppDbContext _context;
+		private readonly ITicketNotificationService _notificationService;
+		private const string SystemActorId = "SYSTEM";
 
-		public SlaService(AppDbContext context)
+		public SlaService(AppDbContext context, ITicketNotificationService notificationService)
 		{
 			_context = context;
+			_notificationService = notificationService;
 		}
 
 		public DateTime GetClockStart(Ticket ticket)
@@ -94,8 +97,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					ChangedByUserId = SEED.SystemActorUserId,
 					CreatedDate = now
 				});
-				// NOTE: Module 5 notification hook (assignee + dept manager) goes here
-				// once ITicketNotificationService is available to this service.
+				await _notificationService.NotifySlaBreachedAsync(ticket.TicketId);
 			}
 
 			if (breached.Count > 0)
@@ -141,7 +143,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					ChangedByUserId = SEED.SystemActorUserId,
 					CreatedDate = now
 				});
-				// NOTE: Module 5 notification hook (assignee + account contact) goes here.
+				await _notificationService.NotifyClosedAsync(ticket.TicketId, SystemActorId);
 			}
 
 			if (dueForAutoClose.Count > 0)

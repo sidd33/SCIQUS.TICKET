@@ -8,11 +8,15 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System;
+using System.Security.Cryptography;
+using System.Text;
+using SCIQUSTICKETS.COMMON.Helpers;
 
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("WhatsAppWebhook")]
     public class WhatsAppWebhookController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -47,15 +51,32 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             using var reader = new StreamReader(Request.Body);
             var payload = await reader.ReadToEndAsync();
             
-            // Validate signature (X-Hub-Signature-256 for Meta)
-            var signature = Request.Headers["X-Hub-Signature-256"].ToString();
+            var signatureHeader = Request.Headers["X-Hub-Signature-256"].ToString();
             
             var config = await _context.WhatsAppChannelConfigs.FirstOrDefaultAsync();
-            // Note: Meta signs payloads using the App Secret, not the Verify Token. 
-            // Bypassing signature validation temporarily for testing until an App Secret field is added to the config.
-            if (config == null)
+            if (config == null || string.IsNullOrEmpty(config.AppSecret))
             {
-                return Unauthorized();
+                return Unauthorized("Channel configuration missing or AppSecret not set.");
+            }
+
+            // Validate signature
+            if (!string.IsNullOrEmpty(signatureHeader) && signatureHeader.StartsWith("sha256="))
+            {
+                var expectedHash = signatureHeader.Substring(7);
+                var keyBytes = Encoding.UTF8.GetBytes(config.AppSecret);
+                var payloadBytes = Encoding.UTF8.GetBytes(payload);
+                using var hmac = new HMACSHA256(keyBytes);
+                var hashBytes = hmac.ComputeHash(payloadBytes);
+                var actualHash = Convert.ToHexString(hashBytes).ToLower();
+
+                if (expectedHash != actualHash)
+                {
+                    return Unauthorized("Invalid signature.");
+                }
+            }
+            else
+            {
+                return Unauthorized("Missing signature.");
             }
 
             try
@@ -74,6 +95,13 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                             string fromPhone = messageData.GetProperty("from").GetString() ?? "";
                             string providerMsgId = messageData.GetProperty("id").GetString() ?? Guid.NewGuid().ToString();
                             string msgType = messageData.GetProperty("type").GetString() ?? "text";
+
+                            // Deduplication Check
+                            bool exists = await _context.WhatsAppInboxMessages.AnyAsync(m => m.ProviderMessageId == providerMsgId);
+                            if (exists)
+                            {
+                                return Ok(); // Already processed
+                            }
                             
                             string body = "";
                             if (msgType == "text" && messageData.TryGetProperty("text", out var textNode))
@@ -103,7 +131,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                                 FromName = fromName,
                                 MessageType = msgType,
                                 Body = body,
-                                ReceivedDate = DateTime.UtcNow
+                                ReceivedDate = TimeHelper.GetIndianTime()
                             };
 
                             _context.WhatsAppInboxMessages.Add(message);

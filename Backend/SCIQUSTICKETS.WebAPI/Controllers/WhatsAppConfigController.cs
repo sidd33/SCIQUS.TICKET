@@ -11,7 +11,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Policy = "whatsapp.config")]
     public class WhatsAppConfigController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -80,6 +80,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpGet("InboxReview")]
+        [Authorize(Policy = "whatsapp.review")]
         public async Task<IActionResult> GetInboxReview([FromQuery] string status = "Pending")
         {
             var messages = await _context.WhatsAppInboxMessages

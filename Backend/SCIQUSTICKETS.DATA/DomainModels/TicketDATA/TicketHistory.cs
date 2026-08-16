@@ -24,6 +24,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public ApplicationUser ChangedByUser { get; set; } = null!;
 
+		public string? ChangedByAccountId { get; set; }
+
 
 		public DateTime CreatedDate { get; set; }
 	}

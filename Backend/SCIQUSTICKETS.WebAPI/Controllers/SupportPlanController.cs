@@ -21,7 +21,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")] // Using custom authorization policy if available, otherwise just use Authorize
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<SupportPlanResponse>> Create(CreateSupportPlanRequest request)
         {
             var userId = User.Identity?.Name ?? "SYSTEM";
@@ -30,7 +30,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPut("{id:guid}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<SupportPlanResponse>> Update(Guid id, UpdateSupportPlanRequest request)
         {
             var userId = User.Identity?.Name ?? "SYSTEM";
@@ -39,6 +39,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<List<SupportPlanResponse>>> GetAll()
         {
             var result = await _supportPlanService.GetAllPlansAsync();
@@ -46,7 +47,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPost("assign")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<AccountSupportPlanResponse>> AssignPlan(AssignPlanRequest request)
         {
             var userId = User.Identity?.Name ?? "SYSTEM";
