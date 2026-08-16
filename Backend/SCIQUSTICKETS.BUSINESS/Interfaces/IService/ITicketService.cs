@@ -37,8 +37,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 
 		Task<bool> DeleteCommentAsync(Guid ticketId, Guid commentId, string actorUserId, bool canManageAll);
 
-		Task<bool> SoftDeleteAsync(Guid ticketId);
-
+		Task<bool> SoftDeleteAsync(Guid ticketId, string actorUserId);
 		Task<bool> ReassignAsync(Guid ticketId, AssignTicketRequest request, string actorUserId);
 		Task<bool> TransferDepartmentAsync(Guid ticketId, TransferTicketDepartmentRequest request, string actorUserId);
 		Task<bool> ChangePriorityImpactAsync(Guid ticketId, ChangePriorityImpactRequest request, string actorUserId);

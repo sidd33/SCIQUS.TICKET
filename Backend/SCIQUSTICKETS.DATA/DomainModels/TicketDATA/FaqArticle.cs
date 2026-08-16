@@ -24,5 +24,6 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public DateTime LastUpdatedDate { get; set; }
 
 		public string? CreatedByUserId { get; set; }
+		public Guid? TicketSubTypeId { get; set; }
 	}
 }

@@ -106,6 +106,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				articles = articles.Where(f => f.Title.Contains(trimmed) || f.Body.Contains(trimmed));
 			}
 
+			if (ticketSubTypeId.HasValue)
+			{
+				articles = articles.Where(f =>
+					f.TicketSubTypeId == ticketSubTypeId.Value ||
+					f.TicketSubTypeId == null);
+			}
+
 			var items = await articles.OrderBy(f => f.Title).Take(5).ToListAsync();
 			return items.Select(MapToResponse);
 		}

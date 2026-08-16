@@ -140,6 +140,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			ticket.PendingClosureDate = null;
 			ticket.LastUpdatedDate = now;
 
+			await RestartAcceptanceIfRequiredAsync(ticket, now);
+
 			_ticketRepository.Update(ticket);
 
 			await _ticketRepository.AddHistoryAsync(new TicketHistory
@@ -280,13 +282,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				var globalConfig = await _context.SlaConfigurations.AsNoTracking().FirstOrDefaultAsync(s => s.IsActive)
 					?? new SlaConfiguration();
 
-				bool requiresAcceptance = subType?.RequiresAcceptance ?? false;
+				bool requiresAcceptance =
+					subType?.RequiresAcceptance
+					?? globalConfig.RequiresAcceptanceGlobalDefault;
 
 				if (requiresAcceptance)
 				{
-					int deadlineHours = priority?.ResponseSlaInHours
-						?? subType?.AcceptanceDeadlineHours
-						?? 2;
+				   int deadlineHours = priority?.ResponseSlaInHours
+					?? subType?.AcceptanceDeadlineHours
+					?? globalConfig.DefaultAcceptanceDeadlineHours;
 
 					ticket.AcceptanceStatus = "Pending";
 					ticket.AcceptanceDeadlineAt = now.AddHours(deadlineHours);
@@ -437,8 +441,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 			else if (string.Equals(targetStatus.Name, "Reopened", StringComparison.OrdinalIgnoreCase))
 			{
-				var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+				var priority = await _ticketPriorityRepository
+					.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+
 				_slaService.ApplyReopen(ticket, priority);
+
+				await RestartAcceptanceIfRequiredAsync(ticket, now);
 			}
 
 			_ticketRepository.Update(ticket);
@@ -488,6 +496,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
 			_slaService.ApplyReopen(ticket, priority);
 			ticket.LastUpdatedDate = now;
+
+			await RestartAcceptanceIfRequiredAsync(ticket, now);
 
 			_ticketRepository.Update(ticket);
 
@@ -822,13 +832,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
-		public async Task<bool> SoftDeleteAsync(Guid ticketId)
+		public async Task<bool> SoftDeleteAsync(Guid ticketId, string actorUserId)
 		{
 			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
 			if (ticket == null) return false;
 
 			ticket.IsDeleted = true;
 			_ticketRepository.Update(ticket);
+
+			await _ticketRepository.AddHistoryAsync(new TicketHistory
+			{
+				TicketHistoryId = Guid.NewGuid(),
+				TicketId = ticketId,
+				ChangeDescription = "Ticket soft-deleted",
+				ChangedByUserId = actorUserId,
+				CreatedDate = TimeHelper.GetIndianTime()
+			});
+
 			await _ticketRepository.SaveChangesAsync();
 			return true;
 		}
@@ -853,6 +873,52 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				});
 		}
 
+		private async Task RestartAcceptanceIfRequiredAsync(
+	Ticket ticket,
+	DateTime now)
+		{
+			var subType = await _ticketSubTypeRepository.GetByIdAsync(ticket.TicketSubTypeId);
+
+			var globalConfig = await _context.SlaConfigurations
+				.AsNoTracking()
+				.FirstOrDefaultAsync(s => s.IsActive)
+				?? new SlaConfiguration();
+
+			bool requiresAcceptance =
+				subType?.RequiresAcceptance
+				?? globalConfig.RequiresAcceptanceGlobalDefault;
+
+			// No acceptance required
+			if (!requiresAcceptance)
+				return;
+
+			// Reopened ticket must have an assigned agent
+			if (string.IsNullOrEmpty(ticket.AssignedToUserId))
+				return;
+
+			var employee = await _context.Employees
+				.FirstOrDefaultAsync(e => e.Id == ticket.AssignedToUserId);
+
+			if (employee == null)
+				return;
+
+			var priority = await _ticketPriorityRepository
+				.GetByIdAsync(ticket.PriorityId);
+
+			int deadlineHours =
+				(priority as TicketPriority)?.ResponseSlaInHours
+				?? subType?.AcceptanceDeadlineHours
+				?? globalConfig.DefaultAcceptanceDeadlineHours;
+
+			ticket.AcceptanceStatus = "Pending";
+			ticket.AcceptanceDeadlineHours = deadlineHours;
+			ticket.AcceptanceDeadlineAt = now.AddHours(deadlineHours);
+
+			await _acceptanceService.StartAcceptanceCycleAsync(
+				ticket,
+				employee,
+				ticket.ReopenCount);
+		}
 		private static TicketResponse MapToResponse(Ticket t)
 		{
 			return new TicketResponse
@@ -891,7 +957,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				AcceptanceDeadlineAt = t.AcceptanceDeadlineAt,
 
 				IsAwaitingAcceptance =
-	string.Equals(t.Status?.Name, "Open", StringComparison.OrdinalIgnoreCase)
+	(string.Equals(t.Status?.Name, "Open", StringComparison.OrdinalIgnoreCase)
+	 || string.Equals(t.Status?.Name, "Reopened", StringComparison.OrdinalIgnoreCase))
 	&& string.Equals(t.AcceptanceStatus, "Pending", StringComparison.OrdinalIgnoreCase),
 
 				CreatedDate = t.CreatedDate,

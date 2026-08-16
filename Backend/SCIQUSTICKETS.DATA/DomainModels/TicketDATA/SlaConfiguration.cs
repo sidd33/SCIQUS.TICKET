@@ -25,5 +25,9 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public bool IsActive { get; set; } = true;
 		public DateTime CreatedDate { get; set; }
 		public DateTime LastUpdatedDate { get; set; }
+
+		public bool RequiresAcceptanceGlobalDefault { get; set; } = false;
+
+		public int DefaultAcceptanceDeadlineHours { get; set; } = 2;
 	}
 }

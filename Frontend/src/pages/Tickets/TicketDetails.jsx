@@ -193,11 +193,26 @@ const currentUserId = storedUser?.id;
     className="btn btn--secondary btn--sm"
     onClick={async () => {
       try {
-        await api.post(`/tickets/${ticketId}/reopen`);
+        const reason = window.prompt('Why are you reopening this ticket?');
+
+        if (!reason?.trim()) return;
+
+        await api.post(
+          `/tickets/${ticketId}/reopen`,
+          reason.trim()
+        );
+
         await loadTicketDetails();
       } catch (err) {
-        console.error('Failed to reopen ticket:', err.response?.data || err);
-        alert(err.response?.data?.message || 'Failed to reopen ticket');
+        console.error(
+          'Failed to reopen ticket:',
+          err.response?.data || err
+        );
+
+        alert(
+          err.response?.data?.message ||
+          'Failed to reopen ticket'
+        );
       }
     }}
   >
