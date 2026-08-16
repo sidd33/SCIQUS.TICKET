@@ -8,6 +8,7 @@ using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SCIQUSTICKETS.DATA.Contexts
 {

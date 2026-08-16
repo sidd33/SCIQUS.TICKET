@@ -12,7 +12,7 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260814113058_AddTicketSubTypeToFaqArticle")]
+    [Migration("20260816204357_AddTicketSubTypeToFaqArticle")]
     partial class AddTicketSubTypeToFaqArticle
     {
         /// <inheritdoc />
@@ -1388,6 +1388,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("PriorityId")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("char(36)");
+
                     b.Property<string>("RaisedByEmployeeId")
                         .HasColumnType("varchar(255)");
 
@@ -1632,8 +1635,14 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("ChangedByAccountId")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CommentText")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("CommentedByAccountId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("CommentedByUserId")
@@ -1669,6 +1678,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("ChangeDescription")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ChangedByAccountId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("ChangedByUserId")
@@ -1781,6 +1793,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("ChangeType")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ChangedByAccountId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("ChangedByUserId")
@@ -2025,6 +2040,10 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("WhatsAppChannelConfigId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("AppSecret")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("AutoCreateEnabled")
                         .HasColumnType("tinyint(1)");

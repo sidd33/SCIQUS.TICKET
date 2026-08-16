@@ -1,5 +1,6 @@
-﻿// SCIQUSTICKETS.DATA/DomainModels/TicketDATA/FaqArticle.cs
+// SCIQUSTICKETS.DATA/DomainModels/TicketDATA/FaqArticle.cs
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 {

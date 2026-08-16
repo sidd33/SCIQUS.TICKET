@@ -909,14 +909,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     DepartmentHeadId = table.Column<string>(type: "varchar(255)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    TicketAutoAssignMethod = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    W_Load = table.Column<double>(type: "double", nullable: true),
-                    W_Severity = table.Column<double>(type: "double", nullable: true),
-                    W_Recency = table.Column<double>(type: "double", nullable: true),
-                    RecencyCapHours = table.Column<int>(type: "int", nullable: true),
-                    MaxConsecutiveAssignments = table.Column<int>(type: "int", nullable: true),
-                    MaxConcurrentOpenTickets = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     LastModifiedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
@@ -1130,18 +1122,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     LastUpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     PendingClosureDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    ClosureConfirmedBy = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     SlaDueDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     SlaMetStatus = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    IsSlaBreached = table.Column<bool>(type: "tinyint(1)", nullable: true),
                     ResolutionTimeInHours = table.Column<double>(type: "double", nullable: true),
                     OverdueHours = table.Column<double>(type: "double", nullable: true),
-                    AcceptanceStatus = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    AcceptanceDeadlineAt = table.Column<DateTime>(type: "datetime(6)", nullable: true),
-                    AcceptanceDeadlineHours = table.Column<int>(type: "int", nullable: true),
                     CurrentFallbackAttempt = table.Column<int>(type: "int", nullable: false),
                     ClosedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     ReopenCount = table.Column<int>(type: "int", nullable: false),
@@ -1230,6 +1215,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     EncryptedApiToken = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     WebhookVerifyToken = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    AppSecret = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     AutoCreateEnabled = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -1471,7 +1458,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CommentedByUserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    IsInternalNote = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CommentedByAccountId = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
@@ -1504,6 +1492,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     ChangeDescription = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ChangedByUserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChangedByAccountId = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
@@ -1540,6 +1530,8 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     Reason = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ChangedByUserId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ChangedByAccountId = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },

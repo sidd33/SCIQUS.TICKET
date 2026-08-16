@@ -12,8 +12,8 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260814091242_AddAcceptanceGlobalDefaults")]
-    partial class AddAcceptanceGlobalDefaults
+    [Migration("20260816203602_AddTicketIsSlaBreached")]
+    partial class AddTicketIsSlaBreached
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -705,30 +705,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("LastModifiedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("MaxConcurrentOpenTickets")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MaxConsecutiveAssignments")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int?>("RecencyCapHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TicketAutoAssignMethod")
-                        .HasColumnType("longtext");
-
-                    b.Property<double?>("W_Load")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Recency")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Severity")
-                        .HasColumnType("double");
 
                     b.HasKey("DepartmentId");
 
@@ -1260,9 +1239,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("DefaultAcceptanceDeadlineHours")
-                        .HasColumnType("int");
-
                     b.Property<string>("DefaultAutoAssignMethod")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -1297,9 +1273,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<int>("ReopenGraceDays")
                         .HasColumnType("int");
 
-                    b.Property<bool>("RequiresAcceptanceGlobalDefault")
-                        .HasColumnType("tinyint(1)");
-
                     b.HasKey("SlaConfigurationId");
 
                     b.ToTable("SlaConfigurations");
@@ -1310,15 +1283,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("TicketId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
-
-                    b.Property<DateTime?>("AcceptanceDeadlineAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("AcceptanceDeadlineHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AcceptanceStatus")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("AccountId")
                         .HasColumnType("varchar(255)");
@@ -1331,9 +1295,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<DateTime?>("ClosedDate")
                         .HasColumnType("datetime(6)");
-
-                    b.Property<string>("ClosureConfirmedBy")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("CreatedByUserId")
                         .IsRequired()
@@ -1633,6 +1594,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("CommentedByAccountId")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("CommentedByUserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -1666,6 +1630,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("ChangeDescription")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ChangedByAccountId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("ChangedByUserId")
@@ -1778,6 +1745,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<string>("ChangeType")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ChangedByAccountId")
                         .HasColumnType("longtext");
 
                     b.Property<string>("ChangedByUserId")
@@ -2022,6 +1992,10 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("WhatsAppChannelConfigId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
+
+                    b.Property<string>("AppSecret")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("AutoCreateEnabled")
                         .HasColumnType("tinyint(1)");
