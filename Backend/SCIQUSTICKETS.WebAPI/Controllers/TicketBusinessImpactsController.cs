@@ -37,6 +37,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPost]
+
         public async Task<IActionResult> Create([FromBody] CreateTicketBusinessImpactRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
