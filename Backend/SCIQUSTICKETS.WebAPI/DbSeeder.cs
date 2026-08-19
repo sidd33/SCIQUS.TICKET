@@ -241,8 +241,14 @@ namespace SCIQUSTICKETS.WebAPI
                 new { Email = "customer.synergy@synergyhealth.org", Company = "Synergy Health", Phone = "+1 (555) 019-6382", AccCode = "ACC-1007" },
                 new { Email = "customer.quantum@quantumdata.com", Company = "Quantum Data Systems", Phone = "+1 (555) 019-7410", AccCode = "ACC-1008" },
                 new { Email = "customer.stellar@stellarmedia.net", Company = "Stellar Networks", Phone = "+1 (555) 019-9283", AccCode = "ACC-1009" },
-                new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" }
-            };
+                new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
+				new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
+                new { Email = "customer.orbit@orbitlogistics.com", Company = "Orbit Logistics", Phone = "+1 (555) 019-3157", AccCode = "ACC-1011" },
+                new { Email = "customer.vertex@vertexsystems.com", Company = "Vertex Systems", Phone = "+1 (555) 019-4628", AccCode = "ACC-1012" },
+                new { Email = "customer.bluewave@bluewaveconsulting.com", Company = "BlueWave Consulting", Phone = "+1 (555) 019-5834", AccCode = "ACC-1013" },
+                new { Email = "customer.novatek@novatekindustries.com", Company = "NovaTek Industries", Phone = "+1 (555) 019-6742", AccCode = "ACC-1014" },
+                new { Email = "customer.crescent@crescentdigital.com", Company = "Crescent Digital Solutions", Phone = "+1 (555) 019-7951", AccCode = "ACC-1015" }
+			    };
 
             foreach (var custData in customerSeedData)
             {
@@ -347,31 +353,141 @@ namespace SCIQUSTICKETS.WebAPI
                 await context.SaveChangesAsync();
             }
 
-            // 9. Ensure Types & Sub-Types Exist
-            if (!context.TicketTypes.Any())
-            {
-                var hardwareType = new TicketType { TicketTypeId = Guid.NewGuid(), Name = "Hardware & Devices", Description = "Laptop, Monitor, Printer, Network hardware", Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow };
-                var softwareType = new TicketType { TicketTypeId = Guid.NewGuid(), Name = "Software & Apps", Description = "OS, Office 365, VPN, ERP, Email access", Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow };
+			// 9. Ensure Types & Sub-Types Exist
+			// 9. Ensure Types & Sub-Types Exist
 
-                context.TicketTypes.AddRange(hardwareType, softwareType);
-                await context.SaveChangesAsync();
+			var hardwareType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Hardware & Devices" && !t.IsDeleted);
 
-                context.TicketSubTypes.AddRange(
-                    new TicketSubType { TicketSubTypeId = Guid.NewGuid(), Name = "Laptop Hardware Issue", Description = "Keyboard, Screen, Battery fault", TicketTypeId = hardwareType.TicketTypeId, DepartmentId = dept1Id, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
-                    new TicketSubType { TicketSubTypeId = Guid.NewGuid(), Name = "VPN / Network Access", Description = "VPN disconnects, WiFi auth failure", TicketTypeId = softwareType.TicketTypeId, DepartmentId = dept1Id, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow }
-                );
-                await context.SaveChangesAsync();
-            }
+			if (hardwareType == null)
+			{
+				hardwareType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Hardware & Devices",
+					Description = "Laptop, Monitor, Printer, Network hardware",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
 
-            // 10. Ensure Ticket ID Store Initialized
-            if (!context.TicketIDStores.Any())
-            {
-                context.TicketIDStores.Add(new TicketIDStore { Id = 1, Prefix = "TKT", CurrentNumber = 100, LastUpdatedDate = DateTime.UtcNow });
-                await context.SaveChangesAsync();
-            }
+				context.TicketTypes.Add(hardwareType);
+			}
 
-            // 11. Seed Dummy Tickets across all states
-            if (!context.Tickets.Any() || context.Tickets.Any(t => t.TicketTypeId == Guid.Empty))
+			var softwareType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Software & Apps" && !t.IsDeleted);
+
+			if (softwareType == null)
+			{
+				softwareType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Software & Apps",
+					Description = "OS, Office 365, VPN, ERP, Email access",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
+
+				context.TicketTypes.Add(softwareType);
+			}
+
+			var otherType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Other" && !t.IsDeleted);
+
+			if (otherType == null)
+			{
+				otherType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Other",
+					Description = "Issue does not match any of the available ticket types",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
+
+				context.TicketTypes.Add(otherType);
+			}
+
+			await context.SaveChangesAsync();
+
+			// 10. Ensure Ticket ID Store Initialized
+			// Ensure default subtypes exist
+
+			var hardwareOtherSubType = await context.TicketSubTypes
+				.FirstOrDefaultAsync(st =>
+					st.TicketTypeId == hardwareType.TicketTypeId &&
+					st.Name == "Other" &&
+					!st.IsDeleted);
+
+			if (hardwareOtherSubType == null)
+			{
+				context.TicketSubTypes.Add(new TicketSubType
+				{
+					TicketSubTypeId = Guid.NewGuid(),
+					Name = "Other",
+					Description = "Other hardware or device related issue",
+					TicketTypeId = hardwareType.TicketTypeId,
+					DepartmentId = dept1Id,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				});
+			}
+
+			var softwareOtherSubType = await context.TicketSubTypes
+				.FirstOrDefaultAsync(st =>
+					st.TicketTypeId == softwareType.TicketTypeId &&
+					st.Name == "Other" &&
+					!st.IsDeleted);
+
+			if (softwareOtherSubType == null)
+			{
+				context.TicketSubTypes.Add(new TicketSubType
+				{
+					TicketSubTypeId = Guid.NewGuid(),
+					Name = "Other",
+					Description = "Other software or application related issue",
+					TicketTypeId = softwareType.TicketTypeId,
+					DepartmentId = dept1Id,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				});
+			}
+
+			var otherSubType = await context.TicketSubTypes
+				.FirstOrDefaultAsync(st =>
+					st.TicketTypeId == otherType.TicketTypeId &&
+					st.Name == "Other" &&
+					!st.IsDeleted);
+
+			if (otherSubType == null)
+			{
+				context.TicketSubTypes.Add(new TicketSubType
+				{
+					TicketSubTypeId = Guid.NewGuid(),
+					Name = "Other",
+					Description = "Other type of customer issue",
+					TicketTypeId = otherType.TicketTypeId,
+					DepartmentId = dept1Id,
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				});
+			}
+
+			await context.SaveChangesAsync();
+
+			// 11. Seed Dummy Tickets across all states
+			if (!context.Tickets.Any() || context.Tickets.Any(t => t.TicketTypeId == Guid.Empty))
             {
                 var invalidTickets = context.Tickets.Where(t => t.TicketTypeId == Guid.Empty).ToList();
                 if (invalidTickets.Any())
@@ -496,23 +612,29 @@ namespace SCIQUSTICKETS.WebAPI
                 var typeObj = context.TicketTypes.FirstOrDefault();
                 var subTypeObj = context.TicketSubTypes.FirstOrDefault();
 
-                context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
-                {
-                    WhatsAppChannelConfigId = Guid.NewGuid(),
-                    Provider = 0, // Meta Cloud API
-                    BusinessPhoneNumberId = "1264781743381359",
-                    // Temporary Access Token (Expires in 24 hours)
-                    EncryptedApiToken = "EAAbjZAv1XkAUBSFCFrUBJslGDa763YL3yfmAqC470e2HOCUh6RBaYvYWy05O2SPNNgGyGrnl9pQcPl6kSZB7M5dZCJ4ckZCdZAlVZBDzdvvVSPGBGAAx76JZCkZBifM4ZA1uJ3r7nro7RHq92h8eZA472jE7ppdSwRKYxDHsZANwqNpvNmjjnxwaZCpaBYXLQwQElhM9SxQ5yDSdHA8ZC4mVALZAZBYR7A9FI1xh23RyqDlj5Epx7FyLAbrRcpMPhM76FA2dQRqdZA1yA8SAGtM7J0YFAzBnbfAZD", 
-                    WebhookVerifyToken = "sciqus_secret_token_123",
-                    IsEnabled = true,
-                    AutoCreateEnabled = true,
-                    DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
-                    DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
-                    DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
-                    DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
-                    DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
-                });
-                await context.SaveChangesAsync();
+				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
+				{
+					WhatsAppChannelConfigId = Guid.NewGuid(),
+					Provider = 0,
+
+					BusinessPhoneNumberId = "1264781743381359",
+
+					EncryptedApiToken = "...",
+
+					WebhookVerifyToken = "sciqus_secret_token_123",
+
+					AppSecret = "sciqus_app_secret_123",
+
+					IsEnabled = true,
+					AutoCreateEnabled = true,
+
+					DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
+					DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
+					DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
+					DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
+					DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
+				});
+				await context.SaveChangesAsync();
             }
         }
     }
