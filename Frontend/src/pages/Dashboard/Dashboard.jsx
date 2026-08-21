@@ -117,10 +117,16 @@ export default function Dashboard() {
                     <td><strong>{t.title}</strong></td>
                     <td>{t.departmentName || 'IT Support'}</td>
                     <td>
-                      <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
-                        {t.statusName || 'Open'}
-                      </span>
-                    </td>
+  {t.acceptanceStatus === 'Pending' ? (
+    <span className="badge badge--awaiting-acceptance">
+      Awaiting Acceptance
+    </span>
+  ) : (
+    <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
+      {t.statusName || 'Open'}
+    </span>
+  )}
+</td>
                     <td>{t.priorityName || 'Medium'}</td>
                     <td>
                       <SlaBadge dueDate={t.slaDueDate} isBreached={t.isSlaBreached} statusName={t.statusName} />

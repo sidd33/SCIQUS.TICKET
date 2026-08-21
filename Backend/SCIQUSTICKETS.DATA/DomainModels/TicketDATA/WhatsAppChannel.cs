@@ -1,5 +1,6 @@
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
+using SCIQUSTICKETS.COMMON.Helpers;
 
 namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 {
@@ -18,6 +19,7 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         public string BusinessPhoneNumberId { get; set; } = null!;
         public string EncryptedApiToken { get; set; } = null!;
         public string WebhookVerifyToken { get; set; } = null!;
+        public string AppSecret { get; set; } = null!;
         
         public bool IsEnabled { get; set; }
         public bool AutoCreateEnabled { get; set; }
@@ -62,7 +64,7 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         public Guid? CreatedTicketId { get; set; }
         public Ticket? CreatedTicket { get; set; }
         
-        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedDate { get; set; } = TimeHelper.GetIndianTime();
         public DateTime? ProcessedDate { get; set; }
     }
 
@@ -85,7 +87,7 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         public string? SentByUserId { get; set; }
         public ApplicationUser? SentByUser { get; set; }
         
-        public DateTime SentDate { get; set; } = DateTime.UtcNow;
+        public DateTime SentDate { get; set; } = TimeHelper.GetIndianTime();
         public string? FailureReason { get; set; }
     }
 }

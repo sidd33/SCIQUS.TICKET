@@ -8,6 +8,8 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 
+using SCIQUSTICKETS.COMMON.Helpers;
+
 namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 {
     public class TicketNotificationService : ITicketNotificationService
@@ -39,9 +41,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 EventType = eventType,
                 EntityType = "Ticket",
                 EntityId = ticketId.ToString(),
-                RedirectUrl = $"/ticket/{ticketId}",
+                RedirectUrl = $"/tickets/{ticketId}",
                 ActorUserId = actorUserId,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = TimeHelper.GetIndianTime()
             };
 
             if (payload != null)
@@ -123,11 +125,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
                 recipients.Add(ticket.AssignedToUserId);
             
-            // For portal tickets, account contacts could be notified, but we need their UserIds
-            // Assuming Account Contact has an associated UserId if they use the portal
-            if (isCustomerVisible && ticket.SourceType == "Portal" && ticket.CreatedByUserId != "SYSTEM")
+            if (isCustomerVisible && ticket.SourceType == "Portal" && !string.IsNullOrEmpty(ticket.AccountId))
             {
-                recipients.Add(ticket.CreatedByUserId);
+                recipients.Add(ticket.AccountId);
             }
 
             await CreateNotificationAsync("CommentAdded", ticketId, actorUserId, recipients, new { IsCustomerVisible = isCustomerVisible });
@@ -172,9 +172,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
                 recipients.Add(ticket.AssignedToUserId);
 
-            if (ticket.CreatedByUserId != "SYSTEM")
+            if (ticket.SourceType == "Portal" && !string.IsNullOrEmpty(ticket.AccountId))
             {
-                recipients.Add(ticket.CreatedByUserId);
+                recipients.Add(ticket.AccountId);
             }
 
             await CreateNotificationAsync("Closed", ticketId, actorUserId, recipients);

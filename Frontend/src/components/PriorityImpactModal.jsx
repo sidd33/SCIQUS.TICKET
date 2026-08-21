@@ -10,21 +10,22 @@ export default function PriorityImpactModal({ ticketId, currentPriorityId, curre
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    async function loadMaster() {
-      try {
-        const [pRes, iRes] = await Promise.all([
-          api.get('/ticketpriorities', { params: { includeInactive: false } }),
-          api.get('/ticketbusinessimpacts', { params: { includeInactive: false } })
-        ]);
-        setPriorities(pRes.data || []);
-        setImpacts(iRes.data || []);
-      } catch {
-        // fallback
-      }
-    }
-    loadMaster();
-  }, []);
+  async function loadMaster() {
+    try {
+      const [pRes, iRes] = await Promise.all([
+        api.get('/ticketpriorities', { params: { includeInactive: false } }),
+        api.get('/ticketbusinessimpacts', { params: { includeInactive: false } })
+      ]);
 
+      setPriorities(pRes.data?.items || pRes.data || []);
+      setImpacts(iRes.data?.items || iRes.data || []);
+    } catch {
+      // fallback
+    }
+  }
+
+  loadMaster();
+}, []);
   const selectedPriorityObj = priorities.find(p => (p.id || p.priorityId) === selectedPriorityId);
   const slaHours = selectedPriorityObj?.slaInHours || 24;
   const previewDueDate = new Date(Date.now() + slaHours * 60 * 60 * 1000).toLocaleString();

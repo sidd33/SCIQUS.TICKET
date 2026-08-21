@@ -33,16 +33,22 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly ISupportPlanService _supportPlanService;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
-			new(StringComparer.OrdinalIgnoreCase)
-			{
-				["Open"] = new[] { "In Progress", "Closed" },
-				["In Progress"] = new[] { "Pending", "Resolved", "Closed" },
-				["Pending"] = new[] { "In Progress", "Resolved", "Closed" },
-				["Resolved"] = new[] { "PendingClosure", "In Progress", "Closed" },
-				["PendingClosure"] = new[] { "Closed", "Reopened" },
-				["Closed"] = new[] { "Reopened" },
-				["Reopened"] = new[] { "In Progress" }
-			};
+	new(StringComparer.OrdinalIgnoreCase)
+	{
+		["Open"] = new[] { "In Progress", "PendingClosure" },
+
+		["In Progress"] = new[] { "Pending", "PendingClosure" },
+
+		["Pending"] = new[] { "In Progress", "PendingClosure" },
+
+		["Resolved"] = new[] { "PendingClosure", "In Progress" },
+
+		["PendingClosure"] = new[] { "Closed", "Reopened" },
+
+		["Closed"] = new[] { "Reopened" },
+
+		["Reopened"] = new[] { "In Progress" }
+	};
 
 		public TicketService(
 			ITicketRepository ticketRepository,
@@ -97,16 +103,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			_ticketRepository.Update(ticket);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				OldStatusId = oldStatusId,
-				NewStatusId = closedStatus.TicketStatusId,
-				ChangeDescription = "Closure confirmed by customer",
-				ChangedByUserId = accountActorId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), closedStatus.TicketStatusId.ToString(), "Closure confirmed by customer", accountActorId, true);
 
 			await _context.SaveChangesAsync();
 			return true;
@@ -134,33 +131,41 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			ticket.PendingClosureDate = null;
 			ticket.LastUpdatedDate = now;
 
+			await RestartAcceptanceIfRequiredAsync(ticket, now);
+
 			_ticketRepository.Update(ticket);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				OldStatusId = oldStatusId,
-				NewStatusId = reopenedStatus.TicketStatusId,
-				ChangeDescription = $"Closure rejected by customer. Reason: {reason}",
-				ChangedByUserId = accountActorId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), reopenedStatus.TicketStatusId.ToString(), $"Closure rejected by customer. Reason: {reason}", accountActorId, true);
 
 			await _context.SaveChangesAsync();
 			return true;
 		}
 
-		public async Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams, string? userId = null, bool canViewAll = true)
+		public async Task<PagedResponse<TicketResponse>> GetAllAsync(
+	TicketQueryParams queryParams,
+	string? userId = null,
+	bool canViewAll = true,
+	bool isCustomer = false)
 		{
 			string? ownershipUserId = null;
 			Guid? ownershipDepartmentId = null;
+			string? createdByUserId = null;
 
 			if (!canViewAll && !string.IsNullOrEmpty(userId))
 			{
-				var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == userId);
-				ownershipUserId = userId;
-				ownershipDepartmentId = employee?.DepartmentId;
+				if (isCustomer)
+				{
+					createdByUserId = userId;
+				}
+				else
+				{
+					var employee = await _context.Employees
+						.AsNoTracking()
+						.FirstOrDefaultAsync(e => e.Id == userId);
+
+					ownershipUserId = userId;
+					ownershipDepartmentId = employee?.DepartmentId;
+				}
 			}
 
 			var (items, totalCount) = await _ticketRepository.GetAllPagedAsync(
@@ -181,7 +186,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				queryParams.Page,
 				queryParams.PageSize,
 				ownershipUserId,
-				ownershipDepartmentId);
+				ownershipDepartmentId,
+				createdByUserId);
 
 			return new PagedResponse<TicketResponse>
 			{
@@ -258,13 +264,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				var globalConfig = await _context.SlaConfigurations.AsNoTracking().FirstOrDefaultAsync(s => s.IsActive)
 					?? new SlaConfiguration();
 
-				bool requiresAcceptance = subType?.RequiresAcceptance ?? false;
+				bool requiresAcceptance =
+					subType?.RequiresAcceptance
+					?? globalConfig.RequiresAcceptanceGlobalDefault;
 
 				if (requiresAcceptance)
 				{
-					int deadlineHours = priority?.ResponseSlaInHours
-						?? subType?.AcceptanceDeadlineHours
-						?? 2;
+				   int deadlineHours = priority?.ResponseSlaInHours
+					?? subType?.AcceptanceDeadlineHours
+					?? globalConfig.DefaultAcceptanceDeadlineHours;
 
 					ticket.AcceptanceStatus = "Pending";
 					ticket.AcceptanceDeadlineAt = now.AddHours(deadlineHours);
@@ -303,16 +311,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 
 			// Write Created TicketHistory row
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = created.TicketId,
-				OldStatusId = null,
-				NewStatusId = created.StatusId,
-				ChangeDescription = $"Ticket created. Assigned to: {(assignedEmployee?.Name ?? "Unassigned (Department Queue)")}",
-				ChangedByUserId = userId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(created.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Created, null, created.StatusId.ToString(), $"Ticket created. Assigned to: {(assignedEmployee?.Name ?? "Unassigned (Department Queue)")}", userId);
 
 			await _context.SaveChangesAsync();
 
@@ -359,16 +358,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			_ticketRepository.Update(ticket);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				OldStatusId = null,
-				NewStatusId = null,
-				ChangeDescription = "Ticket details edited",
-				ChangedByUserId = actorUserId,
-				CreatedDate = TimeHelper.GetIndianTime()
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, null, null, "Ticket details edited", actorUserId);
 
 			await _ticketRepository.SaveChangesAsync();
 
@@ -415,22 +405,17 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 			else if (string.Equals(targetStatus.Name, "Reopened", StringComparison.OrdinalIgnoreCase))
 			{
-				var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+				var priority = await _ticketPriorityRepository
+					.GetByIdAsync(ticket.PriorityId) as TicketPriority;
+
 				_slaService.ApplyReopen(ticket, priority);
+
+				await RestartAcceptanceIfRequiredAsync(ticket, now);
 			}
 
 			_ticketRepository.Update(ticket);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				OldStatusId = oldStatusId,
-				NewStatusId = targetStatus.TicketStatusId,
-				ChangeDescription = $"Status changed from {currentStatus.Name} to {targetStatus.Name}",
-				ChangedByUserId = userId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), targetStatus.TicketStatusId.ToString(), $"Status changed from {currentStatus.Name} to {targetStatus.Name}", userId);
 
 			await _ticketRepository.SaveChangesAsync();
 			return true;
@@ -467,18 +452,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_slaService.ApplyReopen(ticket, priority);
 			ticket.LastUpdatedDate = now;
 
+			await RestartAcceptanceIfRequiredAsync(ticket, now);
+
 			_ticketRepository.Update(ticket);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				OldStatusId = oldStatusId,
-				NewStatusId = reopenedStatus.TicketStatusId,
-				ChangeDescription = $"Reopened. Reason: {reason}",
-				ChangedByUserId = actorUserId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), reopenedStatus.TicketStatusId.ToString(), $"Reopened. Reason: {reason}", actorUserId);
 
 			await _context.SaveChangesAsync();
 			return true;
@@ -511,14 +489,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Remarks = request.Remarks
 			});
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				ChangeDescription = $"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}",
-				ChangedByUserId = actorUserId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Assigned, ticket.AssignedToUserId, request.AssignedToUserId, $"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}", actorUserId);
 
 			await _context.SaveChangesAsync();
 			return true;
@@ -557,14 +528,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Remarks = request.Comment
 			});
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticket.TicketId,
-				ChangeDescription = $"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}",
-				ChangedByUserId = actorUserId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Transferred, ticket.DepartmentId.ToString(), request.DepartmentId.ToString(), $"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}", actorUserId);
 
 			await _context.SaveChangesAsync();
 			return true;
@@ -682,14 +646,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			};
 
 			await _ticketRepository.AddCommentAsync(comment);
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticketId,
-				ChangeDescription = $"Comment added (Internal: {request.IsInternalNote})",
-				ChangedByUserId = userId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Commented, null, null, $"Comment added (Internal: {request.IsInternalNote})", userId);
 
 			await _ticketRepository.SaveChangesAsync();
 			return true;
@@ -706,14 +663,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			comment.IsDeleted = true;
 			_ticketRepository.UpdateComment(comment);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticketId,
-				ChangeDescription = "Comment soft-deleted",
-				ChangedByUserId = actorUserId,
-				CreatedDate = TimeHelper.GetIndianTime()
-			});
+			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Commented, null, null, "Comment soft-deleted", actorUserId);
 
 			await _ticketRepository.SaveChangesAsync();
 			return true;
@@ -740,14 +690,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			};
 
 			await _ticketAttachmentRepository.AddAsync(attachment);
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticketId,
-				ChangeDescription = $"Attachment uploaded: {file.FileName}",
-				ChangedByUserId = actorUserId,
-				CreatedDate = now
-			});
+			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.AttachmentAdded, null, null, $"Attachment uploaded: {file.FileName}", actorUserId);
 
 			await _context.SaveChangesAsync();
 
@@ -787,26 +730,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_fileStorageService.DeletePhysicalFile(attachment.FilePath);
 			_ticketAttachmentRepository.Delete(attachment);
 
-			await _ticketRepository.AddHistoryAsync(new TicketHistory
-			{
-				TicketHistoryId = Guid.NewGuid(),
-				TicketId = ticketId,
-				ChangeDescription = $"Attachment deleted: {attachment.FileName}",
-				ChangedByUserId = actorUserId,
-				CreatedDate = TimeHelper.GetIndianTime()
-			});
+			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.AttachmentAdded, null, null, $"Attachment deleted: {attachment.FileName}", actorUserId);
 
 			await _context.SaveChangesAsync();
 			return true;
 		}
 
-		public async Task<bool> SoftDeleteAsync(Guid ticketId)
+		public async Task<bool> SoftDeleteAsync(Guid ticketId, string actorUserId = "SYSTEM")
 		{
 			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
 			if (ticket == null) return false;
 
 			ticket.IsDeleted = true;
 			_ticketRepository.Update(ticket);
+			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, null, null, "Ticket soft-deleted", actorUserId);
 			await _ticketRepository.SaveChangesAsync();
 			return true;
 		}
@@ -831,6 +768,52 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				});
 		}
 
+		private async Task RestartAcceptanceIfRequiredAsync(
+	Ticket ticket,
+	DateTime now)
+		{
+			var subType = await _ticketSubTypeRepository.GetByIdAsync(ticket.TicketSubTypeId);
+
+			var globalConfig = await _context.SlaConfigurations
+				.AsNoTracking()
+				.FirstOrDefaultAsync(s => s.IsActive)
+				?? new SlaConfiguration();
+
+			bool requiresAcceptance =
+				subType?.RequiresAcceptance
+				?? globalConfig.RequiresAcceptanceGlobalDefault;
+
+			// No acceptance required
+			if (!requiresAcceptance)
+				return;
+
+			// Reopened ticket must have an assigned agent
+			if (string.IsNullOrEmpty(ticket.AssignedToUserId))
+				return;
+
+			var employee = await _context.Employees
+				.FirstOrDefaultAsync(e => e.Id == ticket.AssignedToUserId);
+
+			if (employee == null)
+				return;
+
+			var priority = await _ticketPriorityRepository
+				.GetByIdAsync(ticket.PriorityId);
+
+			int deadlineHours =
+				(priority as TicketPriority)?.ResponseSlaInHours
+				?? subType?.AcceptanceDeadlineHours
+				?? globalConfig.DefaultAcceptanceDeadlineHours;
+
+			ticket.AcceptanceStatus = "Pending";
+			ticket.AcceptanceDeadlineHours = deadlineHours;
+			ticket.AcceptanceDeadlineAt = now.AddHours(deadlineHours);
+
+			await _acceptanceService.StartAcceptanceCycleAsync(
+				ticket,
+				employee,
+				ticket.ReopenCount);
+		}
 		private static TicketResponse MapToResponse(Ticket t)
 		{
 			return new TicketResponse
@@ -869,7 +852,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				AcceptanceDeadlineAt = t.AcceptanceDeadlineAt,
 
 				IsAwaitingAcceptance =
-	string.Equals(t.Status?.Name, "Open", StringComparison.OrdinalIgnoreCase)
+	(string.Equals(t.Status?.Name, "Open", StringComparison.OrdinalIgnoreCase)
+	 || string.Equals(t.Status?.Name, "Reopened", StringComparison.OrdinalIgnoreCase))
 	&& string.Equals(t.AcceptanceStatus, "Pending", StringComparison.OrdinalIgnoreCase),
 
 				CreatedDate = t.CreatedDate,

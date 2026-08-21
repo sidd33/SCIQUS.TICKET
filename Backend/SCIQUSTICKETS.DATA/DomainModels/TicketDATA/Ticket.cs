@@ -70,6 +70,7 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public string? AssignedToUserId { get; set; }
 
+
 		public ApplicationUser? AssignedToUser { get; set; }
 
 

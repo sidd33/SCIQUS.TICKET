@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCIQUSTICKETS.DATA.Contexts;
 
@@ -11,9 +12,11 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260814091242_AddAcceptanceGlobalDefaults")]
+    partial class AddAcceptanceGlobalDefaults
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1144,9 +1147,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.Property<bool>("Status")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<Guid?>("TicketSubTypeId")
-                        .HasColumnType("char(36)");
 
                     b.Property<Guid>("TicketTypeId")
                         .HasColumnType("char(36)");

@@ -1,6 +1,7 @@
 ﻿// SCIQUSTICKETS.BUSINESS/Implementations/Service/AcceptanceService.cs
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
+using SCIQUSTICKETS.COMMON.Constants;
 using SCIQUSTICKETS.COMMON.Helpers;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
@@ -12,7 +13,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 	{
 		private readonly AppDbContext _context;
 		private readonly IAssignmentEngine _assignmentEngine;
-		private const string SystemActorId = "SYSTEM";
 
 		public AcceptanceService(AppDbContext context, IAssignmentEngine assignmentEngine)
 		{
@@ -152,7 +152,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					TicketHistoryId = Guid.NewGuid(),
 					TicketId = ticket.TicketId,
 					ChangeDescription = "Acceptance expired (no response within deadline)",
-					ChangedByUserId = SystemActorId,
+					ChangedByUserId = SEED.SystemActorUserId,
 					CreatedDate = now
 				});
 
@@ -211,7 +211,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				TicketAssignmentId = Guid.NewGuid(),
 				TicketId = ticket.TicketId,
 				AssignedToUserId = nextAgent.Id,
-				AssignedByUserId = SystemActorId,
+				AssignedByUserId = SEED.SystemActorUserId,
 				AssignedDate = now,
 				Status = "Assigned",
 				IsAutoAssigned = true,
@@ -233,7 +233,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				TicketHistoryId = Guid.NewGuid(),
 				TicketId = ticket.TicketId,
 				ChangeDescription = $"Re-routed to fallback agent: {nextAgent.Name} (attempt {ticket.CurrentFallbackAttempt})",
-				ChangedByUserId = SystemActorId,
+				ChangedByUserId = SEED.SystemActorUserId,
 				CreatedDate = now
 			});
 		}

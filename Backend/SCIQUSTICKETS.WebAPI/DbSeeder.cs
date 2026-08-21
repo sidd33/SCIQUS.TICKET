@@ -78,8 +78,38 @@ namespace SCIQUSTICKETS.WebAPI
             }
             await context.SaveChangesAsync();
 
-            // 3. Ensure Seed Admin User
-            var adminEmail = "admin@sciqustickets.com";
+			// Ensure System User Exists
+			var systemEmail = "system@sciqustickets.internal";
+
+			var systemUser = await userManager.FindByEmailAsync(systemEmail);
+
+			if (systemUser == null)
+			{
+				systemUser = new ApplicationUser
+				{
+					UserName = systemEmail,
+					Email = systemEmail,
+					EmailConfirmed = true,
+					Status = true,
+					HasLoginAccess = false,
+					CreatedDate = DateTime.UtcNow,
+					LastModifiedDate = DateTime.UtcNow
+				};
+
+				var systemResult = await userManager.CreateAsync(
+					systemUser,
+					"SystemAccount#2026Secure!"
+				);
+
+				if (!systemResult.Succeeded)
+				{
+					throw new Exception(
+						$"Failed to create system user: {string.Join(", ", systemResult.Errors.Select(e => e.Description))}"
+					);
+				}
+			}
+			// 3. Ensure Seed Admin User
+			var adminEmail = "admin@sciqustickets.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
             if (adminUser == null)
             {

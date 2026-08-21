@@ -11,7 +11,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Policy = "emailticket.config")]
     public class EmailTicketConfigController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -84,6 +84,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
         // GET: api/EmailTicketConfig/InboxReview
         [HttpGet("InboxReview")]
+        [Authorize(Policy = "emailticket.review")]
         public async Task<IActionResult> GetInboxReview([FromQuery] string status = "Pending")
         {
             var messages = await _context.EmailInboxMessages

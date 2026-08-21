@@ -7,6 +7,7 @@ using SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
+using SCIQUSTICKETS.COMMON.Helpers;
 
 namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 {
@@ -30,8 +31,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 PeriodType = request.PeriodType,
                 ValidityDays = request.ValidityDays,
                 BlockWhenExhausted = request.BlockWhenExhausted,
-                CreatedDate = DateTime.UtcNow,
-                LastUpdatedDate = DateTime.UtcNow,
+                CreatedDate = TimeHelper.GetIndianTime(),
+                LastUpdatedDate = TimeHelper.GetIndianTime(),
                 CreatedByUserId = createdByUserId
             };
 
@@ -53,7 +54,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             plan.ValidityDays = request.ValidityDays;
             plan.BlockWhenExhausted = request.BlockWhenExhausted;
             plan.Status = request.Status;
-            plan.LastUpdatedDate = DateTime.UtcNow;
+            plan.LastUpdatedDate = TimeHelper.GetIndianTime();
 
             _context.SupportPlans.Update(plan);
             await _context.SaveChangesAsync();
@@ -86,11 +87,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             foreach (var ap in activePlans)
             {
                 ap.Status = "Expired";
-                ap.LastUpdatedDate = DateTime.UtcNow;
+                ap.LastUpdatedDate = TimeHelper.GetIndianTime();
                 _context.AccountSupportPlans.Update(ap);
             }
 
-            var startDate = DateTime.UtcNow;
+            var startDate = TimeHelper.GetIndianTime();
             DateTime endDate;
 
             if (plan.ValidityDays.HasValue && plan.ValidityDays.Value > 0)
@@ -116,8 +117,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 StartDate = startDate,
                 EndDate = endDate,
                 Status = "Active",
-                CreatedDate = DateTime.UtcNow,
-                LastUpdatedDate = DateTime.UtcNow,
+                CreatedDate = TimeHelper.GetIndianTime(),
+                LastUpdatedDate = TimeHelper.GetIndianTime(),
                 CreatedByUserId = assignedByUserId
             };
 
@@ -137,7 +138,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 .OrderByDescending(ap => ap.CreatedDate)
                 .ToListAsync();
 
-            return accountPlans.Select(ap => MapToAccountPlanResponse(ap, ap.Consumptions.Count)).ToList();
+            var now = TimeHelper.GetIndianTime();
+            return accountPlans.Select(ap => {
+                var periodStart = GetPeriodStartDate(ap.StartDate, ap.SupportPlan?.PeriodType ?? "", now);
+                int consumedCount = ap.Consumptions.Count(c => !c.IsRefunded && c.ConsumedDate >= periodStart);
+                return MapToAccountPlanResponse(ap, consumedCount);
+            }).ToList();
         }
 
         public async Task<bool> HasAvailableQuotaAsync(string accountId)
@@ -149,7 +155,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             if (activePlan == null) return false;
 
-            if (activePlan.EndDate < DateTime.UtcNow)
+            var now = TimeHelper.GetIndianTime();
+            if (activePlan.EndDate < now)
             {
                 // It should have been expired by the background job, but double check
                 return false;
@@ -157,7 +164,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             if (activePlan.SupportPlan.BlockWhenExhausted)
             {
-                int consumed = activePlan.Consumptions.Count;
+                var periodStart = GetPeriodStartDate(activePlan.StartDate, activePlan.SupportPlan.PeriodType, now);
+                int consumed = activePlan.Consumptions.Count(c => !c.IsRefunded && c.ConsumedDate >= periodStart);
                 return consumed < activePlan.SupportPlan.TicketQuota;
             }
 
@@ -171,10 +179,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 .Include(ap => ap.Consumptions)
                 .FirstOrDefaultAsync(ap => ap.AccountId == accountId && ap.Status == "Active");
 
-            if (activePlan == null || activePlan.EndDate < DateTime.UtcNow) return false;
+            var now = TimeHelper.GetIndianTime();
+            if (activePlan == null || activePlan.EndDate < now) return false;
 
-            int consumed = activePlan.Consumptions.Count;
-            if (activePlan.SupportPlan.BlockWhenExhausted && consumed >= activePlan.SupportPlan.TicketQuota)
+            var periodStart = GetPeriodStartDate(activePlan.StartDate, activePlan.SupportPlan.PeriodType, now);
+            int consumed = activePlan.Consumptions.Count(c => !c.IsRefunded && c.ConsumedDate >= periodStart);
+            
+            bool isOverage = consumed >= activePlan.SupportPlan.TicketQuota;
+
+            if (activePlan.SupportPlan.BlockWhenExhausted && isOverage)
             {
                 return false;
             }
@@ -184,7 +197,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 SupportPlanConsumptionId = Guid.NewGuid(),
                 AccountSupportPlanId = activePlan.AccountSupportPlanId,
                 TicketId = ticketId,
-                ConsumedDate = DateTime.UtcNow
+                ConsumedDate = now,
+                IsOverage = isOverage
             };
 
             _context.SupportPlanConsumptions.Add(consumption);
@@ -195,7 +209,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public async Task ValidateAndExpirePlansAsync()
         {
-            var now = DateTime.UtcNow;
+            var now = TimeHelper.GetIndianTime();
             
             var expiredPlans = await _context.AccountSupportPlans
                 .Include(ap => ap.SupportPlan)
@@ -216,9 +230,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 // 2. Check quota expiry
                 if (!isExpired && plan.SupportPlan.BlockWhenExhausted)
                 {
-                    if (plan.Consumptions.Count >= plan.SupportPlan.TicketQuota)
+                    var periodType = plan.SupportPlan.PeriodType?.ToLower();
+                    if (periodType == "lifetime" || periodType == "one-time" || string.IsNullOrEmpty(periodType))
                     {
-                        isExpired = true;
+                        if (plan.Consumptions.Count(c => !c.IsRefunded) >= plan.SupportPlan.TicketQuota)
+                        {
+                            isExpired = true;
+                        }
                     }
                 }
 
@@ -264,5 +282,35 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 RemainingQuota = Math.Max(0, (accountPlan.SupportPlan?.TicketQuota ?? 0) - consumedCount)
             };
         }
+
+        private static DateTime GetPeriodStartDate(DateTime planStart, string periodType, DateTime now)
+        {
+            if (string.IsNullOrEmpty(periodType)) return planStart;
+            
+            periodType = periodType.ToLower();
+            if (periodType == "monthly")
+            {
+                var months = ((now.Year - planStart.Year) * 12) + now.Month - planStart.Month;
+                if (now.Day < planStart.Day) months--;
+                if (months < 0) return planStart;
+                return planStart.AddMonths(months);
+            }
+            if (periodType == "yearly")
+            {
+                var years = now.Year - planStart.Year;
+                if (now < planStart.AddYears(years)) years--;
+                if (years < 0) return planStart;
+                return planStart.AddYears(years);
+            }
+            if (periodType == "weekly")
+            {
+                var diff = (now - planStart).Days;
+                var weeks = diff / 7;
+                if (weeks < 0) return planStart;
+                return planStart.AddDays(weeks * 7);
+            }
+            return planStart;
+        }
     }
 }
+

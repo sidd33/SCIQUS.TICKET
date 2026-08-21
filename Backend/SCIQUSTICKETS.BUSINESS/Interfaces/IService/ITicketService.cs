@@ -12,8 +12,11 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 {
 	public interface ITicketService
 	{
-		Task<PagedResponse<TicketResponse>> GetAllAsync(TicketQueryParams queryParams, string? userId = null, bool canViewAll = true);
-
+		Task<PagedResponse<TicketResponse>> GetAllAsync(
+			TicketQueryParams queryParams,
+			string? userId = null,
+			bool canViewAll = true,
+			bool isCustomer = false);
 		Task<TicketResponse?> GetByIdAsync(Guid ticketId);
 
 		Task<TicketResponse> CreateAsync(
@@ -34,8 +37,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 
 		Task<bool> DeleteCommentAsync(Guid ticketId, Guid commentId, string actorUserId, bool canManageAll);
 
-		Task<bool> SoftDeleteAsync(Guid ticketId);
-
+		Task<bool> SoftDeleteAsync(Guid ticketId, string actorUserId = "SYSTEM");
 		Task<bool> ReassignAsync(Guid ticketId, AssignTicketRequest request, string actorUserId);
 		Task<bool> TransferDepartmentAsync(Guid ticketId, TransferTicketDepartmentRequest request, string actorUserId);
 		Task<bool> ChangePriorityImpactAsync(Guid ticketId, ChangePriorityImpactRequest request, string actorUserId);

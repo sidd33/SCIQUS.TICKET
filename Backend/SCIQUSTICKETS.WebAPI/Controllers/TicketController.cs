@@ -81,9 +81,14 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 	[FromQuery] TicketQueryParams queryParams)
 		{
 			var userId = GetUserId();
-			bool canViewAll = User.IsInRole("Admin"); // TODO: replace with real ticket.manage.all policy once policies are wired
+			bool canViewAll = User.IsInRole("Admin");
+			bool isCustomer = User.IsInRole("Customer");
 
-			var result = await _ticketService.GetAllAsync(queryParams, userId, canViewAll);
+			var result = await _ticketService.GetAllAsync(
+				queryParams,
+				userId,
+				canViewAll,
+				isCustomer);
 
 			return Ok(result);
 		}
@@ -194,8 +199,11 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
 			try
 			{
-				var result = await _ticketService.DeleteCommentAsync(id, commentId, userId, canManageAll: false);
-				if (!result) return NotFound();
+				var result = await _ticketService.DeleteCommentAsync(
+					id,
+					commentId,
+					userId,
+					canManageAll: User.IsInRole("Admin")); if (!result) return NotFound();
 
 				return Ok(new { Message = "Comment deleted successfully." });
 			}
@@ -265,7 +273,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		[HttpDelete("{id:guid}")]
 		public async Task<IActionResult> Delete(Guid id)
 		{
-			var result = await _ticketService.SoftDeleteAsync(id);
+			var userId = GetUserId();
+
+			var result = await _ticketService.SoftDeleteAsync(id, userId);
 
 			if (!result)
 				return NotFound();

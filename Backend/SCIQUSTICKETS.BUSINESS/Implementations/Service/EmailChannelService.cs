@@ -1,4 +1,6 @@
 using System;
+using System.Text.RegularExpressions;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
@@ -11,11 +13,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     {
         private readonly AppDbContext _context;
         private readonly ITicketTimelineService _timelineService;
+        private readonly ITicketService _ticketService;
+        private readonly ISlaService _slaService;
 
-        public EmailChannelService(AppDbContext context, ITicketTimelineService timelineService)
+        public EmailChannelService(AppDbContext context, ITicketTimelineService timelineService, ITicketService ticketService, ISlaService slaService)
         {
             _context = context;
             _timelineService = timelineService;
+            _ticketService = ticketService;
+            _slaService = slaService;
         }
 
         public async Task ProcessInboxMessageAsync(EmailInboxMessage message)
@@ -33,43 +39,78 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 .Include(c => c.Account)
                 .FirstOrDefaultAsync(c => c.Email == message.FromEmail);
 
-            if (accountContact != null && config.AutoCreateEnabled)
-            {
-                var ticket = new Ticket
-                {
-                    TicketId = Guid.NewGuid(),
-                    TicketNumber = $"TKT-{DateTime.UtcNow.Ticks}", // placeholder for auto-generation
-                    Title = message.Subject,
-                    Description = message.Body,
-                    AccountId = accountContact.AccountId,
-                    SourceType = "Email",
-                    SourceMessageId = message.ProviderMessageId,
-                    EmailReceivedDate = message.EmailReceivedDate,
-                    CreatedDate = DateTime.UtcNow,
-                    LastUpdatedDate = DateTime.UtcNow,
-                    
-                    // Apply defaults
-                    PriorityId = config.DefaultPriorityId,
-                    BusinessImpactId = config.DefaultBusinessImpactId,
-                    DepartmentId = config.DefaultDepartmentId,
-                    TicketTypeId = config.DefaultTicketTypeId,
-                    TicketSubTypeId = config.DefaultTicketSubTypeId,
-                    AssignedToUserId = config.DefaultAssigneeId,
-                    StatusId = Guid.Parse("10000000-0000-0000-0000-000000000001"), // Open
-                    CreatedByUserId = "SYSTEM"
-                };
+            var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
 
-                _context.Tickets.Add(ticket);
-                message.CreatedTicketId = ticket.TicketId;
+            if (accountContact != null)
+            {
+                Ticket? existingTicket = null;
                 
-                await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.EmailReceived, null, null, $"Email received from {message.FromEmail}", "SYSTEM");
-                message.ProcessingStatus = "Processed";
-                message.ProcessedDate = DateTime.UtcNow;
+                // Attempt to thread by extracting TKT-\d+ from subject
+                var match = Regex.Match(message.Subject, @"TKT-\d+");
+                if (match.Success)
+                {
+                    string ticketNum = match.Value;
+                    existingTicket = await _context.Tickets
+                        .FirstOrDefaultAsync(t => t.TicketNumber == ticketNum && t.AccountId == accountContact.AccountId && t.IsOpen);
+                }
+
+                if (existingTicket != null)
+                {
+                    // Thread as comment
+                    await _ticketService.AddCommentAsync(existingTicket.TicketId, new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.AddTicketCommentRequest
+                    {
+                        Comment = message.Body,
+                        IsInternalNote = false
+                    }, accountContact.AccountId);
+
+                    message.CreatedTicketId = existingTicket.TicketId;
+                    message.ProcessingStatus = "Processed";
+                    message.ProcessedDate = now;
+                }
+                else if (config.AutoCreateEnabled)
+                {
+                    var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                    {
+                        Title = message.Subject,
+                        Description = message.Body,
+                        AccountId = accountContact.AccountId,
+                        SourceType = "Email",
+                        TicketTypeId = config.DefaultTicketTypeId,
+                        TicketSubTypeId = config.DefaultTicketSubTypeId,
+                        PriorityId = config.DefaultPriorityId,
+                        BusinessImpactId = config.DefaultBusinessImpactId,
+                        DepartmentId = config.DefaultDepartmentId,
+                        AssignedToUserId = config.DefaultAssigneeId,
+                        IsInternal = false
+                    };
+
+                    var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
+                    
+                    // Fix SLA clock for email tickets
+                    var ticketEntity = await _context.Tickets.FindAsync(createdTicket.TicketId);
+                    if (ticketEntity != null)
+                    {
+                        ticketEntity.EmailReceivedDate = message.EmailReceivedDate;
+                        var priority = await _context.TicketPriorities.FindAsync(ticketEntity.PriorityId);
+                        var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(ticketEntity, priority);
+                        ticketEntity.SlaDueDate = slaDueDate;
+                        ticketEntity.SlaMetStatus = slaMetStatus;
+                    }
+                    
+                    message.CreatedTicketId = createdTicket.TicketId;
+                    message.ProcessingStatus = "Processed";
+                    message.ProcessedDate = now;
+                }
+                else
+                {
+                    message.ProcessingStatus = "Failed";
+                    message.FailureReason = "No open ticket found and auto-create is disabled.";
+                }
             }
             else
             {
                 message.ProcessingStatus = "Failed";
-                message.FailureReason = accountContact == null ? "Account not found." : "Auto-create is disabled.";
+                message.FailureReason = "Account not found.";
             }
         }
 
@@ -87,6 +128,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (string.IsNullOrEmpty(contactEmail)) return false;
 
             // Send outbound email via configured provider (SMTP/API)
+            var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
             
             // Add comment to ticket
             var comment = new TicketComment
@@ -96,7 +138,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 CommentText = body,
                 IsInternalNote = false,
                 CommentedByUserId = sentByUserId ?? "SYSTEM",
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = now
             };
 
             _context.TicketComments.Add(comment);
@@ -109,7 +151,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 TicketId = ticketId,
                 ChangeDescription = $"Email Reply sent to {contactEmail}",
                 ChangedByUserId = sentByUserId ?? "SYSTEM",
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = now
             };
             _context.TicketHistories.Add(history);
 
@@ -119,6 +161,30 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public async Task SyncMailboxesAsync()
         {
+            var config = await _context.EmailTicketConfigs.FirstOrDefaultAsync();
+            if (config == null || !config.IsEnabled) return;
+
+            // Mock polling loop for "Pending" inbox messages, deduplicating by ProviderMessageId
+            var pendingMessages = await _context.EmailInboxMessages
+                .Where(m => m.ProcessingStatus == "Pending")
+                .ToListAsync();
+
+            var processedProviderMessageIds = new HashSet<string>();
+
+            foreach (var message in pendingMessages)
+            {
+                if (!string.IsNullOrEmpty(message.ProviderMessageId) && !processedProviderMessageIds.Add(message.ProviderMessageId))
+                {
+                    message.ProcessingStatus = "Duplicate";
+                    message.ProcessedDate = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
+                    continue;
+                }
+
+                await ProcessInboxMessageAsync(message);
+            }
+
+            await _context.SaveChangesAsync();
+            
             await Task.CompletedTask;
         }
     }

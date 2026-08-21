@@ -10,7 +10,9 @@ using SCIQUSTICKETS.DATA.Implementations.Repositories;
 using SCIQUSTICKETS.DATA.Interfaces.IRepositories;
 using SCIQUSTICKETS.BUSINESS.Validations.Authorization;
 
+
 using System.Text;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -150,6 +152,7 @@ builder.Services.AddScoped<ITicketReportService, TicketReportService>();
 builder.Services.AddScoped<IAcceptanceService, AcceptanceService>();
 builder.Services.AddScoped<IFaqArticleService, FaqArticleService>();
 builder.Services.AddScoped<IPortalTicketService, PortalTicketService>();
+builder.Services.AddScoped<ISystemActorService, SystemActorService>();
 
 var app = builder.Build();
 

@@ -22,6 +22,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 
 		public bool IsInternalNote { get; set; }
 
+		public string? CommentedByAccountId { get; set; }
+
 
 		public DateTime CreatedDate { get; set; }
 

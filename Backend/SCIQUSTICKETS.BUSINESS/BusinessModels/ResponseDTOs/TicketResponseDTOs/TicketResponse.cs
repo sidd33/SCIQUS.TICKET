@@ -65,6 +65,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 
 		public string? AssignedToUserName { get; set; }
 
+
+
 		// SLA & Acceptance
 		public DateTime? SlaDueDate { get; set; }
 		public string? SlaMetStatus { get; set; }

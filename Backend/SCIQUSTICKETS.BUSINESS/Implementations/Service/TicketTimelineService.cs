@@ -8,6 +8,7 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 using SCIQUSTICKETS.COMMON.Enums;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
+using SCIQUSTICKETS.COMMON.Helpers;
 
 namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 {
@@ -20,7 +21,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             _context = context;
         }
 
-        public async Task WriteHistoryAsync(Guid ticketId, TicketChangeType changeType, string? oldValue, string? newValue, string description, string actorId)
+        public async Task WriteHistoryAsync(Guid ticketId, TicketChangeType changeType, string? oldValue, string? newValue, string description, string actorId, bool isAccountActor = false)
         {
             var history = new TicketStateChangeHistory
             {
@@ -29,8 +30,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 OldValue = oldValue,
                 NewValue = newValue,
                 Reason = description,
-                ChangedByUserId = actorId,
-                CreatedDate = DateTime.UtcNow
+                ChangedByUserId = isAccountActor ? "SYSTEM" : actorId,
+                ChangedByAccountId = isAccountActor ? actorId : null,
+                CreatedDate = TimeHelper.GetIndianTime()
             };
 
             _context.TicketStateChangeHistories.Add(history);
