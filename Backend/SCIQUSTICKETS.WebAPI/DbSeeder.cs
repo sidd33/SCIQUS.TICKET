@@ -419,72 +419,84 @@ namespace SCIQUSTICKETS.WebAPI
 			await context.SaveChangesAsync();
 
 			// 10. Ensure Ticket ID Store Initialized
-			// Ensure default subtypes exist
+			// 10. Ensure Ticket Sub-Types Exist
 
-			var hardwareOtherSubType = await context.TicketSubTypes
-				.FirstOrDefaultAsync(st =>
-					st.TicketTypeId == hardwareType.TicketTypeId &&
-					st.Name == "Other" &&
-					!st.IsDeleted);
-
-			if (hardwareOtherSubType == null)
+			var subTypeSeedData = new[]
 			{
-				context.TicketSubTypes.Add(new TicketSubType
-				{
-					TicketSubTypeId = Guid.NewGuid(),
-					Name = "Other",
-					Description = "Other hardware or device related issue",
-					TicketTypeId = hardwareType.TicketTypeId,
-					DepartmentId = dept1Id,
-					Status = true,
-					IsDeleted = false,
-					CreatedDate = DateTime.UtcNow,
-					LastUpdatedDate = DateTime.UtcNow
-				});
-			}
+    // Hardware & Devices
+    new
+	{
+		Name = "Laptop Issue",
+		Description = "Laptop hardware or device related issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Printer Issue",
+		Description = "Printer or printing hardware related issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Network Device Issue",
+		Description = "Router, switch or other network device issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
 
-			var softwareOtherSubType = await context.TicketSubTypes
-				.FirstOrDefaultAsync(st =>
-					st.TicketTypeId == softwareType.TicketTypeId &&
-					st.Name == "Other" &&
-					!st.IsDeleted);
+    // Software & Apps
+    new
+	{
+		Name = "VPN Issue",
+		Description = "VPN connection or authentication issue",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Email / Outlook Issue",
+		Description = "Email, Outlook or mailbox related issue",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Application Access Issue",
+		Description = "Access or permission issue for an application",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	}
+};
 
-			if (softwareOtherSubType == null)
+			foreach (var data in subTypeSeedData)
 			{
-				context.TicketSubTypes.Add(new TicketSubType
-				{
-					TicketSubTypeId = Guid.NewGuid(),
-					Name = "Other",
-					Description = "Other software or application related issue",
-					TicketTypeId = softwareType.TicketTypeId,
-					DepartmentId = dept1Id,
-					Status = true,
-					IsDeleted = false,
-					CreatedDate = DateTime.UtcNow,
-					LastUpdatedDate = DateTime.UtcNow
-				});
-			}
+				var existingSubType = await context.TicketSubTypes
+					.FirstOrDefaultAsync(st =>
+						st.TicketTypeId == data.TicketTypeId &&
+						st.Name == data.Name &&
+						!st.IsDeleted);
 
-			var otherSubType = await context.TicketSubTypes
-				.FirstOrDefaultAsync(st =>
-					st.TicketTypeId == otherType.TicketTypeId &&
-					st.Name == "Other" &&
-					!st.IsDeleted);
-
-			if (otherSubType == null)
-			{
-				context.TicketSubTypes.Add(new TicketSubType
+				if (existingSubType == null)
 				{
-					TicketSubTypeId = Guid.NewGuid(),
-					Name = "Other",
-					Description = "Other type of customer issue",
-					TicketTypeId = otherType.TicketTypeId,
-					DepartmentId = dept1Id,
-					Status = true,
-					IsDeleted = false,
-					CreatedDate = DateTime.UtcNow,
-					LastUpdatedDate = DateTime.UtcNow
-				});
+					context.TicketSubTypes.Add(new TicketSubType
+					{
+						TicketSubTypeId = Guid.NewGuid(),
+						Name = data.Name,
+						Description = data.Description,
+						TicketTypeId = data.TicketTypeId,
+						DepartmentId = data.DepartmentId,
+
+						// IMPORTANT
+						RequiresAcceptance = true,
+
+						Status = true,
+						IsDeleted = false,
+						CreatedDate = DateTime.UtcNow,
+						LastUpdatedDate = DateTime.UtcNow
+					});
+				}
 			}
 
 			await context.SaveChangesAsync();
