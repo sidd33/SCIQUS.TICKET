@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCIQUSTICKETS.DATA.Contexts;
 
@@ -11,9 +12,11 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260816203845_AddTicketAcceptance")]
+    partial class AddTicketAcceptance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -702,30 +705,9 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime>("LastModifiedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int?>("MaxConcurrentOpenTickets")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MaxConsecutiveAssignments")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int?>("RecencyCapHours")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TicketAutoAssignMethod")
-                        .HasColumnType("longtext");
-
-                    b.Property<double?>("W_Load")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Recency")
-                        .HasColumnType("double");
-
-                    b.Property<double?>("W_Severity")
-                        .HasColumnType("double");
 
                     b.HasKey("DepartmentId");
 
@@ -1145,9 +1127,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<bool>("Status")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<Guid?>("TicketSubTypeId")
-                        .HasColumnType("char(36)");
-
                     b.Property<Guid>("TicketTypeId")
                         .HasColumnType("char(36)");
 
@@ -1332,9 +1311,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<DateTime?>("ClosedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("ClosureConfirmedBy")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("CreatedByUserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -1383,9 +1359,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<Guid>("PriorityId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid?>("ProductId")
                         .HasColumnType("char(36)");
 
                     b.Property<string>("RaisedByEmployeeId")
@@ -1631,9 +1604,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Property<Guid>("TicketCommentId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
-
-                    b.Property<string>("ChangedByAccountId")
-                        .HasColumnType("longtext");
 
                     b.Property<string>("CommentText")
                         .IsRequired()

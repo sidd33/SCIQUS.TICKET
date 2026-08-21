@@ -30,9 +30,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 OldValue = oldValue,
                 NewValue = newValue,
                 Reason = description,
-                ChangedByUserId = isAccountActor ? "SYSTEM" : actorId,
-                ChangedByAccountId = isAccountActor ? actorId : null,
-                CreatedDate = TimeHelper.GetIndianTime()
+				ChangedByUserId = isAccountActor ? null : actorId,
+				ChangedByAccountId = isAccountActor ? actorId : null,
+				CreatedDate = TimeHelper.GetIndianTime()
             };
 
             _context.TicketStateChangeHistories.Add(history);

@@ -8,10 +8,9 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
-	// TODO: add [Authorize(Policy = "portalticket.access")] once wired.
 	[ApiController]
 	[Route("api/[controller]")]
-	[Authorize]
+	[Authorize(Policy = "portalticket.access")]
 	public class PortalTicketController : ControllerBase
 	{
 		private readonly IPortalTicketService _portalTicketService;
@@ -107,7 +106,6 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			}
 		}
 
-		// PortalTicketController.cs — add
 		[HttpPost("{parentId:guid}/follow-up")]
 		public async Task<IActionResult> CreateFollowUp(Guid parentId, [FromBody] PortalCreateTicketRequest request)
 		{
@@ -125,7 +123,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
 		private string GetAccountId()
 		{
-			return User.FindFirstValue(ClaimTypes.NameIdentifier)
+			return User.FindFirstValue("AccountId")
 				?? throw new UnauthorizedAccessException("Account id not found in token.");
 		}
 	}

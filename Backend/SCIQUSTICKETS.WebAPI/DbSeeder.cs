@@ -7,6 +7,7 @@ using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
+using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
 
 namespace SCIQUSTICKETS.WebAPI
 {
@@ -16,6 +17,12 @@ namespace SCIQUSTICKETS.WebAPI
         {
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            
+            if (context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                await context.Database.MigrateAsync();
+            }
+
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
 
@@ -79,22 +86,24 @@ namespace SCIQUSTICKETS.WebAPI
             await context.SaveChangesAsync();
 
 			// Ensure System User Exists
+			// Ensure System User Exists
 			var systemEmail = "system@sciqustickets.internal";
 
 			var systemUser = await userManager.FindByEmailAsync(systemEmail);
 
 			if (systemUser == null)
 			{
-				systemUser = new ApplicationUser
-				{
-					UserName = systemEmail,
-					Email = systemEmail,
-					EmailConfirmed = true,
-					Status = true,
-					HasLoginAccess = false,
-					CreatedDate = DateTime.UtcNow,
-					LastModifiedDate = DateTime.UtcNow
-				};
+                systemUser = new ApplicationUser
+                {
+                    Id = SEED.SystemActorUserId,
+                    UserName = systemEmail,
+                    Email = systemEmail,
+                    EmailConfirmed = true,
+                    Status = true,
+                    HasLoginAccess = false,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedDate = DateTime.UtcNow
+                };
 
 				var systemResult = await userManager.CreateAsync(
 					systemUser,
@@ -108,6 +117,7 @@ namespace SCIQUSTICKETS.WebAPI
 					);
 				}
 			}
+		
 			// 3. Ensure Seed Admin User
 			var adminEmail = "admin@sciqustickets.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
@@ -241,8 +251,14 @@ namespace SCIQUSTICKETS.WebAPI
                 new { Email = "customer.synergy@synergyhealth.org", Company = "Synergy Health", Phone = "+1 (555) 019-6382", AccCode = "ACC-1007" },
                 new { Email = "customer.quantum@quantumdata.com", Company = "Quantum Data Systems", Phone = "+1 (555) 019-7410", AccCode = "ACC-1008" },
                 new { Email = "customer.stellar@stellarmedia.net", Company = "Stellar Networks", Phone = "+1 (555) 019-9283", AccCode = "ACC-1009" },
-                new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" }
-            };
+                new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
+				new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
+                new { Email = "customer.orbit@orbitlogistics.com", Company = "Orbit Logistics", Phone = "+1 (555) 019-3157", AccCode = "ACC-1011" },
+                new { Email = "customer.vertex@vertexsystems.com", Company = "Vertex Systems", Phone = "+1 (555) 019-4628", AccCode = "ACC-1012" },
+                new { Email = "customer.bluewave@bluewaveconsulting.com", Company = "BlueWave Consulting", Phone = "+1 (555) 019-5834", AccCode = "ACC-1013" },
+                new { Email = "customer.novatek@novatekindustries.com", Company = "NovaTek Industries", Phone = "+1 (555) 019-6742", AccCode = "ACC-1014" },
+                new { Email = "customer.crescent@crescentdigital.com", Company = "Crescent Digital Solutions", Phone = "+1 (555) 019-7951", AccCode = "ACC-1015" }
+			    };
 
             foreach (var custData in customerSeedData)
             {
@@ -347,31 +363,153 @@ namespace SCIQUSTICKETS.WebAPI
                 await context.SaveChangesAsync();
             }
 
-            // 9. Ensure Types & Sub-Types Exist
-            if (!context.TicketTypes.Any())
-            {
-                var hardwareType = new TicketType { TicketTypeId = Guid.NewGuid(), Name = "Hardware & Devices", Description = "Laptop, Monitor, Printer, Network hardware", Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow };
-                var softwareType = new TicketType { TicketTypeId = Guid.NewGuid(), Name = "Software & Apps", Description = "OS, Office 365, VPN, ERP, Email access", Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow };
+			// 9. Ensure Types & Sub-Types Exist
+			// 9. Ensure Types & Sub-Types Exist
 
-                context.TicketTypes.AddRange(hardwareType, softwareType);
-                await context.SaveChangesAsync();
+			var hardwareType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Hardware & Devices" && !t.IsDeleted);
 
-                context.TicketSubTypes.AddRange(
-                    new TicketSubType { TicketSubTypeId = Guid.NewGuid(), Name = "Laptop Hardware Issue", Description = "Keyboard, Screen, Battery fault", TicketTypeId = hardwareType.TicketTypeId, DepartmentId = dept1Id, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
-                    new TicketSubType { TicketSubTypeId = Guid.NewGuid(), Name = "VPN / Network Access", Description = "VPN disconnects, WiFi auth failure", TicketTypeId = softwareType.TicketTypeId, DepartmentId = dept1Id, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow }
-                );
-                await context.SaveChangesAsync();
-            }
+			if (hardwareType == null)
+			{
+				hardwareType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Hardware & Devices",
+					Description = "Laptop, Monitor, Printer, Network hardware",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
 
-            // 10. Ensure Ticket ID Store Initialized
-            if (!context.TicketIDStores.Any())
-            {
-                context.TicketIDStores.Add(new TicketIDStore { Id = 1, Prefix = "TKT", CurrentNumber = 100, LastUpdatedDate = DateTime.UtcNow });
-                await context.SaveChangesAsync();
-            }
+				context.TicketTypes.Add(hardwareType);
+			}
 
-            // 11. Seed Dummy Tickets across all states
-            if (!context.Tickets.Any() || context.Tickets.Any(t => t.TicketTypeId == Guid.Empty))
+			var softwareType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Software & Apps" && !t.IsDeleted);
+
+			if (softwareType == null)
+			{
+				softwareType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Software & Apps",
+					Description = "OS, Office 365, VPN, ERP, Email access",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
+
+				context.TicketTypes.Add(softwareType);
+			}
+
+			var otherType = await context.TicketTypes
+				.FirstOrDefaultAsync(t => t.Name == "Other" && !t.IsDeleted);
+
+			if (otherType == null)
+			{
+				otherType = new TicketType
+				{
+					TicketTypeId = Guid.NewGuid(),
+					Name = "Other",
+					Description = "Issue does not match any of the available ticket types",
+					Status = true,
+					IsDeleted = false,
+					CreatedDate = DateTime.UtcNow,
+					LastUpdatedDate = DateTime.UtcNow
+				};
+
+				context.TicketTypes.Add(otherType);
+			}
+
+			await context.SaveChangesAsync();
+
+			// 10. Ensure Ticket ID Store Initialized
+			// 10. Ensure Ticket Sub-Types Exist
+
+			var subTypeSeedData = new[]
+			{
+    // Hardware & Devices
+    new
+	{
+		Name = "Laptop Issue",
+		Description = "Laptop hardware or device related issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Printer Issue",
+		Description = "Printer or printing hardware related issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Network Device Issue",
+		Description = "Router, switch or other network device issue",
+		TicketTypeId = hardwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+
+    // Software & Apps
+    new
+	{
+		Name = "VPN Issue",
+		Description = "VPN connection or authentication issue",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Email / Outlook Issue",
+		Description = "Email, Outlook or mailbox related issue",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	},
+	new
+	{
+		Name = "Application Access Issue",
+		Description = "Access or permission issue for an application",
+		TicketTypeId = softwareType.TicketTypeId,
+		DepartmentId = dept1Id
+	}
+};
+
+			foreach (var data in subTypeSeedData)
+			{
+				var existingSubType = await context.TicketSubTypes
+					.FirstOrDefaultAsync(st =>
+						st.TicketTypeId == data.TicketTypeId &&
+						st.Name == data.Name &&
+						!st.IsDeleted);
+
+				if (existingSubType == null)
+				{
+					context.TicketSubTypes.Add(new TicketSubType
+					{
+						TicketSubTypeId = Guid.NewGuid(),
+						Name = data.Name,
+						Description = data.Description,
+						TicketTypeId = data.TicketTypeId,
+						DepartmentId = data.DepartmentId,
+
+						// IMPORTANT
+						RequiresAcceptance = true,
+
+						Status = true,
+						IsDeleted = false,
+						CreatedDate = DateTime.UtcNow,
+						LastUpdatedDate = DateTime.UtcNow
+					});
+				}
+			}
+
+			await context.SaveChangesAsync();
+
+			// 11. Seed Dummy Tickets across all states
+			if (!context.Tickets.Any() || context.Tickets.Any(t => t.TicketTypeId == Guid.Empty))
             {
                 var invalidTickets = context.Tickets.Where(t => t.TicketTypeId == Guid.Empty).ToList();
                 if (invalidTickets.Any())
@@ -496,22 +634,129 @@ namespace SCIQUSTICKETS.WebAPI
                 var typeObj = context.TicketTypes.FirstOrDefault();
                 var subTypeObj = context.TicketSubTypes.FirstOrDefault();
 
-                context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
+				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
+				{
+					WhatsAppChannelConfigId = Guid.NewGuid(),
+					Provider = 0,
+
+					BusinessPhoneNumberId = "15556638753",
+
+					EncryptedApiToken = "...",
+
+					WebhookVerifyToken = "sciqus_secret_token_123",
+
+					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12",
+
+					IsEnabled = true,
+					AutoCreateEnabled = true,
+
+					DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
+					DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
+					DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
+					DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
+					DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
+				});
+				await context.SaveChangesAsync();
+            }
+
+            // 13. Seed Support Plans and Contacts for Local Dev Testing
+            if (!context.SupportPlans.Any())
+            {
+                var strictPlan = new SupportPlan
                 {
-                    WhatsAppChannelConfigId = Guid.NewGuid(),
-                    Provider = 0, // Meta Cloud API
-                    BusinessPhoneNumberId = "1264781743381359",
-                    // Temporary Access Token (Expires in 24 hours)
-                    EncryptedApiToken = "EAAbjZAv1XkAUBSFCFrUBJslGDa763YL3yfmAqC470e2HOCUh6RBaYvYWy05O2SPNNgGyGrnl9pQcPl6kSZB7M5dZCJ4ckZCdZAlVZBDzdvvVSPGBGAAx76JZCkZBifM4ZA1uJ3r7nro7RHq92h8eZA472jE7ppdSwRKYxDHsZANwqNpvNmjjnxwaZCpaBYXLQwQElhM9SxQ5yDSdHA8ZC4mVALZAZBYR7A9FI1xh23RyqDlj5Epx7FyLAbrRcpMPhM76FA2dQRqdZA1yA8SAGtM7J0YFAzBnbfAZD", 
-                    WebhookVerifyToken = "sciqus_secret_token_123",
-                    IsEnabled = true,
-                    AutoCreateEnabled = true,
-                    DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
-                    DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
-                    DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
-                    DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
-                    DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
-                });
+                    SupportPlanId = Guid.NewGuid(),
+                    Name = "Standard Plan - Strict Limit",
+                    Description = "Only allows 5 tickets. Blocks any overages.",
+                    TicketQuota = 5,
+                    PeriodType = "Monthly",
+                    ValidityDays = 30,
+                    BlockWhenExhausted = true,
+                    Status = true,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                var overagePlan = new SupportPlan
+                {
+                    SupportPlanId = Guid.NewGuid(),
+                    Name = "Premium Plan - Allows Overages",
+                    Description = "Base quota of 10 tickets, but allows unlimited overages.",
+                    TicketQuota = 10,
+                    PeriodType = "Monthly",
+                    ValidityDays = 30,
+                    BlockWhenExhausted = false,
+                    Status = true,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                context.SupportPlans.AddRange(strictPlan, overagePlan);
+                await context.SaveChangesAsync();
+
+                // Fetch seeded accounts
+                var acmeAccount = await context.Accounts.FirstOrDefaultAsync(a => a.AccountName.Contains("Acme"));
+                var apexAccount = await context.Accounts.FirstOrDefaultAsync(a => a.AccountName.Contains("Apex"));
+
+                if (acmeAccount != null)
+                {
+                    // Assign strict plan to Acme Corporation
+                    context.AccountSupportPlans.Add(new AccountSupportPlan
+                    {
+                        AccountSupportPlanId = Guid.NewGuid(),
+                        AccountId = acmeAccount.AccountId,
+                        SupportPlanId = strictPlan.SupportPlanId,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddDays(30),
+                        Status = "Active",
+                        CreatedDate = DateTime.UtcNow
+                    });
+
+                    // Add Siddhartha Swamy contact to Acme Corporation with phone +918888888888
+                    if (!context.AccountContacts.Any(c => c.Email == "siddharthaswamy16@gmail.com"))
+                    {
+                        context.AccountContacts.Add(new AccountContacts
+                        {
+                            AccountContactsId = Guid.NewGuid(),
+                            AccountId = acmeAccount.AccountId,
+                            PersonName = "Siddhartha Swamy",
+                            Email = "siddharthaswamy16@gmail.com",
+                            MobileNumber = "+918888888888",
+                            IsDeleted = false,
+                            CreatedDate = DateTime.UtcNow,
+                            LastUpdatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                if (apexAccount != null)
+                {
+                    // Assign overage plan to Apex Technologies
+                    context.AccountSupportPlans.Add(new AccountSupportPlan
+                    {
+                        AccountSupportPlanId = Guid.NewGuid(),
+                        AccountId = apexAccount.AccountId,
+                        SupportPlanId = overagePlan.SupportPlanId,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddDays(30),
+                        Status = "Active",
+                        CreatedDate = DateTime.UtcNow
+                    });
+
+                    // Add Siddhartha Swamy contact to Apex Technologies with phone +919999999999
+                    if (!context.AccountContacts.Any(c => c.MobileNumber == "+919999999999"))
+                    {
+                        context.AccountContacts.Add(new AccountContacts
+                        {
+                            AccountContactsId = Guid.NewGuid(),
+                            AccountId = apexAccount.AccountId,
+                            PersonName = "Siddhartha Swamy (WhatsApp)",
+                            Email = "siddharthaswamy_wa@apextech.com",
+                            MobileNumber = "+919999999999",
+                            IsDeleted = false,
+                            CreatedDate = DateTime.UtcNow,
+                            LastUpdatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
                 await context.SaveChangesAsync();
             }
         }

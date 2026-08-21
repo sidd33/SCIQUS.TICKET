@@ -160,7 +160,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
+				new Claim("AccountId", user.Id)
+			};
 
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 

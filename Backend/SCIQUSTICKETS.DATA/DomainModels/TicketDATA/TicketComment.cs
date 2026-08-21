@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 
 namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
@@ -23,6 +24,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public bool IsInternalNote { get; set; }
 
 		public string? CommentedByAccountId { get; set; }
+
+		public string? ChangedByAccountId { get; set; }
 
 
 		public DateTime CreatedDate { get; set; }
