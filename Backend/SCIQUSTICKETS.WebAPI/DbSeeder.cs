@@ -79,22 +79,24 @@ namespace SCIQUSTICKETS.WebAPI
             await context.SaveChangesAsync();
 
 			// Ensure System User Exists
+			// Ensure System User Exists
 			var systemEmail = "system@sciqustickets.internal";
 
 			var systemUser = await userManager.FindByEmailAsync(systemEmail);
 
 			if (systemUser == null)
 			{
-				systemUser = new ApplicationUser
-				{
-					UserName = systemEmail,
-					Email = systemEmail,
-					EmailConfirmed = true,
-					Status = true,
-					HasLoginAccess = false,
-					CreatedDate = DateTime.UtcNow,
-					LastModifiedDate = DateTime.UtcNow
-				};
+                systemUser = new ApplicationUser
+                {
+                    Id = SEED.SystemActorUserId,
+                    UserName = systemEmail,
+                    Email = systemEmail,
+                    EmailConfirmed = true,
+                    Status = true,
+                    HasLoginAccess = false,
+                    CreatedDate = DateTime.UtcNow,
+                    LastModifiedDate = DateTime.UtcNow
+                };
 
 				var systemResult = await userManager.CreateAsync(
 					systemUser,
@@ -108,6 +110,7 @@ namespace SCIQUSTICKETS.WebAPI
 					);
 				}
 			}
+		
 			// 3. Ensure Seed Admin User
 			var adminEmail = "admin@sciqustickets.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
