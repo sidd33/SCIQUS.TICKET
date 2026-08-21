@@ -40,18 +40,52 @@ export default function Customers() {
   };
 
   const handleAddCustomer = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post('/Accounts', newCompany);
-      setMessage({ type: 'success', text: `Customer company '${newCompany.name}' created successfully.` });
-      setShowAddModal(false);
-      setNewCompany({ name: '', email: '', phone: '', address: '' });
-      fetchCustomers();
-    } catch (err) {
-      console.error('Failed to create customer:', err);
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to create customer company.' });
-    }
-  };
+  e.preventDefault();
+
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+    const newAccount = {
+      AccountName: newCompany.name,
+      Email: newCompany.email,
+      RegisteredMobileNumber: newCompany.phone,
+      Address: newCompany.address || '',
+      CreatedByUserId: currentUser?.id,
+      AccountManagerId: currentUser?.id,
+    };
+
+    console.log('Creating customer with:', newAccount);
+
+    await api.post('/Accounts', newAccount);
+
+    setMessage({
+      type: 'success',
+      text: `Customer company '${newCompany.name}' created successfully.`
+    });
+
+    setShowAddModal(false);
+
+    setNewCompany({
+      name: '',
+      email: '',
+      phone: '',
+      address: ''
+    });
+
+    fetchCustomers();
+
+  } catch (err) {
+    console.error('Failed to create customer:', err);
+    console.error('Backend response:', err.response?.data);
+
+    setMessage({
+      type: 'error',
+      text:
+        err.response?.data?.message ||
+        'Failed to create customer company.'
+    });
+  }
+};
 
   const filtered = customers.filter(c =>
     (c.accountName || c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
