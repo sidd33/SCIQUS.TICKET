@@ -5,8 +5,6 @@ import api from '../../../api/axios';
 
 export default function WhatsAppConfig() {
   const [phoneNumberId, setPhoneNumberId] = useState('');
-  const [verifyToken, setVerifyToken] = useState('');
-  const [accessToken, setAccessToken] = useState('');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -29,14 +27,13 @@ export default function WhatsAppConfig() {
     setSaving(true);
     try {
       await api.post('/WhatsAppConfig', {
-        provider: 'Meta',
+        provider: 0,
         businessPhoneNumberId: phoneNumberId,
-        webhookVerifyToken: verifyToken,
-        encryptedApiToken: accessToken
+        encryptedApiToken: '',
+        webhookVerifyToken: '',
+        appSecret: ''
       });
       setMessage('WhatsApp Cloud API integration settings saved!');
-      setVerifyToken('');
-      setAccessToken('');
     } catch (error) {
       console.error('Failed to save config', error);
       setMessage('Failed to save settings.');
@@ -52,7 +49,7 @@ export default function WhatsAppConfig() {
           <h1><MessageSquare size={24} style={{ verticalAlign: 'middle', marginRight: '8px' }} /> WhatsApp Channel Configuration</h1>
           <p>Module 8 — Meta Cloud API webhook verification, Access tokens, and message queue review.</p>
         </div>
-        <Link to="/admin/whatsapp-inbox-review" className="btn btn--secondary">
+        <Link to="/admin/whatsapp-review" className="btn btn--secondary">
           Review WhatsApp Inbox
         </Link>
       </div>
@@ -61,18 +58,8 @@ export default function WhatsAppConfig() {
 
       <form onSubmit={handleSave} className="glass-card" style={{ padding: '1.5rem', maxWidth: '600px' }}>
         <div className="form-group">
-          <label>WhatsApp Business Phone Number ID</label>
-          <input value={phoneNumberId} onChange={(e) => setPhoneNumberId(e.target.value)} required />
-        </div>
-
-        <div className="form-group">
-          <label>Webhook Verify Token</label>
-          <input value={verifyToken} onChange={(e) => setVerifyToken(e.target.value)} placeholder="Leave blank to keep existing" />
-        </div>
-
-        <div className="form-group">
-          <label>Meta Cloud API Permanent Access Token</label>
-          <textarea rows={3} value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="Leave blank to keep existing" />
+          <label>WhatsApp Phone Number</label>
+          <input value={phoneNumberId} onChange={(e) => setPhoneNumberId(e.target.value)} placeholder="+1 (555) 663-8753" required />
         </div>
 
         <div style={{ marginTop: '1.5rem' }}>

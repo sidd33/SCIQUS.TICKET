@@ -16,6 +16,14 @@ export default function MasterConfig() {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
 
+<<<<<<< HEAD
+=======
+  // Integrations state
+  const [apiToken, setApiToken] = useState('');
+  const [webhookToken, setWebhookToken] = useState('');
+  const [appSecret, setAppSecret] = useState('');
+
+>>>>>>> develop
   const [modal, setModal] = useState(null); // { kind: 'type'|'subtype'|'priority'|'impact', mode: 'create'|'edit', data: {...} }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -27,6 +35,7 @@ export default function MasterConfig() {
 
   async function loadMasterData() {
     try {
+<<<<<<< HEAD
       const [tRes, stRes, pRes, iRes] = await Promise.all([
   api.get('/TicketTypes', { params: { includeInactive: true } }),
   api.get('/TicketSubTypes', { params: { includeInactive: true } }),
@@ -44,6 +53,33 @@ console.log('TicketSubTypes response:', stRes.data);
   console.error('Failed to load master data:', err);
   setError(err.response?.data?.message || 'Failed to load master data.');
 }
+=======
+      const [tRes, stRes, pRes, iRes, wRes] = await Promise.all([
+        api.get('/TicketTypes', { params: { includeInactive: true } }),
+        api.get('/TicketSubTypes', { params: { includeInactive: true } }),
+        api.get('/TicketPriorities', { params: { includeInactive: true } }),
+        api.get('/TicketBusinessImpacts', { params: { includeInactive: true } }),
+        api.get('/WhatsAppConfig').catch(() => ({ data: null }))
+      ]);
+
+      console.log('TicketTypes response:', tRes.data);
+      console.log('TicketSubTypes response:', stRes.data);
+
+      setTypes(tRes.data?.items || []);
+      setSubTypes(stRes.data?.items || []);
+      setPriorities(pRes.data?.items || []);
+      setImpacts(iRes.data?.items || []);
+      
+      if (wRes.data) {
+        setApiToken(wRes.data.encryptedApiToken || '');
+        setWebhookToken(wRes.data.webhookVerifyToken || '');
+        setAppSecret(wRes.data.appSecret || '');
+      }
+    } catch (err) {
+      console.error('Failed to load master data:', err);
+      setError(err.response?.data?.message || 'Failed to load master data.');
+    }
+>>>>>>> develop
   }
 
   async function loadSupportingData() {
@@ -140,6 +176,29 @@ console.log('TicketSubTypes response:', stRes.data);
     }
   }
 
+<<<<<<< HEAD
+=======
+  async function handleSaveIntegrations(e) {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      await api.post('/WhatsAppConfig', {
+        provider: 0,
+        businessPhoneNumberId: '',
+        encryptedApiToken: apiToken,
+        webhookVerifyToken: webhookToken,
+        appSecret: appSecret
+      });
+      alert('System Integration settings saved securely.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save integration settings.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+>>>>>>> develop
   const renderModalForm = () => {
     if (!modal) return null;
     const { kind, data } = modal;
@@ -265,7 +324,15 @@ console.log('TicketSubTypes response:', stRes.data);
             <button className={`btn btn--sm ${activeTab === 'impacts' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('impacts')}>
               Business Impacts ({impacts.length})
             </button>
+<<<<<<< HEAD
           </div>
+=======
+            <button className={`btn btn--sm ${activeTab === 'integrations' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('integrations')}>
+              System Integrations
+            </button>
+          </div>
+          {activeTab !== 'integrations' && (
+>>>>>>> develop
           <button
             className="btn btn--primary btn--sm"
             onClick={() => {
@@ -281,6 +348,7 @@ console.log('TicketSubTypes response:', stRes.data);
           >
             <Plus size={14} /> Add
           </button>
+          )}
         </div>
       </div>
 
@@ -378,6 +446,44 @@ console.log('TicketSubTypes response:', stRes.data);
               </tbody>
             </table>
           )}
+<<<<<<< HEAD
+=======
+
+          {activeTab === 'integrations' && (
+            <div style={{ padding: '1rem', maxWidth: '600px' }}>
+              <div style={{ marginBottom: '1.5rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>🔒 IT Administrator Settings</strong>
+                <p style={{ marginTop: '0.4rem' }}>
+                  Configure secure API tokens and secrets for external channels. These tokens grant backend system access and are hidden from regular support staff.
+                </p>
+                {error && <div className="field-error" style={{ marginTop: '1rem' }}>{error}</div>}
+              </div>
+
+              <form onSubmit={handleSaveIntegrations}>
+                <div className="form-group">
+                  <label>Meta Cloud API Permanent Access Token</label>
+                  <textarea rows={3} value={apiToken} onChange={(e) => setApiToken(e.target.value)} placeholder="Leave blank to keep existing" />
+                </div>
+
+                <div className="form-group">
+                  <label>App Secret</label>
+                  <input type="password" value={appSecret} onChange={(e) => setAppSecret(e.target.value)} placeholder="Leave blank to keep existing" />
+                </div>
+
+                <div className="form-group">
+                  <label>Webhook Verify Token</label>
+                  <input value={webhookToken} onChange={(e) => setWebhookToken(e.target.value)} placeholder="Leave blank to keep existing" />
+                </div>
+
+                <div style={{ marginTop: '1.5rem' }}>
+                  <button type="submit" className="btn btn--primary" disabled={saving}>
+                    {saving ? 'Saving...' : 'Save System Integrations'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+>>>>>>> develop
         </div>
       </div>
 

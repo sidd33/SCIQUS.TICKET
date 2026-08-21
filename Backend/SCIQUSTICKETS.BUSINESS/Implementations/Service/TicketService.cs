@@ -155,7 +155,26 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			{
 				if (isCustomer)
 				{
-					createdByUserId = userId;
+					var userObj = await _context.Users.FindAsync(userId);
+					if (userObj != null)
+					{
+						var contact = await _context.AccountContacts
+							.AsNoTracking()
+							.FirstOrDefaultAsync(c => c.Email == userObj.Email);
+						
+						if (contact != null)
+						{
+							queryParams.AccountId = contact.AccountId;
+						}
+						else
+						{
+							createdByUserId = userId;
+						}
+					}
+					else
+					{
+						createdByUserId = userId;
+					}
 				}
 				else
 				{

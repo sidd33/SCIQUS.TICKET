@@ -7,6 +7,7 @@ using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
+using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
 
 namespace SCIQUSTICKETS.WebAPI
 {
@@ -16,6 +17,12 @@ namespace SCIQUSTICKETS.WebAPI
         {
             using var scope = serviceProvider.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            
+            if (context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                await context.Database.MigrateAsync();
+            }
+
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<UserRole>>();
 
@@ -632,13 +639,21 @@ namespace SCIQUSTICKETS.WebAPI
 					WhatsAppChannelConfigId = Guid.NewGuid(),
 					Provider = 0,
 
+<<<<<<< HEAD
 					BusinessPhoneNumberId = "1264781743381359",
+=======
+					BusinessPhoneNumberId = "15556638753",
+>>>>>>> develop
 
 					EncryptedApiToken = "...",
 
 					WebhookVerifyToken = "sciqus_secret_token_123",
 
+<<<<<<< HEAD
 					AppSecret = "sciqus_app_secret_123",
+=======
+					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12",
+>>>>>>> develop
 
 					IsEnabled = true,
 					AutoCreateEnabled = true,
@@ -650,6 +665,110 @@ namespace SCIQUSTICKETS.WebAPI
 					DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
 				});
 				await context.SaveChangesAsync();
+<<<<<<< HEAD
+=======
+            }
+
+            // 13. Seed Support Plans and Contacts for Local Dev Testing
+            if (!context.SupportPlans.Any())
+            {
+                var strictPlan = new SupportPlan
+                {
+                    SupportPlanId = Guid.NewGuid(),
+                    Name = "Standard Plan - Strict Limit",
+                    Description = "Only allows 5 tickets. Blocks any overages.",
+                    TicketQuota = 5,
+                    PeriodType = "Monthly",
+                    ValidityDays = 30,
+                    BlockWhenExhausted = true,
+                    Status = true,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                var overagePlan = new SupportPlan
+                {
+                    SupportPlanId = Guid.NewGuid(),
+                    Name = "Premium Plan - Allows Overages",
+                    Description = "Base quota of 10 tickets, but allows unlimited overages.",
+                    TicketQuota = 10,
+                    PeriodType = "Monthly",
+                    ValidityDays = 30,
+                    BlockWhenExhausted = false,
+                    Status = true,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                context.SupportPlans.AddRange(strictPlan, overagePlan);
+                await context.SaveChangesAsync();
+
+                // Fetch seeded accounts
+                var acmeAccount = await context.Accounts.FirstOrDefaultAsync(a => a.AccountName.Contains("Acme"));
+                var apexAccount = await context.Accounts.FirstOrDefaultAsync(a => a.AccountName.Contains("Apex"));
+
+                if (acmeAccount != null)
+                {
+                    // Assign strict plan to Acme Corporation
+                    context.AccountSupportPlans.Add(new AccountSupportPlan
+                    {
+                        AccountSupportPlanId = Guid.NewGuid(),
+                        AccountId = acmeAccount.AccountId,
+                        SupportPlanId = strictPlan.SupportPlanId,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddDays(30),
+                        Status = "Active",
+                        CreatedDate = DateTime.UtcNow
+                    });
+
+                    // Add Siddhartha Swamy contact to Acme Corporation with phone +918888888888
+                    if (!context.AccountContacts.Any(c => c.Email == "siddharthaswamy16@gmail.com"))
+                    {
+                        context.AccountContacts.Add(new AccountContacts
+                        {
+                            AccountContactsId = Guid.NewGuid(),
+                            AccountId = acmeAccount.AccountId,
+                            PersonName = "Siddhartha Swamy",
+                            Email = "siddharthaswamy16@gmail.com",
+                            MobileNumber = "+918888888888",
+                            IsDeleted = false,
+                            CreatedDate = DateTime.UtcNow,
+                            LastUpdatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                if (apexAccount != null)
+                {
+                    // Assign overage plan to Apex Technologies
+                    context.AccountSupportPlans.Add(new AccountSupportPlan
+                    {
+                        AccountSupportPlanId = Guid.NewGuid(),
+                        AccountId = apexAccount.AccountId,
+                        SupportPlanId = overagePlan.SupportPlanId,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddDays(30),
+                        Status = "Active",
+                        CreatedDate = DateTime.UtcNow
+                    });
+
+                    // Add Siddhartha Swamy contact to Apex Technologies with phone +919999999999
+                    if (!context.AccountContacts.Any(c => c.MobileNumber == "+919999999999"))
+                    {
+                        context.AccountContacts.Add(new AccountContacts
+                        {
+                            AccountContactsId = Guid.NewGuid(),
+                            AccountId = apexAccount.AccountId,
+                            PersonName = "Siddhartha Swamy (WhatsApp)",
+                            Email = "siddharthaswamy_wa@apextech.com",
+                            MobileNumber = "+919999999999",
+                            IsDeleted = false,
+                            CreatedDate = DateTime.UtcNow,
+                            LastUpdatedDate = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                await context.SaveChangesAsync();
+>>>>>>> develop
             }
         }
     }

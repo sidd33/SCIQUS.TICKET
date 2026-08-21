@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.COMMON.Helpers;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
@@ -107,12 +107,15 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 
 		public async Task<Ticket> CreateTicketAsync(Ticket ticket)
 		{
-			await using var transaction = await _context.Database.BeginTransactionAsync();
+			var isInMemory = _context.Database.ProviderName == "Microsoft.EntityFrameworkCore.InMemory";
+			var transaction = isInMemory ? null : await _context.Database.BeginTransactionAsync();
 			try
 			{
-				var store = await _context.TicketIDStores
-					.FromSqlRaw("SELECT * FROM TicketIDStores WHERE Id = {0} FOR UPDATE", 1)
-					.FirstAsync();
+				var store = isInMemory
+					? await _context.TicketIDStores.FirstAsync()
+					: await _context.TicketIDStores
+						.FromSqlRaw("SELECT * FROM TicketIDStores WHERE Id = {0} FOR UPDATE", 1)
+						.FirstAsync();
 
 				store.CurrentNumber++;
 				store.LastUpdatedDate = TimeHelper.GetIndianTime();
@@ -122,12 +125,18 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 				await _dbSet.AddAsync(ticket);
 				await _context.SaveChangesAsync();
 
-				await transaction.CommitAsync();
+				if (transaction != null)
+				{
+					await transaction.CommitAsync();
+				}
 				return ticket;
 			}
 			catch
 			{
-				await transaction.RollbackAsync();
+				if (transaction != null)
+				{
+					await transaction.RollbackAsync();
+				}
 				throw;
 			}
 		}

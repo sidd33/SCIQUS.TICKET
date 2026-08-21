@@ -95,8 +95,8 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
 
 
-		// GET: api/tickets/{id}
 		[HttpGet("{id:guid}")]
+		[AllowAnonymous]
 		public async Task<ActionResult<TicketResponse>> GetById(
 			Guid id)
 		{
