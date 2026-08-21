@@ -28,18 +28,22 @@ export default function MasterConfig() {
   async function loadMasterData() {
     try {
       const [tRes, stRes, pRes, iRes] = await Promise.all([
-        api.get('/TicketTypes', { params: { includeInactive: true } }),
-        api.get('/TicketSubTypes', { params: { includeInactive: true } }),
-        api.get('/TicketPriorities', { params: { includeInactive: true } }),
-        api.get('/TicketBusinessImpacts', { params: { includeInactive: true } })
-      ]);
+  api.get('/TicketTypes', { params: { includeInactive: true } }),
+  api.get('/TicketSubTypes', { params: { includeInactive: true } }),
+  api.get('/TicketPriorities', { params: { includeInactive: true } }),
+  api.get('/TicketBusinessImpacts', { params: { includeInactive: true } })
+]);
+
+console.log('TicketTypes response:', tRes.data);
+console.log('TicketSubTypes response:', stRes.data);
       setTypes(tRes.data.items || []);
       setSubTypes(stRes.data.items || []);
       setPriorities(pRes.data.items || []);
       setImpacts(iRes.data.items || []);
-    } catch {
-      // fallback
-    }
+    } catch (err) {
+  console.error('Failed to load master data:', err);
+  setError(err.response?.data?.message || 'Failed to load master data.');
+}
   }
 
   async function loadSupportingData() {
