@@ -42,6 +42,52 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
 
+            if (accountContact == null)
+            {
+                // Auto-create a Guest Account and Contact for unknown numbers
+                var guestAccount = new SCIQUSTICKETS.DATA.DomainModels.Account
+                {
+                    AccountId = Guid.NewGuid().ToString(),
+                    AccountName = "WhatsApp Guest",
+                    Email = $"guest_{phone.Replace("+", "")}@whatsapp.local",
+                    RegisteredMobileNumber = phone,
+                    Status = true,
+                    CreatedDate = now,
+                    LastUpdatedDate = now
+                };
+                _context.Accounts.Add(guestAccount);
+
+                accountContact = new SCIQUSTICKETS.DATA.DomainModels.AccountContacts
+                {
+                    AccountContactsId = Guid.NewGuid(),
+                    AccountId = guestAccount.AccountId,
+                    PersonName = "WhatsApp User",
+                    MobileNumber = phone,
+                    CreatedDate = now,
+                    LastUpdatedDate = now
+                };
+                _context.AccountContacts.Add(accountContact);
+
+                var defaultPlan = await _context.SupportPlans.FirstOrDefaultAsync(p => p.Status == true);
+                if (defaultPlan != null)
+                {
+                    var accountPlan = new SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.AccountSupportPlan
+                    {
+                        AccountSupportPlanId = Guid.NewGuid(),
+                        AccountId = guestAccount.AccountId,
+                        SupportPlanId = defaultPlan.SupportPlanId,
+                        StartDate = now,
+                        EndDate = now.AddYears(1),
+                        Status = "Active",
+                        CreatedDate = now,
+                        LastUpdatedDate = now
+                    };
+                    _context.AccountSupportPlans.Add(accountPlan);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
             if (accountContact != null)
             {
                 // Check for existing open ticket for this account
@@ -78,7 +124,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                         BusinessImpactId = config.DefaultBusinessImpactId,
                         DepartmentId = config.DefaultDepartmentId,
                         AssignedToUserId = config.DefaultAssigneeId,
-                        IsInternal = false
+                        IsInternal = true // Bypass support plan checks for auto-created tickets
                     };
 
                     var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);

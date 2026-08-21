@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
@@ -23,6 +24,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		// Internal ticket creator
 		public string? RaisedByEmployeeId { get; set; }
 		public Employee? RaisedByEmployee { get; set; }
+
+		public Guid? ProductId { get; set; }
 
 		public bool IsInternal { get; set; }
 
@@ -100,8 +103,8 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public DateTime? ClosedDate { get; set; }
 		public int ReopenCount { get; set; } = 0;
 		public DateTime? LastReopenedDate { get; set; }
-		public Guid? ParentTicketId { get; set; }
-		public Ticket? ParentTicket { get; set; }
+		[NotMapped] public Guid? ParentTicketId { get; set; }
+		[NotMapped] public Ticket? ParentTicket { get; set; }
 
 		// Navigation
 		public ICollection<TicketAssignment> Assignments { get; set; }

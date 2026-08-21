@@ -19,9 +19,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			_reportService = reportService;
 		}
 
-		[HttpGet("summary")]
+		[HttpGet("kpi-summary")]
 		public async Task<IActionResult> GetSummary([FromQuery] TicketReportQueryParams query)
-			=> Ok(await _reportService.GetSummaryAsync(query));
+	        => Ok(await _reportService.GetSummaryAsync(query));
 
 		[HttpGet("by-department")]
 		public async Task<IActionResult> GetByDepartment([FromQuery] TicketReportQueryParams query)

@@ -36,10 +36,20 @@ export default function CreateTicket({ isPortal = false }) {
   api.get("/TicketBusinessImpacts")
 ]);
 
-setTypes(typesRes.data.items || []);
-setSubTypes(subTypesRes.data.items || []);
-setPriorities(prioritiesRes.data.items || []);
-setImpacts(impactsRes.data.items || []);
+const typesData = typesRes.data.items || typesRes.data || [];
+const subTypesData = subTypesRes.data.items || subTypesRes.data || [];
+const prioritiesData = prioritiesRes.data.items || prioritiesRes.data || [];
+const impactsData = impactsRes.data.items || impactsRes.data || [];
+
+console.log("TYPES:", typesData);
+console.log("SUBTYPES:", subTypesData);
+console.log("PRIORITIES:", prioritiesData);
+console.log("IMPACTS:", impactsData);
+
+setTypes(typesData);
+setSubTypes(subTypesData);
+setPriorities(prioritiesData);
+setImpacts(impactsData);
 
 if (prioritiesRes.data.items?.length > 0) {
   const firstPriority = prioritiesRes.data.items[0];
@@ -54,23 +64,36 @@ if (impactsRes.data.items?.length > 0) {
     firstImpact.ticketBusinessTypeImpactId || firstImpact.businessImpactId || firstImpact.id
   );
 }
-      } catch {
-        // fallback
-      }
+      } catch (err) {
+  console.error("Failed to load master data:", err);
+  setError(err.response?.data?.message || "Failed to load master data.");
+}
     }
     loadMasterData();
   }, []);
 
   useEffect(() => {
-    if (!selectedTypeId) {
-      setFilteredSubTypes([]);
-      setSelectedSubTypeId('');
-      return;
-    }
-    const filtered = subTypes.filter(st => (st.ticketTypeId === selectedTypeId || st.typeId === selectedTypeId));
-    setFilteredSubTypes(filtered);
-    if (filtered.length > 0) setSelectedSubTypeId(filtered[0].id || filtered[0].ticketSubTypeId);
-  }, [selectedTypeId, subTypes]);
+  if (!selectedTypeId) {
+    setFilteredSubTypes([]);
+    setSelectedSubTypeId('');
+    return;
+  }
+
+  const filtered = subTypes.filter(
+    st => String(st.ticketTypeId) === String(selectedTypeId)
+  );
+
+  console.log('Selected Type ID:', selectedTypeId);
+  console.log('Filtered SubTypes:', filtered);
+
+  setFilteredSubTypes(filtered);
+
+  if (filtered.length > 0) {
+    setSelectedSubTypeId(filtered[0].ticketSubTypeId);
+  } else {
+    setSelectedSubTypeId('');
+  }
+}, [selectedTypeId, subTypes]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,24 +146,47 @@ if (impactsRes.data.items?.length > 0) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             <div className="form-group">
-              <label>Ticket Type *</label>
-              <select required value={selectedTypeId} onChange={(e) => setSelectedTypeId(e.target.value)}>
-                <option value="">Select Category...</option>
-                {types.map(t => (
-                  <option key={t.id || t.ticketTypeId} value={t.id || t.ticketTypeId}>{t.name}</option>
-                ))}
-              </select>
-            </div>
+  <label>Ticket Type *</label>
+
+  <select
+    required
+    value={selectedTypeId}
+    onChange={(e) => setSelectedTypeId(e.target.value)}
+  >
+    <option value="">Select Category...</option>
+
+    {types.map((t) => (
+      <option
+        key={t.ticketTypeId}
+        value={t.ticketTypeId}
+      >
+        {t.name}
+      </option>
+    ))}
+  </select>
+</div>
 
             <div className="form-group">
-              <label>Issue Sub-Type *</label>
-              <select required value={selectedSubTypeId} onChange={(e) => setSelectedSubTypeId(e.target.value)} disabled={!selectedTypeId}>
-                <option value="">Select Specific Issue...</option>
-                {filteredSubTypes.map(st => (
-                  <option key={st.id || st.ticketSubTypeId} value={st.id || st.ticketSubTypeId}>{st.name}</option>
-                ))}
-              </select>
-            </div>
+  <label>Issue Sub-Type *</label>
+
+  <select
+    required
+    value={selectedSubTypeId}
+    onChange={(e) => setSelectedSubTypeId(e.target.value)}
+    disabled={!selectedTypeId}
+  >
+    <option value="">Select Specific Issue...</option>
+
+    {filteredSubTypes.map((st) => (
+      <option
+        key={st.ticketSubTypeId}
+        value={st.ticketSubTypeId}
+      >
+        {st.name}
+      </option>
+    ))}
+  </select>
+</div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

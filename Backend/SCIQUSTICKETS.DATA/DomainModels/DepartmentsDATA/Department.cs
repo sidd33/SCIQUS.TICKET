@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using System.ComponentModel.DataAnnotations.Schema;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 
 namespace SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA

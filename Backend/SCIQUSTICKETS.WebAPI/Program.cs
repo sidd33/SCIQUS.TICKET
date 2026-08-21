@@ -16,12 +16,16 @@ using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString!)));
+	options.UseMySql(
+		connectionString,
+		ServerVersion.AutoDetect(connectionString)
+	));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, UserRole>(options =>

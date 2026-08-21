@@ -11,6 +11,9 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
         public string EncryptedAccessToken { get; set; } = null!;
         public string EncryptedRefreshToken { get; set; } = null!;
         
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public string? AppPassword { get; set; }
+        
         public bool IsEnabled { get; set; }
         public bool AutoCreateEnabled { get; set; }
         

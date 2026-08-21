@@ -19,7 +19,7 @@ namespace SCIQUSTICKETS.DATA.DomainModels.TicketDATA
 		public string? NewValue { get; set; }
 		public string Reason { get; set; } = null!;
 
-		public string ChangedByUserId { get; set; } = null!;
+		public string? ChangedByUserId { get; set; }
 		[ForeignKey("ChangedByUserId")]
 		public virtual ApplicationUser ChangedByUser { get; set; } = null!;
 

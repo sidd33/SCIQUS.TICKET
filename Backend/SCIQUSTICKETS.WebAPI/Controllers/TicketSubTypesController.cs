@@ -21,14 +21,14 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] TicketSubTypeQueryParams queryParams)
+		public async Task<IActionResult> GetAll([FromQuery] TicketSubTypeQueryParams queryParams)
         {
             var result = await _ticketSubTypeService.GetAllAsync(queryParams);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+		public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _ticketSubTypeService.GetByIdAsync(id);
             if (result == null) return NotFound(new { message = $"Ticket Sub-Type with ID {id} not found." });
@@ -37,7 +37,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTicketSubTypeRequest request)
+		public async Task<IActionResult> Create([FromBody] CreateTicketSubTypeRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -56,7 +56,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketSubTypeRequest request)
+		public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketSubTypeRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -77,7 +77,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpPatch("{id}/status")]
-        public async Task<IActionResult> SetStatus(Guid id, [FromQuery] bool status)
+		public async Task<IActionResult> SetStatus(Guid id, [FromQuery] bool status)
         {
             var actorUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(actorUserId)) return Unauthorized();
@@ -96,7 +96,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> SoftDelete(Guid id)
+		public async Task<IActionResult> SoftDelete(Guid id)
         {
             try
             {

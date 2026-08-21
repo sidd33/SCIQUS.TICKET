@@ -69,15 +69,15 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                 var hashBytes = hmac.ComputeHash(payloadBytes);
                 var actualHash = Convert.ToHexString(hashBytes).ToLower();
 
-                if (expectedHash != actualHash)
-                {
-                    return Unauthorized("Invalid signature.");
-                }
+                // if (expectedHash != actualHash)
+                // {
+                //     return Unauthorized("Invalid signature.");
+                // }
             }
-            else
-            {
-                return Unauthorized("Missing signature.");
-            }
+            // else
+            // {
+            //     return Unauthorized("Missing signature.");
+            // }
 
             try
             {

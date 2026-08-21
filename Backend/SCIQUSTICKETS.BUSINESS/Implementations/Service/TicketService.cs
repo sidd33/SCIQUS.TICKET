@@ -155,7 +155,26 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			{
 				if (isCustomer)
 				{
-					createdByUserId = userId;
+					var userObj = await _context.Users.FindAsync(userId);
+					if (userObj != null)
+					{
+						var contact = await _context.AccountContacts
+							.AsNoTracking()
+							.FirstOrDefaultAsync(c => c.Email == userObj.Email);
+						
+						if (contact != null)
+						{
+							queryParams.AccountId = contact.AccountId;
+						}
+						else
+						{
+							createdByUserId = userId;
+						}
+					}
+					else
+					{
+						createdByUserId = userId;
+					}
 				}
 				else
 				{
@@ -215,7 +234,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				}
 			}
 
-			await ValidateReferencesAsync(request.TicketTypeId, request.TicketSubTypeId, request.PriorityId, request.BusinessImpactId);
+			await ValidateReferencesAsync(
+				request.TicketTypeId,
+				request.TicketSubTypeId,
+				request.PriorityId,
+				request.BusinessImpactId,
+				request.DepartmentId,
+				request.AccountId);
 
 			var subType = await _ticketSubTypeRepository.GetByIdAsync(request.TicketSubTypeId);
 			var priority = await _ticketPriorityRepository.GetByIdAsync(request.PriorityId);
@@ -319,7 +344,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return MapToResponse(full ?? created);
 		}
 
-		private async Task ValidateReferencesAsync(Guid ticketTypeId, Guid ticketSubTypeId, Guid priorityId, Guid businessImpactId)
+		private async Task ValidateReferencesAsync(
+			Guid ticketTypeId,
+			Guid ticketSubTypeId,
+			Guid priorityId,
+			Guid businessImpactId,
+			Guid? departmentId,
+			string? accountId)
 		{
 			var ticketType = await _ticketTypeRepository.GetByIdAsync(ticketTypeId);
 			if (ticketType is not TicketType tt || tt.IsDeleted || !tt.Status)
@@ -338,6 +369,26 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var impact = await _ticketBusinessImpactRepository.GetByIdAsync(businessImpactId);
 			if (impact is not TicketBusinessTypeImpact i || i.IsDeleted || !i.Status)
 				throw new InvalidOperationException("The selected Business Impact is invalid or inactive.");
+
+			if (departmentId.HasValue)
+			{
+				var departmentExists = await _context.Departments
+					.AnyAsync(d => d.DepartmentId == departmentId.Value);
+
+				if (!departmentExists)
+					throw new InvalidOperationException(
+						"The selected Department is invalid.");
+			}
+
+			if (!string.IsNullOrWhiteSpace(accountId))
+			{
+				var accountExists = await _context.Accounts
+					.AnyAsync(a => a.AccountId == accountId);
+
+				if (!accountExists)
+					throw new InvalidOperationException(
+						"The selected Account is invalid.");
+			}
 		}
 
 		public async Task<TicketResponse> UpdateAsync(Guid ticketId, UpdateTicketRequest request, string actorUserId)

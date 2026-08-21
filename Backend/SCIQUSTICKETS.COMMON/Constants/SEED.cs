@@ -16,7 +16,7 @@ namespace SCIQUSTICKETS.COMMON.Constants
 
         // ── Admin User ─────────────────────────────────────────────────
         public static readonly string AdminUserId = "1022da6f-76cb-45ae-b0de-6c663373c4bf";
-		public const string SystemActorUserId = "c064137c-2a06-4c13-bbd7-52f9c5d81722";
+		public const string SystemActorUserId = "c7bd6100-76e7-4764-b6b7-bbb3e8de0f64";
 		public static readonly string AdminEmailId = "admin@sciqustickets.com";
         public static readonly string AdminPassword = "Admin@123";
         public static readonly string AdminPasswordHash = "AQAAAAIAAYagAAAAEIdzJ5KmybApslqWPl/Ax9qNNMhb6GZ7dUoH/WMdLGZRGd2J5437zxPGdYU9FIvpDQ==";
