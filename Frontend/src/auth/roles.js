@@ -11,8 +11,15 @@ export const isDepartmentHead = (user) => {
 
 export const isEmployee = (user) => {
   if (!user || !user.role) return false;
+
   const r = Array.isArray(user.role) ? user.role : [user.role];
-  return r.includes('Employee') || r.includes('SupportAgent') || isAdmin(user);
+
+  return (
+    r.includes('Employee') ||
+    r.includes('SupportAgent') ||
+    r.includes('DepartmentHead') ||
+    isAdmin(user)
+  );
 };
 
 export const isCustomer = (user) => {

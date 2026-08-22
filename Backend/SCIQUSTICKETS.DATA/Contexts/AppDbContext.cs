@@ -28,6 +28,9 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<Employee> Employees { get; set; }
 		public DbSet<Department> Departments { get; set; }
 		public DbSet<Grade> Grades { get; set; }
+
+		public DbSet<EmployeeWorkingHour> EmployeeWorkingHours { get; set; }
+		public DbSet<EmployeeLeave> EmployeeLeaves { get; set; }
 		// ── [END: EMPLOYEE] ───────────────────────────────────────────
 
 		// ── [TEAM: ACCOUNTS / CRM] ────────────────────────────────────
@@ -117,6 +120,8 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.HasForeignKey(sp => sp.PolicyId)
 				.OnDelete(DeleteBehavior.Cascade);
 
+
+
 			// ── [SIDD: AUTH/IDENTITY] — Seed Data ────────────────────
 			builder.Entity<UserRole>().HasData(
 				new UserRole
@@ -161,6 +166,7 @@ namespace SCIQUSTICKETS.DATA.Contexts
 
 
 			// ── [TEAM: EMPLOYEE] — Relationships & Seed ───────────────
+			// ── [TEAM: EMPLOYEE] — Relationships & Seed ───────────────
 			builder.Entity<Employee>()
 				.HasOne(e => e.ReportsToUser)
 				.WithMany()
@@ -184,6 +190,26 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithMany(g => g.Employees)
 				.HasForeignKey(e => e.GradeId)
 				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<EmployeeWorkingHour>()
+				.ToTable("EmployeeWorkingHour");
+
+			builder.Entity<EmployeeLeave>()
+				.ToTable("EmployeeLeave");
+
+			builder.Entity<EmployeeWorkingHour>()
+				.HasOne(wh => wh.Employee)
+				.WithMany(e => e.WorkingHours)
+				.HasForeignKey(wh => wh.EmployeeId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<EmployeeLeave>()
+				.HasOne(l => l.Employee)
+				.WithMany(e => e.Leaves)
+				.HasForeignKey(l => l.EmployeeId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			// ── [END: EMPLOYEE] ───────────────────────────────────────
 			// ── [END: EMPLOYEE] ───────────────────────────────────────
 			// ── [TEAM: ACCOUNTS / CRM] — Relationships ────────────────
 			builder.Entity<Account>()

@@ -16,14 +16,11 @@ export default function MasterConfig() {
   const [departments, setDepartments] = useState([]);
   const [employees, setEmployees] = useState([]);
 
-<<<<<<< HEAD
-=======
   // Integrations state
   const [apiToken, setApiToken] = useState('');
   const [webhookToken, setWebhookToken] = useState('');
   const [appSecret, setAppSecret] = useState('');
 
->>>>>>> develop
   const [modal, setModal] = useState(null); // { kind: 'type'|'subtype'|'priority'|'impact', mode: 'create'|'edit', data: {...} }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -35,25 +32,6 @@ export default function MasterConfig() {
 
   async function loadMasterData() {
     try {
-<<<<<<< HEAD
-      const [tRes, stRes, pRes, iRes] = await Promise.all([
-  api.get('/TicketTypes', { params: { includeInactive: true } }),
-  api.get('/TicketSubTypes', { params: { includeInactive: true } }),
-  api.get('/TicketPriorities', { params: { includeInactive: true } }),
-  api.get('/TicketBusinessImpacts', { params: { includeInactive: true } })
-]);
-
-console.log('TicketTypes response:', tRes.data);
-console.log('TicketSubTypes response:', stRes.data);
-      setTypes(tRes.data.items || []);
-      setSubTypes(stRes.data.items || []);
-      setPriorities(pRes.data.items || []);
-      setImpacts(iRes.data.items || []);
-    } catch (err) {
-  console.error('Failed to load master data:', err);
-  setError(err.response?.data?.message || 'Failed to load master data.');
-}
-=======
       const [tRes, stRes, pRes, iRes, wRes] = await Promise.all([
         api.get('/TicketTypes', { params: { includeInactive: true } }),
         api.get('/TicketSubTypes', { params: { includeInactive: true } }),
@@ -69,7 +47,7 @@ console.log('TicketSubTypes response:', stRes.data);
       setSubTypes(stRes.data?.items || []);
       setPriorities(pRes.data?.items || []);
       setImpacts(iRes.data?.items || []);
-      
+
       if (wRes.data) {
         setApiToken(wRes.data.encryptedApiToken || '');
         setWebhookToken(wRes.data.webhookVerifyToken || '');
@@ -79,7 +57,6 @@ console.log('TicketSubTypes response:', stRes.data);
       console.error('Failed to load master data:', err);
       setError(err.response?.data?.message || 'Failed to load master data.');
     }
->>>>>>> develop
   }
 
   async function loadSupportingData() {
@@ -131,39 +108,39 @@ console.log('TicketSubTypes response:', stRes.data);
   }
 
   async function handleSave(e) {
-  e.preventDefault();
-  if (!modal) return;
+    e.preventDefault();
+    if (!modal) return;
 
-  setSaving(true);
-  setError('');
+    setSaving(true);
+    setError('');
 
-  try {
-    const url = endpointFor(modal.kind);
+    try {
+      const url = endpointFor(modal.kind);
 
-    const payload = { ...modal.data };
+      const payload = { ...modal.data };
 
-    if (modal.kind === 'subtype') {
-      payload.defaultUserId = modal.data.defaultUserId || null;
+      if (modal.kind === 'subtype') {
+        payload.defaultUserId = modal.data.defaultUserId || null;
+      }
+
+      if (modal.mode === 'create') {
+        await api.post(url, payload);
+      } else {
+        await api.put(`${url}/${modal.id}`, {
+          ...payload,
+          status: payload.status ?? true
+        });
+      }
+
+      setModal(null);
+      await loadMasterData();
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Save failed.');
+    } finally {
+      setSaving(false);
     }
-
-    if (modal.mode === 'create') {
-      await api.post(url, payload);
-    } else {
-      await api.put(`${url}/${modal.id}`, {
-        ...payload,
-        status: payload.status ?? true
-      });
-    }
-
-    setModal(null);
-    await loadMasterData();
-
-  } catch (err) {
-    setError(err.response?.data?.message || 'Save failed.');
-  } finally {
-    setSaving(false);
   }
-}
 
   async function handleDelete(kind, item) {
     const id = idFor(kind, item);
@@ -176,8 +153,6 @@ console.log('TicketSubTypes response:', stRes.data);
     }
   }
 
-<<<<<<< HEAD
-=======
   async function handleSaveIntegrations(e) {
     e.preventDefault();
     setSaving(true);
@@ -198,7 +173,6 @@ console.log('TicketSubTypes response:', stRes.data);
     }
   }
 
->>>>>>> develop
   const renderModalForm = () => {
     if (!modal) return null;
     const { kind, data } = modal;
@@ -324,15 +298,11 @@ console.log('TicketSubTypes response:', stRes.data);
             <button className={`btn btn--sm ${activeTab === 'impacts' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('impacts')}>
               Business Impacts ({impacts.length})
             </button>
-<<<<<<< HEAD
-          </div>
-=======
             <button className={`btn btn--sm ${activeTab === 'integrations' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('integrations')}>
               System Integrations
             </button>
           </div>
           {activeTab !== 'integrations' && (
->>>>>>> develop
           <button
             className="btn btn--primary btn--sm"
             onClick={() => {
@@ -343,11 +313,11 @@ console.log('TicketSubTypes response:', stRes.data);
     impacts: 'impact'
   };
 
-  openCreate(kindMap[activeTab]);
-}}
-          >
-            <Plus size={14} /> Add
-          </button>
+                openCreate(kindMap[activeTab]);
+              }}
+            >
+              <Plus size={14} /> Add
+            </button>
           )}
         </div>
       </div>
@@ -446,8 +416,6 @@ console.log('TicketSubTypes response:', stRes.data);
               </tbody>
             </table>
           )}
-<<<<<<< HEAD
-=======
 
           {activeTab === 'integrations' && (
             <div style={{ padding: '1rem', maxWidth: '600px' }}>
@@ -483,7 +451,6 @@ console.log('TicketSubTypes response:', stRes.data);
               </form>
             </div>
           )}
->>>>>>> develop
         </div>
       </div>
 
