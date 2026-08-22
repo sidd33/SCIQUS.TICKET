@@ -184,63 +184,84 @@ namespace SCIQUSTICKETS.WebAPI
                 new { Email = "kevin.hr@sciqustickets.com", Name = "Kevin Thomas", DeptId = dept5Id, EmpCode = "EMP-5002", IsHead = false }
             };
 
-            foreach (var empData in employeeSeedData)
-            {
-                var empUser = await userManager.FindByEmailAsync(empData.Email);
-                if (empUser == null)
-                {
-                    empUser = new ApplicationUser
-                    {
-                        UserName = empData.Email,
-                        Email = empData.Email,
-                        EmailConfirmed = true,
-                        Status = true,
-                        HasLoginAccess = true,
-                        CreatedDate = DateTime.UtcNow,
-                        LastModifiedDate = DateTime.UtcNow
-                    };
-                    var result = await userManager.CreateAsync(empUser, "Employee@123");
-                    if (result.Succeeded)
-                    {
-                        await userManager.AddToRoleAsync(empUser, "Employee");
-                        if (empData.IsHead)
-                        {
-                            await userManager.AddToRoleAsync(empUser, "DepartmentHead");
-                        }
-                    }
-                }
+			foreach (var empData in employeeSeedData)
+			{
+				var empUser = await userManager.FindByEmailAsync(empData.Email);
 
-                if (empUser != null && !context.Employees.Any(e => e.Id == empUser.Id))
-                {
-                    context.Employees.Add(new Employee
-                    {
-                        Id = empUser.Id,
-                        Name = empData.Name,
-                        Email = empData.Email,
-                        AutoGenrateId = empData.EmpCode,
-                        EmployeeId = empData.EmpCode,
-                        DepartmentId = empData.DeptId,
-                        CreatedDate = DateTime.UtcNow,
-                        LastUpdatedDate = DateTime.UtcNow,
-                        IsDeleted = false
-                    });
-                    await context.SaveChangesAsync();
+				if (empUser == null)
+				{
+					empUser = new ApplicationUser
+					{
+						UserName = empData.Email,
+						Email = empData.Email,
+						EmailConfirmed = true,
+						Status = true,
+						HasLoginAccess = true,
+						CreatedDate = DateTime.UtcNow,
+						LastModifiedDate = DateTime.UtcNow
+					};
 
-                    if (empData.IsHead)
-                    {
-                        var targetDept = await context.Departments.FindAsync(empData.DeptId);
-                        if (targetDept != null)
-                        {
-                            targetDept.DepartmentHeadId = empUser.Id;
-                            context.Departments.Update(targetDept);
-                            await context.SaveChangesAsync();
-                        }
-                    }
-                }
-            }
+					var result = await userManager.CreateAsync(
+						empUser,
+						"Employee@123"
+					);
 
-            // 5. Seed 10 Customer Companies with CRM Details
-            var customerSeedData = new[]
+					if (result.Succeeded)
+					{
+						await userManager.AddToRoleAsync(empUser, "Employee");
+
+						if (empData.IsHead)
+						{
+							await userManager.AddToRoleAsync(
+								empUser,
+								"DepartmentHead"
+							);
+						}
+					}
+					else
+					{
+						throw new Exception(
+							$"Failed to create employee {empData.Email}: " +
+							$"{string.Join(", ", result.Errors.Select(e => e.Description))}"
+						);
+					}
+				}
+
+				if (empUser != null && !context.Employees.Any(e => e.Id == empUser.Id))
+				{
+					context.Employees.Add(new Employee
+					{
+						Id = empUser.Id,
+						Name = empData.Name,
+						Email = empData.Email,
+						AutoGenrateId = empData.EmpCode,
+						EmployeeId = empData.EmpCode,
+						DepartmentId = empData.DeptId,
+						CreatedDate = DateTime.UtcNow,
+						LastUpdatedDate = DateTime.UtcNow,
+						IsDeleted = false
+					});
+
+					await context.SaveChangesAsync();
+
+					if (empData.IsHead)
+					{
+						var targetDept = await context.Departments.FindAsync(
+							empData.DeptId
+						);
+
+						if (targetDept != null)
+						{
+							targetDept.DepartmentHeadId = empUser.Id;
+							context.Departments.Update(targetDept);
+							await context.SaveChangesAsync();
+						}
+					}
+				}
+			}
+
+			// 5. Seed 10 Customer Companies with CRM Details
+			var customerSeedData = new[]
             {
                 new { Email = "customer.acme@acmecorp.com", Company = "Acme Corporation", Phone = "+1 (555) 019-2831", AccCode = "ACC-1001" },
                 new { Email = "customer.apex@apextech.com", Company = "Apex Technologies", Phone = "+1 (555) 019-4820", AccCode = "ACC-1002" },
@@ -252,7 +273,6 @@ namespace SCIQUSTICKETS.WebAPI
                 new { Email = "customer.quantum@quantumdata.com", Company = "Quantum Data Systems", Phone = "+1 (555) 019-7410", AccCode = "ACC-1008" },
                 new { Email = "customer.stellar@stellarmedia.net", Company = "Stellar Networks", Phone = "+1 (555) 019-9283", AccCode = "ACC-1009" },
                 new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
-				new { Email = "customer.pinnacle@pinnaclefinance.com", Company = "Pinnacle Financial", Phone = "+1 (555) 019-2049", AccCode = "ACC-1010" },
                 new { Email = "customer.orbit@orbitlogistics.com", Company = "Orbit Logistics", Phone = "+1 (555) 019-3157", AccCode = "ACC-1011" },
                 new { Email = "customer.vertex@vertexsystems.com", Company = "Vertex Systems", Phone = "+1 (555) 019-4628", AccCode = "ACC-1012" },
                 new { Email = "customer.bluewave@bluewaveconsulting.com", Company = "BlueWave Consulting", Phone = "+1 (555) 019-5834", AccCode = "ACC-1013" },
@@ -639,13 +659,13 @@ namespace SCIQUSTICKETS.WebAPI
 					WhatsAppChannelConfigId = Guid.NewGuid(),
 					Provider = 0,
 
-					BusinessPhoneNumberId = "15556638753",
+					BusinessPhoneNumberId = "1264781743381359",
 
 					EncryptedApiToken = "...",
 
 					WebhookVerifyToken = "sciqus_secret_token_123",
 
-					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12",
+					AppSecret = "sciqus_app_secret_123",
 
 					IsEnabled = true,
 					AutoCreateEnabled = true,

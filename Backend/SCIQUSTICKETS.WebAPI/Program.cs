@@ -1,26 +1,28 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SCIQUSTICKETS.DATA.Contexts;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SCIQUSTICKETS.BUSINESS.Implementations.Service;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
+using SCIQUSTICKETS.BUSINESS.Validations.Authorization;
+using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.Implementations.Repositories;
 using SCIQUSTICKETS.DATA.Interfaces.IRepositories;
-using SCIQUSTICKETS.BUSINESS.Validations.Authorization;
-
-
-using System.Text;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Configuration.AddJsonFile(
+	"appsettings.Local.json",
+	optional: true,
+	reloadOnChange: true
+);
+
+// Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseMySql(
 		connectionString,
@@ -70,26 +72,35 @@ builder.Services.AddCors(options =>
 	});
 });
 
-builder.Services.AddOpenApi();
 // Add Controllers
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-	options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
+	options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
 	{
 		Name = "Authorization",
-		Type = Microsoft.OpenApi.SecuritySchemeType.Http,
-		Scheme = "Bearer",
+		Type = SecuritySchemeType.Http,
+		Scheme = "bearer",
 		BearerFormat = "JWT",
-		In = Microsoft.OpenApi.ParameterLocation.Header,
-		Description = "Paste your JWT here (no need to type 'Bearer' first)"
+		In = ParameterLocation.Header,
+		Description = "Enter your JWT token. You do not need to type 'Bearer' before it."
 	});
 
-	options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
+	options.AddSecurityRequirement(new OpenApiSecurityRequirement
 	{
-		[new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
+				{
+					Type = ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				}
+			},
+			Array.Empty<string>()
+		}
 	});
 });
 // Register CRM / Accounts Repositories
@@ -163,18 +174,17 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-	app.MapOpenApi();
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
+
+
 
 app.UseHttpsRedirection();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<SCIQUSTICKETS.DATA.Contexts.AppDbContext>();
-    context.Database.EnsureCreated();
-    await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
+	await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
 }
 
 app.UseCors("AllowFrontend");
@@ -184,4 +194,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
