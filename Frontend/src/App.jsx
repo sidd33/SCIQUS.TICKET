@@ -26,6 +26,8 @@ import WhatsAppInboxReview from './pages/Admin/WhatsAppConfig/WhatsAppInboxRevie
 import Profile from './pages/Profile/Profile';
 import Customers from './pages/Customers/Customers';
 import NotFound from './pages/NotFound/NotFound';
+import Leave from './pages/Leave/Leave';
+import MyLeave from './pages/Leave/MyLeave';
 
 export default function App() {
   const token = getAccessToken();
@@ -63,6 +65,31 @@ export default function App() {
             <Route path="/portal/ticket/:ticketId" element={<ProtectedRoute allow={['Customer']}><TicketDetails /></ProtectedRoute>} />
 
             <Route path="/employees" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><Employees /></ProtectedRoute>} />
+            <Route
+  path="/leave"
+  element={
+    <ProtectedRoute
+      allow={[
+        'Admin',
+        'SuperAdmin',
+        'Employee',
+        'SupportAgent',
+        'DepartmentHead'
+      ]}
+    >
+      <Leave />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/my-leave"
+  element={
+    <ProtectedRoute>
+      <MyLeave />
+    </ProtectedRoute>
+  }
+/>
             <Route path="/departments" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><Departments /></ProtectedRoute>} />
             <Route path="/customers" element={<ProtectedRoute allow={['Admin', 'SuperAdmin', 'DepartmentHead', 'Employee']}><Customers /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

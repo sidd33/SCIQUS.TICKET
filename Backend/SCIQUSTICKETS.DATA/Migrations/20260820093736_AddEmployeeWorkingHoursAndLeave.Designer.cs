@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCIQUSTICKETS.DATA.Contexts;
 
@@ -11,9 +12,11 @@ using SCIQUSTICKETS.DATA.Contexts;
 namespace SCIQUSTICKETS.DATA.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820093736_AddEmployeeWorkingHoursAndLeave")]
+    partial class AddEmployeeWorkingHoursAndLeave
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,7 +58,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("EmployeeLeave", (string)null);
+                    b.ToTable("EmployeeLeave");
                 });
 
             modelBuilder.Entity("EmployeeWorkingHour", b =>
@@ -84,7 +87,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("EmployeeWorkingHour", (string)null);
+                    b.ToTable("EmployeeWorkingHour");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -312,7 +315,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("RegionId");
 
-                    b.ToTable("Accounts", (string)null);
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddress", b =>
@@ -359,7 +362,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("AccountAddresses", (string)null);
+                    b.ToTable("AccountAddresses");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountAddressType", b =>
@@ -391,7 +394,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("AccountAddressId");
 
-                    b.ToTable("AccountAddressTypes", (string)null);
+                    b.ToTable("AccountAddressTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountContacts", b =>
@@ -453,7 +456,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("AccountContacts", (string)null);
+                    b.ToTable("AccountContacts");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AccountTypes", b =>
@@ -480,7 +483,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccountTypes", (string)null);
+                    b.ToTable("AccountTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", b =>
@@ -604,7 +607,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Policies", (string)null);
+                    b.ToTable("Policies");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.RefreshToken", b =>
@@ -637,7 +640,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.RolePolicy", b =>
@@ -652,7 +655,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("RolePolicies", (string)null);
+                    b.ToTable("RolePolicies");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.SpecializedPolicy", b =>
@@ -667,7 +670,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("PolicyId");
 
-                    b.ToTable("SpecializedPolicies", (string)null);
+                    b.ToTable("SpecializedPolicies");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.UserRole", b =>
@@ -746,7 +749,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Currencies", (string)null);
+                    b.ToTable("Currencies");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA.Department", b =>
@@ -796,7 +799,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("DepartmentHeadId");
 
-                    b.ToTable("Departments", (string)null);
+                    b.ToTable("Departments");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", b =>
@@ -857,7 +860,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("ReportsTo");
 
-                    b.ToTable("Employees", (string)null);
+                    b.ToTable("Employees");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Grade", b =>
@@ -883,7 +886,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades", (string)null);
+                    b.ToTable("Grades");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.IndustryTypes", b =>
@@ -910,7 +913,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("IndustryTypes", (string)null);
+                    b.ToTable("IndustryTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.Region", b =>
@@ -940,7 +943,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Regions", (string)null);
+                    b.ToTable("Regions");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.AccountSupportPlan", b =>
@@ -981,7 +984,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("SupportPlanId");
 
-                    b.ToTable("AccountSupportPlans", (string)null);
+                    b.ToTable("AccountSupportPlans");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.SupportPlan", b =>
@@ -1028,7 +1031,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("SupportPlanId");
 
-                    b.ToTable("SupportPlans", (string)null);
+                    b.ToTable("SupportPlans");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.SupportPlanConsumption", b =>
@@ -1058,7 +1061,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("SupportPlanConsumptions", (string)null);
+                    b.ToTable("SupportPlanConsumptions");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.EmailInboxMessage", b =>
@@ -1109,7 +1112,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("CreatedTicketId");
 
-                    b.ToTable("EmailInboxMessages", (string)null);
+                    b.ToTable("EmailInboxMessages");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.EmailTicketConfig", b =>
@@ -1182,7 +1185,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("DefaultTicketTypeId");
 
-                    b.ToTable("EmailTicketConfigs", (string)null);
+                    b.ToTable("EmailTicketConfigs");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.FaqArticle", b =>
@@ -1225,7 +1228,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketTypeId");
 
-                    b.ToTable("FaqArticles", (string)null);
+                    b.ToTable("FaqArticles");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Notification", b =>
@@ -1258,7 +1261,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("ActorUserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.NotificationData", b =>
@@ -1279,7 +1282,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasIndex("NotificationId")
                         .IsUnique();
 
-                    b.ToTable("NotificationData", (string)null);
+                    b.ToTable("NotificationData");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.NotificationUser", b =>
@@ -1307,7 +1310,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("NotificationUsers", (string)null);
+                    b.ToTable("NotificationUsers");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.SlaConfiguration", b =>
@@ -1367,7 +1370,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("SlaConfigurationId");
 
-                    b.ToTable("SlaConfigurations", (string)null);
+                    b.ToTable("SlaConfigurations");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", b =>
@@ -1516,7 +1519,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketTypeId");
 
-                    b.ToTable("Tickets", (string)null);
+                    b.ToTable("Tickets");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAcceptance", b =>
@@ -1557,7 +1560,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketAcceptances", (string)null);
+                    b.ToTable("TicketAcceptances");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAssignment", b =>
@@ -1610,7 +1613,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketAssignments", (string)null);
+                    b.ToTable("TicketAssignments");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketAttachment", b =>
@@ -1652,7 +1655,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("UploadedByUserId");
 
-                    b.ToTable("TicketAttachments", (string)null);
+                    b.ToTable("TicketAttachments");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketBusinessTypeImpact", b =>
@@ -1688,7 +1691,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("TicketBusinessTypeImpactId");
 
-                    b.ToTable("TicketBusinessTypeImpacts", (string)null);
+                    b.ToTable("TicketBusinessTypeImpacts");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketComment", b =>
@@ -1729,7 +1732,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketComments", (string)null);
+                    b.ToTable("TicketComments");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketHistory", b =>
@@ -1767,7 +1770,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketHistories", (string)null);
+                    b.ToTable("TicketHistories");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketIDStore", b =>
@@ -1790,7 +1793,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TicketIDStores", (string)null);
+                    b.ToTable("TicketIDStores");
 
                     b.HasData(
                         new
@@ -1844,7 +1847,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("TicketPriorityId");
 
-                    b.ToTable("TicketPriorities", (string)null);
+                    b.ToTable("TicketPriorities");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStateChangeHistory", b =>
@@ -1885,7 +1888,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("TicketStateChangeHistories", (string)null);
+                    b.ToTable("TicketStateChangeHistories");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketStatus", b =>
@@ -1918,7 +1921,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("TicketStatusId");
 
-                    b.ToTable("TicketStatuses", (string)null);
+                    b.ToTable("TicketStatuses");
 
                     b.HasData(
                         new
@@ -2057,7 +2060,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketTypeId");
 
-                    b.ToTable("TicketSubTypes", (string)null);
+                    b.ToTable("TicketSubTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.TicketType", b =>
@@ -2093,7 +2096,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasKey("TicketTypeId");
 
-                    b.ToTable("TicketTypes", (string)null);
+                    b.ToTable("TicketTypes");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.WhatsAppChannelConfig", b =>
@@ -2163,7 +2166,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("DefaultTicketTypeId");
 
-                    b.ToTable("WhatsAppChannelConfigs", (string)null);
+                    b.ToTable("WhatsAppChannelConfigs");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.WhatsAppInboxMessage", b =>
@@ -2216,7 +2219,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("CreatedTicketId");
 
-                    b.ToTable("WhatsAppInboxMessages", (string)null);
+                    b.ToTable("WhatsAppInboxMessages");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.WhatsAppOutboundMessage", b =>
@@ -2260,7 +2263,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
                     b.HasIndex("TicketId");
 
-                    b.ToTable("WhatsAppOutboundMessages", (string)null);
+                    b.ToTable("WhatsAppOutboundMessages");
                 });
 
             modelBuilder.Entity("EmployeeLeave", b =>
