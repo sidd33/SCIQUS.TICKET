@@ -54,10 +54,16 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			{
 				var requestedEmployee = await _context.Employees
 					.AsNoTracking()
-					.FirstOrDefaultAsync(e => e.Id == requestedAgentId && e.DepartmentId == deptId);
+					.FirstOrDefaultAsync(e =>
+						e.Id == requestedAgentId &&
+						e.DepartmentId == deptId &&
+						!e.IsDeleted);
 
-				if (requestedEmployee != null)
+				if (requestedEmployee != null &&
+	await IsEmployeeAvailableAsync(requestedEmployee.Id, now))
+				{
 					return requestedEmployee;
+				}
 			}
 
 			// 2. Sub-Type Default Agent
@@ -65,10 +71,16 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			{
 				var defaultEmployee = await _context.Employees
 					.AsNoTracking()
-					.FirstOrDefaultAsync(e => e.Id == subType.DefaultUserId && e.DepartmentId == deptId);
+					.FirstOrDefaultAsync(e =>
+						e.Id == subType.DefaultUserId &&
+						e.DepartmentId == deptId &&
+						!e.IsDeleted);
 
-				if (defaultEmployee != null)
+				if (defaultEmployee != null &&
+	await IsEmployeeAvailableAsync(defaultEmployee.Id, now))
+				{
 					return defaultEmployee;
+				}
 			}
 
 			// 3. Manual-Only check on Priority or SubType
@@ -90,9 +102,10 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				?? globalConfig.DefaultMaxConcurrentOpenTickets;
 
 			// Active employees in department
+			// Active employees in department
 			var activeEmployees = await _context.Employees
 				.AsNoTracking()
-				.Where(e => e.DepartmentId == deptId)
+				.Where(e => e.DepartmentId == deptId && !e.IsDeleted)
 				.ToListAsync();
 
 			if (excludedAgentIds != null && excludedAgentIds.Count > 0)
@@ -102,9 +115,21 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					.ToList();
 			}
 
+			// Remove employees who are on leave or outside working hours
+			var availableEmployees = new List<Employee>();
+
+			foreach (var employee in activeEmployees)
+			{
+				if (await IsEmployeeAvailableAsync(employee.Id, now))
+				{
+					availableEmployees.Add(employee);
+				}
+			}
+
+			activeEmployees = availableEmployees;
+
 			if (activeEmployees.Count == 0)
 				return null;
-
 			// Compute open ticket count per agent to check maxConcurrent
 			var agentOpenCounts = await _context.Tickets
 				.AsNoTracking()
@@ -231,6 +256,62 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			// =========================================================================
 
 			return scoredAgents[0].Employee;
+		}
+
+		private async Task<bool> IsEmployeeAvailableAsync(string employeeId, DateTime now)
+		{
+			var employee = await _context.Employees
+				.AsNoTracking()
+				.FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted);
+
+			if (employee == null)
+				return false;
+
+			// ============================================================
+			// CHECK 1: Approved leave
+			// ============================================================
+
+			var today = now.Date;
+
+			var onLeave = await _context.EmployeeLeaves
+				.AsNoTracking()
+				.AnyAsync(l =>
+					l.EmployeeId == employeeId &&
+					!l.IsDeleted &&
+					l.Status == "Approved" &&
+					l.StartDate.Date <= today &&
+					l.EndDate.Date >= today);
+
+			if (onLeave)
+				return false;
+
+			// ============================================================
+			// CHECK 2: Working hours
+			// ============================================================
+
+			var currentDay = now.DayOfWeek;
+			var currentTime = now.TimeOfDay;
+
+			var workingHour = await _context.EmployeeWorkingHours
+				.AsNoTracking()
+				.FirstOrDefaultAsync(w =>
+					w.EmployeeId == employeeId &&
+					w.DayOfWeek == currentDay &&
+					w.IsWorkingDay);
+
+			if (workingHour == null)
+				return false;
+
+			// Normal working period
+			if (workingHour.StartTime <= workingHour.EndTime)
+			{
+				return currentTime >= workingHour.StartTime &&
+					   currentTime <= workingHour.EndTime;
+			}
+
+			// Handles overnight shifts such as 22:00 - 06:00
+			return currentTime >= workingHour.StartTime ||
+				   currentTime <= workingHour.EndTime;
 		}
 
 		private class ScoredAgent
