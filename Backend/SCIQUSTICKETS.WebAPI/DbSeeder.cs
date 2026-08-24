@@ -639,13 +639,13 @@ namespace SCIQUSTICKETS.WebAPI
 					WhatsAppChannelConfigId = Guid.NewGuid(),
 					Provider = 0,
 
-					BusinessPhoneNumberId = "1264781743381359",
+					BusinessPhoneNumberId = "15556638753",
 
 					EncryptedApiToken = "...",
 
 					WebhookVerifyToken = "sciqus_secret_token_123",
 
-					AppSecret = "sciqus_app_secret_123",
+					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12",
 
 					IsEnabled = true,
 					AutoCreateEnabled = true,

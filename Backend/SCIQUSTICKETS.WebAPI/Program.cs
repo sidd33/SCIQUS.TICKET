@@ -22,7 +22,10 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 32))));
+	options.UseMySql(
+		connectionString,
+		ServerVersion.AutoDetect(connectionString)
+	));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, UserRole>(options =>
