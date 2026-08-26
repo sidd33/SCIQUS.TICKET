@@ -303,15 +303,15 @@ export default function MasterConfig() {
             </button>
           </div>
           {activeTab !== 'integrations' && (
-          <button
-            className="btn btn--primary btn--sm"
-            onClick={() => {
-  const kindMap = {
-    types: 'type',
-    subtypes: 'subtype',
-    priorities: 'priority',
-    impacts: 'impact'
-  };
+            <button
+              className="btn btn--primary btn--sm"
+              onClick={() => {
+                const kindMap = {
+                  types: 'type',
+                  subtypes: 'subtype',
+                  priorities: 'priority',
+                  impacts: 'impact'
+                };
 
                 openCreate(kindMap[activeTab]);
               }}

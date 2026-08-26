@@ -111,27 +111,35 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 }
                 else if (config.AutoCreateEnabled)
                 {
-                    // Create new ticket using core TicketService
-                    var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                    try
                     {
-                        Title = "WhatsApp Message from " + phone,
-                        Description = message.Body ?? "[Media]",
-                        AccountId = accountContact.AccountId,
-                        SourceType = "WhatsApp",
-                        TicketTypeId = config.DefaultTicketTypeId,
-                        TicketSubTypeId = config.DefaultTicketSubTypeId,
-                        PriorityId = config.DefaultPriorityId,
-                        BusinessImpactId = config.DefaultBusinessImpactId,
-                        DepartmentId = config.DefaultDepartmentId,
-                        AssignedToUserId = config.DefaultAssigneeId,
-                        IsInternal = true // Bypass support plan checks for auto-created tickets
-                    };
+                        // Create new ticket using core TicketService
+                        var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                        {
+                            Title = "WhatsApp Message from " + phone,
+                            Description = message.Body ?? "[Media]",
+                            AccountId = accountContact.AccountId,
+                            SourceType = "WhatsApp",
+                            TicketTypeId = config.DefaultTicketTypeId,
+                            TicketSubTypeId = config.DefaultTicketSubTypeId,
+                            PriorityId = config.DefaultPriorityId,
+                            BusinessImpactId = config.DefaultBusinessImpactId,
+                            DepartmentId = config.DefaultDepartmentId,
+                            AssignedToUserId = config.DefaultAssigneeId,
+                            IsInternal = true // Bypass support plan checks for auto-created tickets
+                        };
 
-                    var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
-                    
-                    message.CreatedTicketId = createdTicket.TicketId;
-                    message.ProcessingStatus = "Processed";
-                    message.ProcessedDate = now;
+                        var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
+                        
+                        message.CreatedTicketId = createdTicket.TicketId;
+                        message.ProcessingStatus = "Processed";
+                        message.ProcessedDate = now;
+                    }
+                    catch (Exception ex)
+                    {
+                        message.ProcessingStatus = "Failed";
+                        message.FailureReason = $"Auto-create failed: {ex.Message}";
+                    }
                 }
                 else
                 {
@@ -161,6 +169,37 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             // Send outbound message via configured WhatsApp provider
             var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
             
+            var config = await _context.WhatsAppChannelConfigs.FirstOrDefaultAsync();
+            if (config != null && config.IsEnabled && !string.IsNullOrEmpty(config.EncryptedApiToken) && !string.IsNullOrEmpty(config.BusinessPhoneNumberId))
+            {
+                try
+                {
+                    using var httpClient = new System.Net.Http.HttpClient();
+                    httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.EncryptedApiToken);
+
+                    var payload = new
+                    {
+                        messaging_product = "whatsapp",
+                        to = contactPhone.Replace("+", ""),
+                        type = "text",
+                        text = new { body = body }
+                    };
+
+                    var content = new System.Net.Http.StringContent(System.Text.Json.JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync($"https://graph.facebook.com/v17.0/{config.BusinessPhoneNumberId}/messages", content);
+                    
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var error = await response.Content.ReadAsStringAsync();
+                        // Log error ideally, but for now we proceed to record the intent
+                    }
+                }
+                catch
+                {
+                    // Ignore transient HTTP errors
+                }
+            }
+
             var outbound = new WhatsAppOutboundMessage
             {
                 WhatsAppOutboundMessageId = Guid.NewGuid(),

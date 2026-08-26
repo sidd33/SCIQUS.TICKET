@@ -54,3 +54,9 @@ $RECYCLE.BIN/
 scratch/
 Backend/test_mock.ps1
 LOCAL_DEV_SETUP.md
+
+# Test Reports & Frontend Cache
+playwright-report/
+test-results/
+.vite/
+
