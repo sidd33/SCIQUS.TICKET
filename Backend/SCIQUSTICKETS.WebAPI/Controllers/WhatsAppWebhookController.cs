@@ -69,15 +69,15 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                 var hashBytes = hmac.ComputeHash(payloadBytes);
                 var actualHash = Convert.ToHexString(hashBytes).ToLower();
 
-                // if (expectedHash != actualHash)
-                // {
-                //     return Unauthorized("Invalid signature.");
-                // }
+                if (expectedHash != actualHash)
+                {
+                    return Unauthorized("Invalid signature.");
+                }
             }
-            // else
-            // {
-            //     return Unauthorized("Missing signature.");
-            // }
+            else
+            {
+                return Unauthorized("Missing signature.");
+            }
 
             try
             {
@@ -89,6 +89,13 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                     if (entry.TryGetProperty("changes", out var changesArray) && changesArray.GetArrayLength() > 0)
                     {
                         var value = changesArray[0].GetProperty("value");
+                        
+                        // Handle read/delivery receipts gracefully
+                        if (value.TryGetProperty("statuses", out var statusesArray) && statusesArray.GetArrayLength() > 0)
+                        {
+                            return Ok(); // Acknowledge receipt
+                        }
+
                         if (value.TryGetProperty("messages", out var messagesArray) && messagesArray.GetArrayLength() > 0)
                         {
                             var messageData = messagesArray[0];

@@ -38,8 +38,8 @@ namespace SCIQUSTICKETS.WebAPI.BackgroundServices
                     _logger.LogError(ex, "Error occurred executing Email Polling task.");
                 }
 
-                // Minimum 15 minutes as per requirements
-                await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
+                // Minimum 1 minute as per requirements to keep responsive
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }

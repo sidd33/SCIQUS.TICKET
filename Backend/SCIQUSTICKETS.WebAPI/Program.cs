@@ -24,10 +24,7 @@ builder.Configuration.AddJsonFile(
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseMySql(
-		connectionString,
-		ServerVersion.AutoDetect(connectionString)
-	));
+	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, UserRole>(options =>
@@ -84,28 +81,28 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-	options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+	options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
 	{
 		Name = "Authorization",
-		Type = SecuritySchemeType.Http,
-		Scheme = "bearer",
+		Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+		Scheme = "Bearer",
 		BearerFormat = "JWT",
-		In = ParameterLocation.Header,
-		Description = "Enter your JWT token. You do not need to type 'Bearer' before it."
+		In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+		Description = "Paste your JWT here (no need to type 'Bearer' first)"
 	});
 
-	options.AddSecurityRequirement(new OpenApiSecurityRequirement
+	options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
 	{
 		{
-			new OpenApiSecurityScheme
+			new Microsoft.OpenApi.Models.OpenApiSecurityScheme
 			{
-				Reference = new OpenApiReference
+				Reference = new Microsoft.OpenApi.Models.OpenApiReference
 				{
-					Type = ReferenceType.SecurityScheme,
+					Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
 					Id = "Bearer"
 				}
 			},
-			Array.Empty<string>()
+			new List<string>()
 		}
 	});
 });
@@ -191,7 +188,7 @@ if (!app.Environment.IsDevelopment())
 
 using (var scope = app.Services.CreateScope())
 {
-	await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
+    await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
 }
 
 app.UseCors("AllowFrontend");

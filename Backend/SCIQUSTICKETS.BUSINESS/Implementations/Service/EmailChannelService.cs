@@ -133,37 +133,45 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 }
                 else if (config.AutoCreateEnabled)
                 {
-                    var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                    try
                     {
-                        Title = message.Subject,
-                        Description = message.Body,
-                        AccountId = accountContact.AccountId,
-                        SourceType = "Email",
-                        TicketTypeId = config.DefaultTicketTypeId,
-                        TicketSubTypeId = config.DefaultTicketSubTypeId,
-                        PriorityId = config.DefaultPriorityId,
-                        BusinessImpactId = config.DefaultBusinessImpactId,
-                        DepartmentId = config.DefaultDepartmentId,
-                        AssignedToUserId = config.DefaultAssigneeId,
-                        IsInternal = false
-                    };
+                        var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
+                        {
+                            Title = message.Subject,
+                            Description = message.Body,
+                            AccountId = accountContact.AccountId,
+                            SourceType = "Email",
+                            TicketTypeId = config.DefaultTicketTypeId,
+                            TicketSubTypeId = config.DefaultTicketSubTypeId,
+                            PriorityId = config.DefaultPriorityId,
+                            BusinessImpactId = config.DefaultBusinessImpactId,
+                            DepartmentId = config.DefaultDepartmentId,
+                            AssignedToUserId = config.DefaultAssigneeId,
+                            IsInternal = false
+                        };
 
-                    var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
-                    
-                    // Fix SLA clock for email tickets
-                    var ticketEntity = await _context.Tickets.FindAsync(createdTicket.TicketId);
-                    if (ticketEntity != null)
-                    {
-                        ticketEntity.EmailReceivedDate = message.EmailReceivedDate;
-                        var priority = await _context.TicketPriorities.FindAsync(ticketEntity.PriorityId);
-                        var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(ticketEntity, priority);
-                        ticketEntity.SlaDueDate = slaDueDate;
-                        ticketEntity.SlaMetStatus = slaMetStatus;
+                        var createdTicket = await _ticketService.CreateAsync(accountContact.AccountId, createReq);
+                        
+                        // Fix SLA clock for email tickets
+                        var ticketEntity = await _context.Tickets.FindAsync(createdTicket.TicketId);
+                        if (ticketEntity != null)
+                        {
+                            ticketEntity.EmailReceivedDate = message.EmailReceivedDate;
+                            var priority = await _context.TicketPriorities.FindAsync(ticketEntity.PriorityId);
+                            var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(ticketEntity, priority);
+                            ticketEntity.SlaDueDate = slaDueDate;
+                            ticketEntity.SlaMetStatus = slaMetStatus;
+                        }
+                        
+                        message.CreatedTicketId = createdTicket.TicketId;
+                        message.ProcessingStatus = "Processed";
+                        message.ProcessedDate = now;
                     }
-                    
-                    message.CreatedTicketId = createdTicket.TicketId;
-                    message.ProcessingStatus = "Processed";
-                    message.ProcessedDate = now;
+                    catch (Exception ex)
+                    {
+                        message.ProcessingStatus = "Failed";
+                        message.FailureReason = $"Auto-create failed: {ex.Message}";
+                    }
                 }
                 else
                 {
@@ -191,7 +199,37 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var contactEmail = ticket.Account.Contacts.FirstOrDefault()?.Email;
             if (string.IsNullOrEmpty(contactEmail)) return false;
 
-            // Send outbound email via configured provider (SMTP/API)
+            // Send outbound email via configured provider (SMTP)
+            var config = await _context.EmailTicketConfigs.FirstOrDefaultAsync();
+            if (config != null && config.IsEnabled && !string.IsNullOrEmpty(config.AppPassword))
+            {
+                try
+                {
+                    string smtpHost = config.Provider == "Outlook" ? "smtp.office365.com" : "smtp.gmail.com";
+                    int smtpPort = 587; // STARTTLS
+
+                    var message = new MimeMessage();
+                    message.From.Add(new MailboxAddress("Support", config.EmailAddress));
+                    message.To.Add(new MailboxAddress(ticket.Account.AccountName, contactEmail));
+                    message.Subject = $"Re: [TKT-{ticket.TicketNumber}] {ticket.Title}";
+                    
+                    message.Body = new TextPart("plain")
+                    {
+                        Text = body
+                    };
+
+                    using var client = new MailKit.Net.Smtp.SmtpClient();
+                    await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+                    await client.AuthenticateAsync(config.EmailAddress, config.AppPassword);
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to send SMTP email to {Email}", contactEmail);
+                }
+            }
+
             var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
             
             // Add comment to ticket
