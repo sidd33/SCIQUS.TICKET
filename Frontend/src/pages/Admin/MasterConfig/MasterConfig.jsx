@@ -47,7 +47,7 @@ export default function MasterConfig() {
       setSubTypes(stRes.data?.items || []);
       setPriorities(pRes.data?.items || []);
       setImpacts(iRes.data?.items || []);
-      
+
       if (wRes.data) {
         setApiToken(wRes.data.encryptedApiToken || '');
         setWebhookToken(wRes.data.webhookVerifyToken || '');
@@ -108,39 +108,39 @@ export default function MasterConfig() {
   }
 
   async function handleSave(e) {
-  e.preventDefault();
-  if (!modal) return;
+    e.preventDefault();
+    if (!modal) return;
 
-  setSaving(true);
-  setError('');
+    setSaving(true);
+    setError('');
 
-  try {
-    const url = endpointFor(modal.kind);
+    try {
+      const url = endpointFor(modal.kind);
 
-    const payload = { ...modal.data };
+      const payload = { ...modal.data };
 
-    if (modal.kind === 'subtype') {
-      payload.defaultUserId = modal.data.defaultUserId || null;
+      if (modal.kind === 'subtype') {
+        payload.defaultUserId = modal.data.defaultUserId || null;
+      }
+
+      if (modal.mode === 'create') {
+        await api.post(url, payload);
+      } else {
+        await api.put(`${url}/${modal.id}`, {
+          ...payload,
+          status: payload.status ?? true
+        });
+      }
+
+      setModal(null);
+      await loadMasterData();
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Save failed.');
+    } finally {
+      setSaving(false);
     }
-
-    if (modal.mode === 'create') {
-      await api.post(url, payload);
-    } else {
-      await api.put(`${url}/${modal.id}`, {
-        ...payload,
-        status: payload.status ?? true
-      });
-    }
-
-    setModal(null);
-    await loadMasterData();
-
-  } catch (err) {
-    setError(err.response?.data?.message || 'Save failed.');
-  } finally {
-    setSaving(false);
   }
-}
 
   async function handleDelete(kind, item) {
     const id = idFor(kind, item);
@@ -303,21 +303,21 @@ export default function MasterConfig() {
             </button>
           </div>
           {activeTab !== 'integrations' && (
-          <button
-            className="btn btn--primary btn--sm"
-            onClick={() => {
-  const kindMap = {
-    types: 'type',
-    subtypes: 'subtype',
-    priorities: 'priority',
-    impacts: 'impact'
-  };
+            <button
+              className="btn btn--primary btn--sm"
+              onClick={() => {
+                const kindMap = {
+                  types: 'type',
+                  subtypes: 'subtype',
+                  priorities: 'priority',
+                  impacts: 'impact'
+                };
 
-  openCreate(kindMap[activeTab]);
-}}
-          >
-            <Plus size={14} /> Add
-          </button>
+                openCreate(kindMap[activeTab]);
+              }}
+            >
+              <Plus size={14} /> Add
+            </button>
           )}
         </div>
       </div>

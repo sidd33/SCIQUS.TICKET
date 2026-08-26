@@ -44,6 +44,12 @@ namespace SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA
 		[ForeignKey("GradeId")]
 		public Grade? Grade { get; set; }
 
+		public ICollection<EmployeeWorkingHour> WorkingHours { get; set; }
+	= new List<EmployeeWorkingHour>();
+
+		public ICollection<EmployeeLeave> Leaves { get; set; }
+			= new List<EmployeeLeave>();
+
 
 	}
 }

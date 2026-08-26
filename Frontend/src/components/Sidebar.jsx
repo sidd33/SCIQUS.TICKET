@@ -15,7 +15,8 @@ import {
   Award,
   PlusCircle,
   Inbox,
-  MessageSquare
+  MessageSquare,
+  CalendarOff
 } from 'lucide-react';
 import { isAdmin, isCustomer, isEmployee } from '../auth/roles';
 import { clearToken } from '../auth/tokenManager';
@@ -110,6 +111,16 @@ export default function Sidebar() {
               <PlusCircle size={20} />
               {!isCollapsed && <span>New Ticket</span>}
             </NavLink>
+            <NavLink
+            to="/my-leave"
+            className={({ isActive }) =>
+              isActive ? 'nav-link active' : 'nav-link'
+            }
+            title="My Leave"
+          >
+            <CalendarOff size={20} />
+            {!isCollapsed && <span>My Leave</span>}
+          </NavLink>
 
             <NavLink
               to="/tickets/department-queue"
@@ -142,6 +153,17 @@ export default function Sidebar() {
               <Users size={20} />
               {!isCollapsed && <span>Employees</span>}
             </NavLink>
+
+            <NavLink
+            to="/leave"
+            className={({ isActive }) =>
+              isActive ? 'nav-link active' : 'nav-link'
+            }
+            title="Leave Management"
+          >
+            <CalendarOff size={20} />
+            {!isCollapsed && <span>Leave Management</span>}
+          </NavLink>
             <NavLink
               to="/departments"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}

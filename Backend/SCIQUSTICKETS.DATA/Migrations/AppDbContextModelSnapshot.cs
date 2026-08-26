@@ -17,10 +17,75 @@ namespace SCIQUSTICKETS.DATA.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("EmployeeLeave", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LeaveType")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeLeave", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeWorkingHour", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<TimeSpan>("EndTime")
+                        .HasColumnType("time(6)");
+
+                    b.Property<bool>("IsWorkingDay")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("time(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeWorkingHour", (string)null);
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
@@ -1796,7 +1861,6 @@ namespace SCIQUSTICKETS.DATA.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("ChangedByUserId")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreatedDate")
@@ -2197,6 +2261,28 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasIndex("TicketId");
 
                     b.ToTable("WhatsAppOutboundMessages");
+                });
+
+            modelBuilder.Entity("EmployeeLeave", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "Employee")
+                        .WithMany("Leaves")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("EmployeeWorkingHour", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "Employee")
+                        .WithMany("WorkingHours")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -2773,9 +2859,7 @@ namespace SCIQUSTICKETS.DATA.Migrations
                 {
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser", "ChangedByUser")
                         .WithMany()
-                        .HasForeignKey("ChangedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ChangedByUserId");
 
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.TicketDATA.Ticket", "Ticket")
                         .WithMany()
@@ -2916,6 +3000,13 @@ namespace SCIQUSTICKETS.DATA.Migrations
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA.Department", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", b =>
+                {
+                    b.Navigation("Leaves");
+
+                    b.Navigation("WorkingHours");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Grade", b =>

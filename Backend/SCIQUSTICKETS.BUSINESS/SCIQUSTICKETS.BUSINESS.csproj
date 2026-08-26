@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\SCIQUSTICKETS.DATA\SCIQUSTICKETS.DATA.csproj" />
-    <ProjectReference Include="..\SCIQUSTICKETS.COMMON\SCIQUSTICKETS.COMMON.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\SCIQUSTICKETS.DATA\SCIQUSTICKETS.DATA.csproj" />
+		<ProjectReference Include="..\SCIQUSTICKETS.COMMON\SCIQUSTICKETS.COMMON.csproj" />
+	</ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="MailKit" Version="4.8.0" />

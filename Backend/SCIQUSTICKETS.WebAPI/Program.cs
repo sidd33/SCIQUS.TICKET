@@ -1,26 +1,28 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using SCIQUSTICKETS.DATA.Contexts;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SCIQUSTICKETS.BUSINESS.Implementations.Service;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
+using SCIQUSTICKETS.BUSINESS.Validations.Authorization;
+using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.AuthDATA;
 using SCIQUSTICKETS.DATA.Implementations.Repositories;
 using SCIQUSTICKETS.DATA.Interfaces.IRepositories;
-using SCIQUSTICKETS.BUSINESS.Validations.Authorization;
-
-
-using System.Text;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Configuration.AddJsonFile(
+	"appsettings.Local.json",
+	optional: true,
+	reloadOnChange: true
+);
+
+// Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
@@ -60,10 +62,15 @@ builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowFrontend", policy =>
 	{
-		policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
-			  .AllowAnyHeader()
-			  .AllowAnyMethod()
-			  .AllowCredentials();
+		policy.WithOrigins(
+			"http://localhost:5173", "https://localhost:5173",
+			"http://localhost:5174", "https://localhost:5174",
+			"http://localhost:3000", "https://localhost:3000",
+			"http://localhost:5175", "https://localhost:5175"
+		)
+		.AllowAnyHeader()
+		.AllowAnyMethod()
+		.AllowCredentials();
 	});
 });
 
@@ -71,6 +78,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
 	options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -173,7 +181,10 @@ if (app.Environment.IsDevelopment())
 	app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHttpsRedirection();
+}
 
 using (var scope = app.Services.CreateScope())
 {
@@ -187,4 +198,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
