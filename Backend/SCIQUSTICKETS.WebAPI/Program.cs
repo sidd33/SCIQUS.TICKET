@@ -65,10 +65,15 @@ builder.Services.AddCors(options =>
 {
 	options.AddPolicy("AllowFrontend", policy =>
 	{
-		policy.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174")
-			  .AllowAnyHeader()
-			  .AllowAnyMethod()
-			  .AllowCredentials();
+		policy.WithOrigins(
+			"http://localhost:5173", "https://localhost:5173",
+			"http://localhost:5174", "https://localhost:5174",
+			"http://localhost:3000", "https://localhost:3000",
+			"http://localhost:5175", "https://localhost:5175"
+		)
+		.AllowAnyHeader()
+		.AllowAnyMethod()
+		.AllowCredentials();
 	});
 });
 
@@ -179,9 +184,10 @@ if (app.Environment.IsDevelopment())
 	app.UseSwaggerUI();
 }
 
-
-
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHttpsRedirection();
+}
 
 using (var scope = app.Services.CreateScope())
 {
