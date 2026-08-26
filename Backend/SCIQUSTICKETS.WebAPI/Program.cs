@@ -22,10 +22,7 @@ builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, relo
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
-	options.UseMySql(
-		connectionString,
-		ServerVersion.AutoDetect(connectionString)
-	));
+	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, UserRole>(options =>
@@ -70,26 +67,35 @@ builder.Services.AddCors(options =>
 	});
 });
 
-builder.Services.AddOpenApi();
 // Add Controllers
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-	options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.OpenApiSecurityScheme
+	options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
 	{
 		Name = "Authorization",
-		Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+		Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
 		Scheme = "Bearer",
 		BearerFormat = "JWT",
-		In = Microsoft.OpenApi.ParameterLocation.Header,
+		In = Microsoft.OpenApi.Models.ParameterLocation.Header,
 		Description = "Paste your JWT here (no need to type 'Bearer' first)"
 	});
 
-	options.AddSecurityRequirement(document => new Microsoft.OpenApi.OpenApiSecurityRequirement
+	options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
 	{
-		[new Microsoft.OpenApi.OpenApiSecuritySchemeReference("Bearer", document)] = new List<string>()
+		{
+			new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+			{
+				Reference = new Microsoft.OpenApi.Models.OpenApiReference
+				{
+					Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				}
+			},
+			new List<string>()
+		}
 	});
 });
 // Register CRM / Accounts Repositories
@@ -163,7 +169,6 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-	app.MapOpenApi();
 	app.UseSwagger();
 	app.UseSwaggerUI();
 }
@@ -172,8 +177,6 @@ app.UseHttpsRedirection();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<SCIQUSTICKETS.DATA.Contexts.AppDbContext>();
-    context.Database.EnsureCreated();
     await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
 }
 

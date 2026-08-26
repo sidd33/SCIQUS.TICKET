@@ -15,10 +15,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     public class TicketNotificationService : ITicketNotificationService
     {
         private readonly AppDbContext _context;
+        private readonly IServiceProvider _serviceProvider;
 
-        public TicketNotificationService(AppDbContext context)
+        public TicketNotificationService(AppDbContext context, IServiceProvider serviceProvider)
         {
             _context = context;
+            _serviceProvider = serviceProvider;
         }
 
         private async Task CreateNotificationAsync(
@@ -80,6 +82,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 .FirstOrDefaultAsync(t => t.TicketId == ticketId);
         }
 
+        private async Task SendExternalNotificationAsync(Ticket ticket, string message, string? actorUserId)
+        {
+            if (ticket.SourceType == "Email")
+            {
+                var emailService = (IEmailChannelService?)_serviceProvider.GetService(typeof(IEmailChannelService));
+                if (emailService != null) await emailService.SendOutboundReplyAsync(ticket.TicketId, message, actorUserId);
+            }
+            else if (ticket.SourceType == "WhatsApp")
+            {
+                var waService = (IWhatsAppChannelService?)_serviceProvider.GetService(typeof(IWhatsAppChannelService));
+                if (waService != null) await waService.SendOutboundReplyAsync(ticket.TicketId, message, null, actorUserId);
+            }
+        }
+
         public async Task NotifyTicketCreatedAsync(Guid ticketId, string? actorUserId)
         {
             var ticket = await GetTicketDetailsAsync(ticketId);
@@ -92,6 +108,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 recipients.Add(ticket.Department.DepartmentHeadId);
 
             await CreateNotificationAsync("Created", ticketId, actorUserId, recipients, new { Title = ticket.Title });
+            await SendExternalNotificationAsync(ticket, $"Your ticket [TKT-{ticket.TicketNumber}] has been successfully created and assigned.", actorUserId);
         }
 
         public async Task NotifyAssignedAsync(Guid ticketId, string? actorUserId)
@@ -178,6 +195,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             }
 
             await CreateNotificationAsync("Closed", ticketId, actorUserId, recipients);
+            await SendExternalNotificationAsync(ticket, $"Your ticket [TKT-{ticket.TicketNumber}] has been successfully closed. Thank you!", actorUserId);
         }
 
         public async Task NotifyReopenedAsync(Guid ticketId, string? actorUserId)

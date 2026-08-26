@@ -625,27 +625,27 @@ namespace SCIQUSTICKETS.WebAPI
                 }
             }
 
-            // 12. Seed WhatsApp Channel Config
-            if (!context.WhatsAppChannelConfigs.Any())
-            {
-                var priorityObj = context.TicketPriorities.FirstOrDefault();
-                var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
-                var deptObj = context.Departments.FirstOrDefault();
-                var typeObj = context.TicketTypes.FirstOrDefault();
-                var subTypeObj = context.TicketSubTypes.FirstOrDefault();
+			// 12. Seed WhatsApp Channel Config
+			if (!context.WhatsAppChannelConfigs.Any())
+			{
+				var priorityObj = context.TicketPriorities.FirstOrDefault();
+				var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
+				var deptObj = context.Departments.FirstOrDefault();
+				var typeObj = context.TicketTypes.FirstOrDefault();
+				var subTypeObj = context.TicketSubTypes.FirstOrDefault(st => typeObj != null && st.TicketTypeId == typeObj.TicketTypeId);
 
 				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
 				{
 					WhatsAppChannelConfigId = Guid.NewGuid(),
 					Provider = 0,
 
-					BusinessPhoneNumberId = "15556638753",
+					BusinessPhoneNumberId = "1264781743381359", // From your Meta dashboard screenshot
 
-					EncryptedApiToken = "...",
+					EncryptedApiToken = "PASTE_YOUR_GENERATED_ACCESS_TOKEN_HERE", // Update this if you generated it!
 
-					WebhookVerifyToken = "sciqus_secret_token_123",
+					WebhookVerifyToken = "MySecretToken123", // Matches what you entered in the Webhooks page
 
-					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12",
+					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12", // Update this to your real App Secret from Basic Settings
 
 					IsEnabled = true,
 					AutoCreateEnabled = true,
