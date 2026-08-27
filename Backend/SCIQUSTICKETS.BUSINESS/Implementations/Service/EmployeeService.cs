@@ -517,6 +517,64 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
+		// ============================================================
+		// EMAIL NOTIFICATION PREFERENCES
+		// ============================================================
+
+		public async Task<EmployeeEmailNotificationPreference?>
+			GetEmailNotificationPreferenceAsync(string employeeId)
+		{
+			await EnsureEmployeeExistsAsync(employeeId);
+
+			return await _context.EmployeeEmailNotificationPreferences
+				.AsNoTracking()
+				.FirstOrDefaultAsync(p => p.EmployeeId == employeeId);
+		}
+
+
+		public async Task<EmployeeEmailNotificationPreference>
+			SaveEmailNotificationPreferenceAsync(
+				string employeeId,
+				EmployeeEmailNotificationPreference preference)
+		{
+			await EnsureEmployeeExistsAsync(employeeId);
+
+			var existingPreference =
+				await _context.EmployeeEmailNotificationPreferences
+					.FirstOrDefaultAsync(p => p.EmployeeId == employeeId);
+
+			var now = TimeHelper.GetIndianTime();
+
+			if (existingPreference == null)
+			{
+				preference.EmployeeEmailNotificationPreferenceId = Guid.NewGuid();
+				preference.EmployeeId = employeeId;
+				preference.CreatedDate = now;
+				preference.LastUpdatedDate = now;
+
+				_context.EmployeeEmailNotificationPreferences.Add(preference);
+			}
+			else
+			{
+				existingPreference.ReceiveAll = preference.ReceiveAll;
+				existingPreference.Assignment = preference.Assignment;
+				existingPreference.Acceptance = preference.Acceptance;
+				existingPreference.Rejection = preference.Rejection;
+				existingPreference.Expiry = preference.Expiry;
+				existingPreference.Reassignment = preference.Reassignment;
+				existingPreference.StatusChange = preference.StatusChange;
+				existingPreference.Closure = preference.Closure;
+				existingPreference.Reopen = preference.Reopen;
+				existingPreference.LastUpdatedDate = now;
+
+				preference = existingPreference;
+			}
+
+			await _context.SaveChangesAsync();
+
+			return preference;
+		}
+
 
 		// ============================================================
 		// VALIDATION / HELPERS

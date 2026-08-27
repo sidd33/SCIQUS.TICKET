@@ -31,6 +31,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		private readonly IAcceptanceService _acceptanceService;
 		private readonly ITicketTimelineService _timelineService;
 		private readonly ISupportPlanService _supportPlanService;
+		private readonly ITicketEmailNotificationService _ticketEmailNotificationService;
+		private readonly IAcknowledgementService _acknowledgementService;
 
 		private static readonly Dictionary<string, string[]> AllowedTransitions =
 	new(StringComparer.OrdinalIgnoreCase)
@@ -51,19 +53,21 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 	};
 
 		public TicketService(
-			ITicketRepository ticketRepository,
-			ITicketTypeRepository ticketTypeRepository,
-			ITicketSubTypeRepository ticketSubTypeRepository,
-			ITicketPriorityRepository ticketPriorityRepository,
-			ITicketBusinessImpactRepository ticketBusinessImpactRepository,
-			ITicketAttachmentRepository ticketAttachmentRepository,
-			IFileStorageService fileStorageService,
-			IAssignmentEngine assignmentEngine,
-			ISlaService slaService,
-			AppDbContext context,
-			IAcceptanceService acceptanceService,
-			ITicketTimelineService timelineService,
-			ISupportPlanService supportPlanService)
+	ITicketRepository ticketRepository,
+	ITicketTypeRepository ticketTypeRepository,
+	ITicketSubTypeRepository ticketSubTypeRepository,
+	ITicketPriorityRepository ticketPriorityRepository,
+	ITicketBusinessImpactRepository ticketBusinessImpactRepository,
+	ITicketAttachmentRepository ticketAttachmentRepository,
+	IFileStorageService fileStorageService,
+	IAssignmentEngine assignmentEngine,
+	ISlaService slaService,
+	AppDbContext context,
+	IAcceptanceService acceptanceService,
+	ITicketTimelineService timelineService,
+	ISupportPlanService supportPlanService,
+	ITicketEmailNotificationService ticketEmailNotificationService,
+	IAcknowledgementService acknowledgementService)
 		{
 			_ticketRepository = ticketRepository;
 			_ticketTypeRepository = ticketTypeRepository;
@@ -78,6 +82,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			_acceptanceService = acceptanceService;
 			_timelineService = timelineService;
 			_supportPlanService = supportPlanService;
+			_ticketEmailNotificationService = ticketEmailNotificationService;
+			_acknowledgementService = acknowledgementService;
 		}
 
 		public async Task<bool> ConfirmClosureAsync(Guid ticketId, string accountActorId)
@@ -106,6 +112,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), closedStatus.TicketStatusId.ToString(), "Closure confirmed by customer", accountActorId, true);
 
 			await _context.SaveChangesAsync();
+
+			await _acknowledgementService.HandleAsync(
+				ticketId,
+				"Closed",
+				accountActorId);
+
 			return true;
 		}
 
@@ -159,16 +171,28 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					if (userObj != null)
 					{
 						var contact = await _context.AccountContacts
-							.AsNoTracking()
-							.FirstOrDefaultAsync(c => c.Email == userObj.Email);
-						
+	.AsNoTracking()
+	.FirstOrDefaultAsync(c => c.Email == userObj.Email);
+
 						if (contact != null)
 						{
 							queryParams.AccountId = contact.AccountId;
 						}
 						else
 						{
-							createdByUserId = userId;
+							// In this project, customer AspNetUsers.Id matches Accounts.AccountId.
+							var accountExists = await _context.Accounts
+								.AsNoTracking()
+								.AnyAsync(a => a.AccountId == userId && !a.IsDeleted);
+
+							if (accountExists)
+							{
+								queryParams.AccountId = userId;
+							}
+							else
+							{
+								createdByUserId = userId;
+							}
 						}
 					}
 					else
@@ -225,12 +249,28 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 		public async Task<TicketResponse> CreateAsync(string userId, CreateTicketRequest request)
 		{
+			// Resolve the customer's AccountId when it is not supplied by the frontend.
+			// In this project, the customer AspNetUsers.Id matches Accounts.AccountId.
+			if (!request.IsInternal && string.IsNullOrWhiteSpace(request.AccountId))
+			{
+				var accountExists = await _context.Accounts
+					.AsNoTracking()
+					.AnyAsync(a => a.AccountId == userId && !a.IsDeleted);
+
+				if (accountExists)
+				{
+					request.AccountId = userId;
+				}
+			}
+
 			if (!string.IsNullOrEmpty(request.AccountId) && !request.IsInternal)
 			{
 				bool hasQuota = await _supportPlanService.HasAvailableQuotaAsync(request.AccountId);
+
 				if (!hasQuota)
 				{
-					throw new InvalidOperationException("Ticket creation failed: Support plan quota exhausted or no active plan found.");
+					throw new InvalidOperationException(
+						"Ticket creation failed: Support plan quota exhausted or no active plan found.");
 				}
 			}
 
@@ -469,6 +509,28 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), targetStatus.TicketStatusId.ToString(), $"Status changed from {currentStatus.Name} to {targetStatus.Name}", userId);
 
 			await _ticketRepository.SaveChangesAsync();
+
+			if (string.Equals(
+		targetStatus.Name,
+		"In Progress",
+		StringComparison.OrdinalIgnoreCase))
+			{
+				await _acknowledgementService.HandleAsync(
+					ticketId,
+					"InProgress",
+					userId);
+			}
+			else if (string.Equals(
+					targetStatus.Name,
+					"Closed",
+					StringComparison.OrdinalIgnoreCase))
+			{
+				await _acknowledgementService.HandleAsync(
+					ticketId,
+					"Closed",
+					userId);
+			}
+
 			return true;
 		}
 
@@ -497,7 +559,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				?? throw new InvalidOperationException("The 'Reopened' status is not seeded.");
 
 			var oldStatusId = ticket.StatusId;
+
 			ticket.StatusId = reopenedStatus.TicketStatusId;
+			ticket.IsOpen = true;
 
 			var priority = await _ticketPriorityRepository.GetByIdAsync(ticket.PriorityId) as TicketPriority;
 			_slaService.ApplyReopen(ticket, priority);
@@ -510,6 +574,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, oldStatusId.ToString(), reopenedStatus.TicketStatusId.ToString(), $"Reopened. Reason: {reason}", actorUserId);
 
 			await _context.SaveChangesAsync();
+
+			await _acknowledgementService.HandleAsync(
+				ticket.TicketId,
+				"Reopened",
+				actorUserId);
+
 			return true;
 		}
 
