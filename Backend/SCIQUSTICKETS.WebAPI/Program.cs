@@ -189,6 +189,16 @@ if (!app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     await SCIQUSTICKETS.WebAPI.DbSeeder.SeedAsync(app.Services);
+
+	var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+	var waConfig = context.WhatsAppChannelConfigs.FirstOrDefault();
+	if (waConfig != null)
+	{
+		waConfig.EncryptedApiToken = "EAAbjZAv1XkAUBSbhN9H7osPsWp9otlDc2M9ZB82lQUr3ZCdzFPAWtCQAEe3HYnJMSnep424Hkd4WauBHMlAMRq3wl9lXciEVZBBR51uQCTO1MiH1ZBkyqCZBXYnscZA1yj62OMJHfVE2B9ZB54iVFdAtZCqYlIyj2NeCv0iCt0ask3VWWqytLYnCMlvfyktEpfjrQZAwGk0pPYVJB0XrdPnpE6oOyxhZCkVdbqyzmMYHcZCSb2MjtZB5zjB5OlMUHy1RRyp1kdAGHZAkQM1ydnOpdqsemq";
+		context.WhatsAppChannelConfigs.Update(waConfig);
+		context.SaveChanges();
+	}
 }
 
 app.UseCors("AllowFrontend");

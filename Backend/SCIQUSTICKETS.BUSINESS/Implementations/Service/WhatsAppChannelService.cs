@@ -44,12 +44,29 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             if (accountContact == null)
             {
+                var newUserId = Guid.NewGuid().ToString();
+
+                var user = new SCIQUSTICKETS.DATA.DomainModels.AuthDATA.ApplicationUser
+                {
+                    Id = newUserId,
+                    UserName = $"guest_{phone.Replace("+", "")}@whatsapp.local",
+                    NormalizedUserName = $"GUEST_{phone.Replace("+", "")}@WHATSAPP.LOCAL",
+                    Email = $"guest_{phone.Replace("+", "")}@whatsapp.local",
+                    NormalizedEmail = $"GUEST_{phone.Replace("+", "")}@WHATSAPP.LOCAL",
+                    EmailConfirmed = true,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    ConcurrencyStamp = Guid.NewGuid().ToString(),
+                    CreatedDate = now,
+                    Status = true
+                };
+                _context.Users.Add(user);
+
                 // Auto-create a Guest Account and Contact for unknown numbers
                 var guestAccount = new SCIQUSTICKETS.DATA.DomainModels.Account
                 {
-                    AccountId = Guid.NewGuid().ToString(),
+                    AccountId = newUserId,
                     AccountName = "WhatsApp Guest",
-                    Email = $"guest_{phone.Replace("+", "")}@whatsapp.local",
+                    Email = user.Email,
                     RegisteredMobileNumber = phone,
                     Status = true,
                     CreatedDate = now,
@@ -137,6 +154,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine($"[CRITICAL] WhatsApp Auto-Create Failed: {ex.ToString()}");
                         message.ProcessingStatus = "Failed";
                         message.FailureReason = $"Auto-create failed: {ex.Message}";
                     }
