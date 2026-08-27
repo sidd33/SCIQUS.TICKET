@@ -83,7 +83,11 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<WhatsAppChannelConfig> WhatsAppChannelConfigs { get; set; }
 		public DbSet<WhatsAppInboxMessage> WhatsAppInboxMessages { get; set; }
 		public DbSet<WhatsAppOutboundMessage> WhatsAppOutboundMessages { get; set; }
+
 		// ── [END: CHANNELS] ───────────────────────────────────────────
+
+		public DbSet<EmployeeEmailNotificationPreference> EmployeeEmailNotificationPreferences { get; set; }
+
 		public DbSet<FaqArticle> FaqArticles { get; set; }
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -475,6 +479,12 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.HasForeignKey(spc => spc.TicketId)
 				.OnDelete(DeleteBehavior.Restrict);
 			// 🎫 [END: SUPPORT PLANS] ──────────────────────────────────
+
+			builder.Entity<EmployeeEmailNotificationPreference>()
+			.HasOne(p => p.Employee)
+			.WithMany()
+			.HasForeignKey(p => p.EmployeeId)
+			.OnDelete(DeleteBehavior.Cascade);
 		}
 	}
 }

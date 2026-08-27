@@ -13,11 +13,18 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 	{
 		private readonly AppDbContext _context;
 		private readonly IAssignmentEngine _assignmentEngine;
-
-		public AcceptanceService(AppDbContext context, IAssignmentEngine assignmentEngine)
+		private readonly IAcknowledgementService _acknowledgementService;
+		private readonly IEmployeeEmailNotificationService _employeeEmailNotificationService;
+		public AcceptanceService(
+	AppDbContext context,
+	IAssignmentEngine assignmentEngine,
+	IAcknowledgementService acknowledgementService,
+	IEmployeeEmailNotificationService employeeEmailNotificationService)
 		{
 			_context = context;
 			_assignmentEngine = assignmentEngine;
+			_acknowledgementService = acknowledgementService;
+			_employeeEmailNotificationService = employeeEmailNotificationService;
 		}
 
 		public async Task StartAcceptanceCycleAsync(Ticket ticket, Employee employee, int attemptNumber)
@@ -35,17 +42,31 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 		public async Task<bool> AcceptAsync(Guid ticketId, string employeeId)
 		{
-			var ticket = await _context.Tickets.FirstOrDefaultAsync(t => t.TicketId == ticketId && !t.IsDeleted);
+			var ticket = await _context.Tickets
+				.FirstOrDefaultAsync(t => t.TicketId == ticketId && !t.IsDeleted);
+
 			if (ticket == null) return false;
 
-			if (!string.Equals(ticket.AcceptanceStatus, "Pending", StringComparison.OrdinalIgnoreCase))
-				throw new InvalidOperationException("This ticket is not awaiting acceptance.");
+			if (!string.Equals(
+					ticket.AcceptanceStatus,
+					"Pending",
+					StringComparison.OrdinalIgnoreCase))
+			{
+				throw new InvalidOperationException(
+					"This ticket is not awaiting acceptance.");
+			}
 
 			if (ticket.AssignedToUserId != employeeId)
-				throw new InvalidOperationException("Only the assigned agent can accept this ticket.");
+			{
+				throw new InvalidOperationException(
+					"Only the assigned agent can accept this ticket.");
+			}
 
 			var acceptanceRow = await _context.TicketAcceptances
-				.Where(a => a.TicketId == ticketId && a.AssignedEmployeeId == employeeId && a.Status == "Pending")
+				.Where(a =>
+					a.TicketId == ticketId &&
+					a.AssignedEmployeeId == employeeId &&
+					a.Status == "Pending")
 				.OrderByDescending(a => a.AttemptNumber)
 				.FirstOrDefaultAsync();
 
@@ -59,9 +80,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			ticket.AcceptanceStatus = "Accepted";
 
-			var inProgressStatus = await _context.TicketStatuses.FirstOrDefaultAsync(s => s.Name == "In Progress" && !s.IsDeleted);
-			if (inProgressStatus != null)
-				ticket.StatusId = inProgressStatus.TicketStatusId;
+			var inProgressStatus = await _context.TicketStatuses
+	.FirstOrDefaultAsync(
+		s => s.Name == "In Progress" && !s.IsDeleted)
+	?? throw new InvalidOperationException(
+		"The 'In Progress' status is not seeded.");
+
+			ticket.StatusId = inProgressStatus.TicketStatusId;
 
 			ticket.LastUpdatedDate = now;
 
@@ -75,6 +100,15 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			});
 
 			await _context.SaveChangesAsync();
+
+			await _acknowledgementService.HandleAsync(
+				ticket.TicketId,
+				"InProgress",
+				employeeId);
+			await _employeeEmailNotificationService.SendTicketNotificationAsync(
+				ticket.TicketId,
+				"Accepted",
+				employeeId);
 			return true;
 		}
 
@@ -114,6 +148,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				ChangedByUserId = employeeId,
 				CreatedDate = now
 			});
+
+			await _employeeEmailNotificationService.SendTicketNotificationAsync(
+	ticket.TicketId,
+	"Rejected",
+	employeeId,
+	reason);
+
 
 			await RouteToFallbackOrQueueAsync(ticket, employeeId, now);
 
@@ -157,9 +198,16 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				});
 
 				if (!string.IsNullOrEmpty(expiredAgentId))
-					await RouteToFallbackOrQueueAsync(ticket, expiredAgentId, now);
+				{
+					await RouteToFallbackOrQueueAsync(
+						ticket,
+						expiredAgentId,
+						now);
+				}
 				else
+				{
 					ClearAcceptanceAndQueue(ticket);
+				}
 				// NOTE: Module 5 manager-escalation notification hook goes here.
 			}
 
@@ -236,6 +284,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				ChangedByUserId = SEED.SystemActorUserId,
 				CreatedDate = now
 			});
+
+			await _employeeEmailNotificationService.SendTicketNotificationAsync(
+				ticket.TicketId,
+				"FallbackAssigned",
+				SEED.SystemActorUserId,
+				"The ticket has been reassigned to you after the previous acceptance attempt was rejected or expired.");
 		}
 
 		private static void ClearAcceptanceAndQueue(Ticket ticket)

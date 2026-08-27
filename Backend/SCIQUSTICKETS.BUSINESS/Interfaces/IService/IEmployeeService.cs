@@ -65,5 +65,12 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task<bool> DeleteLeaveAsync(
 			string employeeId,
 			Guid leaveId);
+
+		Task<EmployeeEmailNotificationPreference?> GetEmailNotificationPreferenceAsync(
+	string employeeId);
+
+		Task<EmployeeEmailNotificationPreference> SaveEmailNotificationPreferenceAsync(
+			string employeeId,
+			EmployeeEmailNotificationPreference preference);
 	}
 }

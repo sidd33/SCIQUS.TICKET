@@ -331,8 +331,89 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			}
 		}
 
+		[HttpGet("{id}/email-notification-preferences")]
+		public async Task<IActionResult> GetEmailNotificationPreference(string id)
+		{
+			try
+			{
+				var preference =
+					await _employeeService.GetEmailNotificationPreferenceAsync(id);
+
+				if (preference == null)
+				{
+					return Ok(new EmployeeEmailNotificationPreference
+					{
+						EmployeeId = id,
+						ReceiveAll = false,
+						Assignment = false,
+						Acceptance = false,
+						Rejection = false,
+						Expiry = false,
+						Reassignment = false,
+						StatusChange = false,
+						Closure = false,
+						Reopen = false
+					});
+				}
+
+				return Ok(preference);
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(new
+				{
+					message = ex.Message
+				});
+			}
+		}
+
+		[HttpPut("{id}/email-notification-preferences")]
+		public async Task<IActionResult> SaveEmailNotificationPreference(
+	string id,
+	[FromBody] SaveEmployeeEmailNotificationPreferenceRequest request)
+		{
+			try
+			{
+				var preference = new EmployeeEmailNotificationPreference
+				{
+					EmployeeId = id,
+					ReceiveAll = request.ReceiveAll,
+					Assignment = request.Assignment,
+					Acceptance = request.Acceptance,
+					Rejection = request.Rejection,
+					Expiry = request.Expiry,
+					Reassignment = request.Reassignment,
+					StatusChange = request.StatusChange,
+					Closure = request.Closure,
+					Reopen = request.Reopen
+				};
+
+				var saved =
+					await _employeeService.SaveEmailNotificationPreferenceAsync(
+						id,
+						preference);
+
+				return Ok(saved);
+			}
+			catch (KeyNotFoundException ex)
+			{
+				return NotFound(new
+				{
+					message = ex.Message
+				});
+			}
+			catch (ArgumentException ex)
+			{
+				return BadRequest(new
+				{
+					message = ex.Message
+				});
+			}
+		}
+
 
 
 	}
+
 }
 

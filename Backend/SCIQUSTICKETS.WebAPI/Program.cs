@@ -171,6 +171,10 @@ builder.Services.AddScoped<IAcceptanceService, AcceptanceService>();
 builder.Services.AddScoped<IFaqArticleService, FaqArticleService>();
 builder.Services.AddScoped<IPortalTicketService, PortalTicketService>();
 builder.Services.AddScoped<ISystemActorService, SystemActorService>();
+builder.Services.AddScoped<IAcknowledgementService, AcknowledgementService>();
+builder.Services.AddScoped<ITicketEmailNotificationService, TicketEmailNotificationService>();
+builder.Services.AddScoped<IEmployeeEmailNotificationService,
+	EmployeeEmailNotificationService>();
 
 var app = builder.Build();
 
