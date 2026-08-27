@@ -651,8 +651,8 @@ namespace SCIQUSTICKETS.WebAPI
 				var priorityObj = context.TicketPriorities.FirstOrDefault();
 				var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
 				var deptObj = context.Departments.FirstOrDefault();
-				var typeObj = context.TicketTypes.FirstOrDefault();
-				var subTypeObj = context.TicketSubTypes.FirstOrDefault(st => typeObj != null && st.TicketTypeId == typeObj.TicketTypeId);
+				var subTypeObj = context.TicketSubTypes.FirstOrDefault();
+				var typeObj = context.TicketTypes.FirstOrDefault(t => subTypeObj != null && t.TicketTypeId == subTypeObj.TicketTypeId);
 
 				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
 				{
@@ -661,7 +661,7 @@ namespace SCIQUSTICKETS.WebAPI
 
 					BusinessPhoneNumberId = "1264781743381359", // From your Meta dashboard screenshot
 
-					EncryptedApiToken = "PASTE_YOUR_GENERATED_ACCESS_TOKEN_HERE", // Update this if you generated it!
+					EncryptedApiToken = "EAAbjZAv1XkAUBSbhN9H7osPsWp9otlDc2M9ZB82lQUr3ZCdzFPAWtCQAEe3HYnJMSnep424Hkd4WauBHMlAMRq3wl9lXciEVZBBR51uQCTO1MiH1ZBkyqCZBXYnscZA1yj62OMJHfVE2B9ZB54iVFdAtZCqYlIyj2NeCv0iCt0ask3VWWqytLYnCMlvfyktEpfjrQZAwGk0pPYVJB0XrdPnpE6oOyxhZCkVdbqyzmMYHcZCSb2MjtZB5zjB5OlMUHy1RRyp1kdAGHZAkQM1ydnOpdqsemq", // Update this if you generated it!
 
 					WebhookVerifyToken = "MySecretToken123", // Matches what you entered in the Webhooks page
 
@@ -765,7 +765,7 @@ namespace SCIQUSTICKETS.WebAPI
 					});
 
 					// Add Siddhartha Swamy contact to Apex Technologies
-					if (!context.AccountContacts.Any(c => c.MobileNumber == "+919999999999"))
+					if (!context.AccountContacts.Any(c => c.MobileNumber == "+919022343601"))
 					{
 						context.AccountContacts.Add(new AccountContacts
 						{
@@ -773,7 +773,7 @@ namespace SCIQUSTICKETS.WebAPI
 							AccountId = apexAccount.AccountId,
 							PersonName = "Siddhartha Swamy (WhatsApp)",
 							Email = "siddharthaswamy_wa@apextech.com",
-							MobileNumber = "+919999999999",
+							MobileNumber = "+919022343601",
 							IsDeleted = false,
 							CreatedDate = DateTime.UtcNow,
 							LastUpdatedDate = DateTime.UtcNow
