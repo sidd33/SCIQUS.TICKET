@@ -416,7 +416,6 @@ export default function Employees() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Employee Code</th>
                 <th>Full Name</th>
                 <th>Email Address</th>
                 <th>Department</th>
@@ -426,13 +425,12 @@ export default function Employees() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Loading workforce roster...</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Loading workforce roster...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>No employee records found.</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>No employee records found.</td></tr>
               ) : (
                 filtered.map((emp) => (
                   <tr key={emp.id}>
-                    <td><code>{emp.employeeId || '—'}</code></td>
                     <td><strong>{emp.name}</strong>{emp.designation && <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{emp.designation}</div>}</td>
                     <td>{emp.email}</td>
                     <td>{emp.departmentName || '—'}</td>
