@@ -164,6 +164,15 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 			=> await _context.TicketComments
 				.FirstOrDefaultAsync(c => c.TicketId == ticketId && c.TicketCommentId == commentId && !c.IsDeleted);
 
+		public async Task<TicketAssignment?> GetLatestAssignmentAsync(Guid ticketId)
+		{
+			return await _context.TicketAssignments
+				.AsNoTracking()
+				.Where(ta => ta.TicketId == ticketId && !ta.IsDeleted)
+				.OrderByDescending(ta => ta.AssignedDate)
+				.FirstOrDefaultAsync();
+		}
+
 		public void UpdateComment(TicketComment comment)
 			=> _context.TicketComments.Update(comment);
 	}

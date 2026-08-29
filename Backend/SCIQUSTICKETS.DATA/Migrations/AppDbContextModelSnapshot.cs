@@ -22,6 +22,56 @@ namespace SCIQUSTICKETS.DATA.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("EmployeeEmailNotificationPreference", b =>
+                {
+                    b.Property<Guid>("EmployeeEmailNotificationPreferenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("Acceptance")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("Assignment")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("Closure")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("Expiry")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastUpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("Reassignment")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ReceiveAll")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("Rejection")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("Reopen")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("StatusChange")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("EmployeeEmailNotificationPreferenceId");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeEmailNotificationPreferences");
+                });
+
             modelBuilder.Entity("EmployeeLeave", b =>
                 {
                     b.Property<Guid>("Id")
@@ -884,6 +934,71 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Grades");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.HolidayDATA.Holiday", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsRecurringYearly")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Holiday", (string)null);
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.HolidayDATA.HolidayConfirmation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EmployeeId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("HolidayId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("RespondedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("HolidayId");
+
+                    b.ToTable("HolidayConfirmation", (string)null);
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.IndustryTypes", b =>
@@ -2263,6 +2378,17 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.ToTable("WhatsAppOutboundMessages");
                 });
 
+            modelBuilder.Entity("EmployeeEmailNotificationPreference", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
             modelBuilder.Entity("EmployeeLeave", b =>
                 {
                     b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "Employee")
@@ -2523,6 +2649,25 @@ namespace SCIQUSTICKETS.DATA.Migrations
                     b.Navigation("Grade");
 
                     b.Navigation("ReportsToUser");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.HolidayDATA.HolidayConfirmation", b =>
+                {
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SCIQUSTICKETS.DATA.DomainModels.HolidayDATA.Holiday", "Holiday")
+                        .WithMany("Confirmations")
+                        .HasForeignKey("HolidayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("Holiday");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.AccountSupportPlan", b =>
@@ -3012,6 +3157,11 @@ namespace SCIQUSTICKETS.DATA.Migrations
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA.Grade", b =>
                 {
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.HolidayDATA.Holiday", b =>
+                {
+                    b.Navigation("Confirmations");
                 });
 
             modelBuilder.Entity("SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.AccountSupportPlan", b =>

@@ -28,6 +28,9 @@ import Customers from './pages/Customers/Customers';
 import NotFound from './pages/NotFound/NotFound';
 import Leave from './pages/Leave/Leave';
 import MyLeave from './pages/Leave/MyLeave';
+import Holiday from './pages/Holiday/Holiday';
+import MyHoliday from './pages/Holiday/MyHoliday';
+
 
 export default function App() {
   const token = getAccessToken();
@@ -90,6 +93,25 @@ export default function App() {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/holidays"
+  element={
+    <ProtectedRoute allow={['Admin', 'SuperAdmin']}>
+      <Holiday />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/my-holidays"
+  element={
+    <ProtectedRoute>
+      <MyHoliday />
+    </ProtectedRoute>
+  }
+/>
+
+
             <Route path="/departments" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><Departments /></ProtectedRoute>} />
             <Route path="/customers" element={<ProtectedRoute allow={['Admin', 'SuperAdmin', 'DepartmentHead', 'Employee']}><Customers /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

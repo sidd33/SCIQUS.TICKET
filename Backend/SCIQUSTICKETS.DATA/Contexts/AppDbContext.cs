@@ -9,6 +9,7 @@ using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 using System.ComponentModel.DataAnnotations.Schema;
+using SCIQUSTICKETS.DATA.DomainModels.HolidayDATA;
 
 namespace SCIQUSTICKETS.DATA.Contexts
 {
@@ -89,6 +90,11 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<EmployeeEmailNotificationPreference> EmployeeEmailNotificationPreferences { get; set; }
 
 		public DbSet<FaqArticle> FaqArticles { get; set; }
+
+		// ── [TEAM: HOLIDAY] ───────────────────────────────────────────
+		public DbSet<Holiday> Holidays { get; set; }
+		public DbSet<HolidayConfirmation> HolidayConfirmations { get; set; }
+		// ── [END: HOLIDAY] ────────────────────────────────────────────
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
@@ -485,6 +491,24 @@ namespace SCIQUSTICKETS.DATA.Contexts
 			.WithMany()
 			.HasForeignKey(p => p.EmployeeId)
 			.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<Holiday>()
+	.ToTable("Holiday");
+
+			builder.Entity<HolidayConfirmation>()
+				.ToTable("HolidayConfirmation");
+
+			builder.Entity<HolidayConfirmation>()
+				.HasOne(c => c.Holiday)
+				.WithMany(h => h.Confirmations)
+				.HasForeignKey(c => c.HolidayId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<HolidayConfirmation>()
+				.HasOne(c => c.Employee)
+				.WithMany()
+				.HasForeignKey(c => c.EmployeeId)
+				.OnDelete(DeleteBehavior.Cascade);
 		}
 	}
 }

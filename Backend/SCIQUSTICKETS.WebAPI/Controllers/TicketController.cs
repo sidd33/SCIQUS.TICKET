@@ -22,6 +22,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		private readonly IAcceptanceService _acceptanceService;
 		private readonly IFaqArticleService _faqArticleService;
 		private readonly ITicketTimelineService _timelineService;
+		private readonly IAssignmentEngine _assignmentEngine;
 		public TicketController(
 			ITicketService ticketService,
 			ITicketNotificationService notificationService,
@@ -29,7 +30,8 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			IWhatsAppChannelService whatsAppChannelService,
 			IAcceptanceService acceptanceService,
 			IFaqArticleService faqArticleService,
-			ITicketTimelineService timelineService)
+			ITicketTimelineService timelineService,
+			IAssignmentEngine assignmentEngine)
 		{
 			_ticketService = ticketService;
 			_notificationService = notificationService;
@@ -38,6 +40,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			_acceptanceService = acceptanceService;
 			_faqArticleService = faqArticleService;
 			_timelineService = timelineService;
+			_assignmentEngine = assignmentEngine;
 		}
 
 
@@ -490,6 +493,21 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		public async Task<IActionResult> GetFaqSuggestions([FromQuery] Guid ticketTypeId, [FromQuery] Guid? subTypeId, [FromQuery] string? query)
 		{
 			var result = await _faqArticleService.GetSuggestionsAsync(ticketTypeId, subTypeId, query);
+			return Ok(result);
+		}
+
+		// GET: api/tickets/{id}/assignment-reason
+		[HttpGet("{id:guid}/assignment-reason")]
+		public async Task<IActionResult> GetAssignmentReason(Guid id)
+		{
+			var result = await _ticketService.GetAssignmentExplanationAsync(id);
+
+			if (result == null)
+				return NotFound(new
+				{
+					message = "Ticket or assignment information not found."
+				});
+
 			return Ok(result);
 		}
 
