@@ -359,17 +359,17 @@ namespace SCIQUSTICKETS.WebAPI
                 await context.SaveChangesAsync();
             }
 
-            // 7. Ensure Priorities Exist (Min 36h SLA Floor)
-            if (!context.TicketPriorities.Any())
-            {
-                context.TicketPriorities.AddRange(
-                    new TicketPriority { TicketPriorityId = Guid.NewGuid(), Name = "Critical", Level = 4, SlaInHours = 36, ResponseSlaInHours = 1, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
-                    new TicketPriority { TicketPriorityId = Guid.NewGuid(), Name = "High", Level = 3, SlaInHours = 48, ResponseSlaInHours = 2, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
-                    new TicketPriority { TicketPriorityId = Guid.NewGuid(), Name = "Medium", Level = 2, SlaInHours = 72, ResponseSlaInHours = 4, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
-                    new TicketPriority { TicketPriorityId = Guid.NewGuid(), Name = "Low", Level = 1, SlaInHours = 96, ResponseSlaInHours = 8, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow }
-                );
-                await context.SaveChangesAsync();
-            }
+			// 8. Seed Priority & Impact
+			if (!context.TicketPriorities.Any())
+			{
+				context.TicketPriorities.AddRange(
+					new TicketPriority { TicketPriorityId = Guid.Parse("11111111-1111-1111-1111-111111111111"), Name = "Normal", Level = 1, SlaInHours = 72, ResponseSlaInHours = 24, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
+					new TicketPriority { TicketPriorityId = Guid.Parse("22222222-2222-2222-2222-222222222222"), Name = "Medium", Level = 2, SlaInHours = 24, ResponseSlaInHours = 8, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
+					new TicketPriority { TicketPriorityId = Guid.Parse("33333333-3333-3333-3333-333333333333"), Name = "High", Level = 3, SlaInHours = 12, ResponseSlaInHours = 4, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow },
+					new TicketPriority { TicketPriorityId = Guid.Parse("44444444-4444-4444-4444-444444444444"), Name = "Highest", Level = 4, SlaInHours = 4, ResponseSlaInHours = 1, Status = true, CreatedDate = DateTime.UtcNow, LastUpdatedDate = DateTime.UtcNow }
+				);
+				await context.SaveChangesAsync();
+			}
 
             // 8. Ensure Business Impacts Exist
             if (!context.TicketBusinessTypeImpacts.Any())
@@ -683,33 +683,75 @@ namespace SCIQUSTICKETS.WebAPI
 			// 13. Seed Support Plans and Contacts for Local Dev Testing
 			if (!context.SupportPlans.Any())
 			{
-				var strictPlan = new SupportPlan
+				var basicPlan = new SupportPlan
 				{
 					SupportPlanId = Guid.NewGuid(),
-					Name = "Standard Plan - Strict Limit",
-					Description = "Only allows 5 tickets. Blocks any overages.",
-					TicketQuota = 5,
-					PeriodType = "Monthly",
-					ValidityDays = 30,
-					BlockWhenExhausted = true,
-					Status = true,
-					CreatedDate = DateTime.UtcNow
-				};
-
-				var overagePlan = new SupportPlan
-				{
-					SupportPlanId = Guid.NewGuid(),
-					Name = "Premium Plan - Allows Overages",
-					Description = "Base quota of 10 tickets, but allows unlimited overages.",
+					Name = "Basic",
+					Description = "10 tickets/month, Standard Business Hours",
 					TicketQuota = 10,
 					PeriodType = "Monthly",
 					ValidityDays = 30,
-					BlockWhenExhausted = false,
-					Status = true,
+					BlockWhenExhausted = true,
+					DefaultPriorityId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+					SupportHours = "StandardBusinessHours",
+					IncludesWeekendSupport = false,
+					AssignmentStrategy = "Shared",
+					EscalationLevel = "Standard",
 					CreatedDate = DateTime.UtcNow
 				};
 
-				context.SupportPlans.AddRange(strictPlan, overagePlan);
+				var silverPlan = new SupportPlan
+				{
+					SupportPlanId = Guid.NewGuid(),
+					Name = "Silver",
+					Description = "50 tickets/month, Medium Priority",
+					TicketQuota = 50,
+					PeriodType = "Monthly",
+					ValidityDays = 30,
+					BlockWhenExhausted = true,
+					DefaultPriorityId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+					SupportHours = "StandardBusinessHours",
+					IncludesWeekendSupport = false,
+					AssignmentStrategy = "WeightedPriority",
+					EscalationLevel = "FastAlerts",
+					CreatedDate = DateTime.UtcNow
+				};
+				
+				var goldPlan = new SupportPlan
+				{
+					SupportPlanId = Guid.NewGuid(),
+					Name = "Gold",
+					Description = "100 tickets/month, High Priority, Allocated Agents",
+					TicketQuota = 100,
+					PeriodType = "Monthly",
+					ValidityDays = 30,
+					BlockWhenExhausted = false,
+					DefaultPriorityId = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+					SupportHours = "ExtendedBusinessHours",
+					IncludesWeekendSupport = true,
+					AssignmentStrategy = "AllocatedGroup",
+					EscalationLevel = "WarningAlerts",
+					CreatedDate = DateTime.UtcNow
+				};
+				
+				var platinumPlan = new SupportPlan
+				{
+					SupportPlanId = Guid.NewGuid(),
+					Name = "Platinum",
+					Description = "Unlimited tickets, Dedicated Agents, 24x7",
+					TicketQuota = 999999,
+					PeriodType = "Monthly",
+					ValidityDays = 30,
+					BlockWhenExhausted = false,
+					DefaultPriorityId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+					SupportHours = "24x7",
+					IncludesWeekendSupport = true,
+					AssignmentStrategy = "DedicatedPrimary",
+					EscalationLevel = "Immediate",
+					CreatedDate = DateTime.UtcNow
+				};
+
+				context.SupportPlans.AddRange(basicPlan, silverPlan, goldPlan, platinumPlan);
 				await context.SaveChangesAsync();
 
 				// Fetch seeded accounts
@@ -721,12 +763,12 @@ namespace SCIQUSTICKETS.WebAPI
 
 				if (acmeSupportAccount != null)
 				{
-					// Assign strict plan to Acme Corporation
+					// Assign Basic plan to Acme Corporation
 					context.AccountSupportPlans.Add(new AccountSupportPlan
 					{
 						AccountSupportPlanId = Guid.NewGuid(),
 						AccountId = acmeSupportAccount.AccountId,
-						SupportPlanId = strictPlan.SupportPlanId,
+						SupportPlanId = basicPlan.SupportPlanId,
 						StartDate = DateTime.UtcNow,
 						EndDate = DateTime.UtcNow.AddDays(30),
 						Status = "Active",
@@ -752,12 +794,12 @@ namespace SCIQUSTICKETS.WebAPI
 
 				if (apexAccount != null)
 				{
-					// Assign overage plan to Apex Technologies
+					// Assign Platinum plan to Apex Technologies
 					context.AccountSupportPlans.Add(new AccountSupportPlan
 					{
 						AccountSupportPlanId = Guid.NewGuid(),
 						AccountId = apexAccount.AccountId,
-						SupportPlanId = overagePlan.SupportPlanId,
+						SupportPlanId = platinumPlan.SupportPlanId,
 						StartDate = DateTime.UtcNow,
 						EndDate = DateTime.UtcNow.AddDays(30),
 						Status = "Active",

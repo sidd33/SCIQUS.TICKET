@@ -6,6 +6,7 @@ import api from '../../../api/axios';
 export default function EmailConfig() {
   const queryParams = new URLSearchParams(window.location.search);
   const code = queryParams.get('code');
+  const outlookLinked = queryParams.get('outlook_linked');
 
   const [provider, setProvider] = useState('Google Workspace API (OAuth)');
   const [email, setEmail] = useState('siddharthaswamy01@gmail.com');
@@ -64,6 +65,15 @@ export default function EmailConfig() {
     }
   }, [code]);
 
+  useEffect(() => {
+    if (outlookLinked === 'true') {
+      setMessage('Microsoft 365 account linked successfully! Polling channel is now active.');
+      setIsLinked(true);
+      setShowErrorBanner(false);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, [outlookLinked]);
+
   const handlePoll = async () => {
     try {
       setMessage('Checking for new emails...');
@@ -100,7 +110,7 @@ export default function EmailConfig() {
       }
 
       if (provider.includes('Microsoft') || provider.includes('365')) {
-        window.open('https://login.microsoftonline.com/common/oauth2/v2.0/authorize', '_blank');
+        window.location.href = 'https://localhost:7219/api/OutlookEmail/Login';
         setMessage('Redirecting to Microsoft 365 login...');
         setSaving(false);
         return;

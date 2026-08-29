@@ -393,6 +393,18 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					throw new InvalidOperationException(
 						"Ticket creation failed: Support plan quota exhausted or no active plan found.");
 				}
+
+				var activePlan = await _context.AccountSupportPlans
+					.Include(asp => asp.SupportPlan)
+					.Where(asp => asp.AccountId == request.AccountId && asp.Status == "Active" && 
+								  asp.StartDate <= DateTime.UtcNow && asp.EndDate >= DateTime.UtcNow)
+					.Select(asp => asp.SupportPlan)
+					.FirstOrDefaultAsync();
+
+				if (activePlan != null && activePlan.DefaultPriorityId.HasValue)
+				{
+					request.PriorityId = activePlan.DefaultPriorityId.Value;
+				}
 			}
 
 			await ValidateReferencesAsync(
@@ -564,6 +576,25 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			if (!ticket.IsOpen)
 				throw new InvalidOperationException("A closed ticket cannot be edited. Reopen it first.");
+
+			// Priority Lock logic
+			if (!string.IsNullOrEmpty(ticket.AccountId) && !ticket.IsInternal)
+			{
+				var activePlan = await _context.AccountSupportPlans
+					.Include(asp => asp.SupportPlan)
+					.Where(asp => asp.AccountId == ticket.AccountId && asp.Status == "Active" && 
+								  asp.StartDate <= DateTime.UtcNow && asp.EndDate >= DateTime.UtcNow)
+					.Select(asp => asp.SupportPlan)
+					.FirstOrDefaultAsync();
+
+				if (activePlan != null && activePlan.DefaultPriorityId.HasValue && activePlan.DefaultPriorityId.Value != request.PriorityId)
+				{
+					// If the priority is being changed but there is an active support plan dictating priority, block it.
+					// We only enforce this for non-internal changes by checking if they are attempting to change it.
+					// If the user tries to change it via UI, they get an error.
+					throw new InvalidOperationException($"Ticket priority is locked by the active Support Plan ({activePlan.Name}).");
+				}
+			}
 
 			ticket.Title = request.Title;
 			ticket.Description = request.Description;

@@ -18,6 +18,21 @@ namespace SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA
         
         public bool BlockWhenExhausted { get; set; } = true;
         
+        // --- Advanced CRM Features (Tiers) ---
+        public Guid? DefaultPriorityId { get; set; }
+        
+        // "StandardBusinessHours", "ExtendedBusinessHours", "24x7"
+        public string SupportHours { get; set; } = "StandardBusinessHours";
+        
+        public bool IncludesWeekendSupport { get; set; } = false;
+        
+        // "Shared", "WeightedPriority", "AllocatedGroup", "DedicatedPrimary"
+        public string AssignmentStrategy { get; set; } = "Shared";
+        
+        // "Standard", "FastAlerts", "WarningAlerts", "Immediate"
+        public string EscalationLevel { get; set; } = "Standard";
+        // -------------------------------------
+
         public bool Status { get; set; } = true;
         public bool IsDeleted { get; set; } = false;
         

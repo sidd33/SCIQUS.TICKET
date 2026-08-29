@@ -28,7 +28,30 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			if (priority != null && priority.SlaInHours > 0)
 			{
 				var clockStart = GetClockStart(ticket);
-				return (clockStart.AddHours(priority.SlaInHours), null);
+				
+				// Fallback to Standard
+				string supportHours = "StandardBusinessHours";
+				bool includesWeekend = false;
+
+				if (!string.IsNullOrEmpty(ticket.AccountId))
+				{
+					var activePlan = _context.AccountSupportPlans
+						.Include(asp => asp.SupportPlan)
+						.Where(asp => asp.AccountId == ticket.AccountId && asp.Status == "Active" && 
+									  asp.StartDate <= DateTime.UtcNow && asp.EndDate >= DateTime.UtcNow)
+						.Select(asp => asp.SupportPlan)
+						.FirstOrDefault();
+					
+					if (activePlan != null)
+					{
+						supportHours = activePlan.SupportHours;
+						includesWeekend = activePlan.IncludesWeekendSupport;
+					}
+				}
+
+				DateTime dueDate = TimeHelper.CalculateSlaBusinessHours(clockStart, priority.SlaInHours, supportHours, includesWeekend);
+
+				return (dueDate, null);
 			}
 			return (null, "Not Applicable");
 		}
@@ -78,6 +101,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		{
 			var now = TimeHelper.GetIndianTime();
 
+			// 1. Process Breaches
 			var breached = await _context.Tickets
 				.Where(t => t.IsOpen && !t.IsDeleted
 					&& t.SlaDueDate != null
@@ -100,7 +124,54 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				await _notificationService.NotifySlaBreachedAsync(ticket.TicketId);
 			}
 
-			if (breached.Count > 0)
+			// 2. Process Warnings
+			var upcomingBreaches = await _context.Tickets
+				.Where(t => t.IsOpen && !t.IsDeleted
+					&& t.SlaDueDate != null
+					&& t.SlaDueDate > now
+					&& t.SlaDueDate <= now.AddHours(4) // Check within 4 hours
+					&& (t.IsSlaBreached == null || t.IsSlaBreached == false))
+				.ToListAsync();
+
+			foreach(var ticket in upcomingBreaches)
+			{
+				// Has it already been warned?
+				bool alreadyWarned = await _context.TicketHistories
+					.AnyAsync(th => th.TicketId == ticket.TicketId && th.ChangeDescription == "SLA Warning");
+				
+				if (alreadyWarned) continue;
+
+				bool shouldWarn = false;
+				if (!string.IsNullOrEmpty(ticket.AccountId))
+				{
+					var plan = await _context.AccountSupportPlans
+						.Include(asp => asp.SupportPlan)
+						.Where(asp => asp.AccountId == ticket.AccountId && asp.Status == "Active")
+						.Select(asp => asp.SupportPlan)
+						.FirstOrDefaultAsync();
+						
+					if (plan != null && (plan.EscalationLevel == "FastAlerts" || plan.EscalationLevel == "WarningAlerts" || plan.EscalationLevel == "Immediate"))
+					{
+						shouldWarn = true;
+					}
+				}
+
+				if (shouldWarn)
+				{
+					_context.TicketHistories.Add(new TicketHistory
+					{
+						TicketHistoryId = Guid.NewGuid(),
+						TicketId = ticket.TicketId,
+						ChangeDescription = "SLA Warning",
+						ChangedByUserId = SEED.SystemActorUserId,
+						CreatedDate = now
+					});
+					
+					await _notificationService.NotifySlaWarningAsync(ticket.TicketId);
+				}
+			}
+
+			if (breached.Count > 0 || _context.ChangeTracker.HasChanges())
 				await _context.SaveChangesAsync();
 		}
 

@@ -34,5 +34,68 @@ namespace SCIQUSTICKETS.COMMON.Helpers
                 return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
             }
         }
+
+        public static DateTime CalculateSlaBusinessHours(DateTime clockStart, int slaInHours, string supportHours, bool includesWeekend)
+        {
+            if (supportHours == "24x7" && includesWeekend)
+            {
+                return clockStart.AddHours(slaInHours);
+            }
+
+            int startHour = 9;
+            int endHour = 18; // 6 PM
+            if (supportHours == "ExtendedBusinessHours")
+            {
+                startHour = 8;
+                endHour = 20; // 8 PM
+            }
+            else if (supportHours == "24x7")
+            {
+                startHour = 0;
+                endHour = 24;
+            }
+
+            DateTime current = clockStart;
+            double remainingHours = slaInHours;
+
+            while (remainingHours > 0)
+            {
+                // Skip weekends if not included
+                if (!includesWeekend && (current.DayOfWeek == DayOfWeek.Saturday || current.DayOfWeek == DayOfWeek.Sunday))
+                {
+                    current = current.Date.AddDays(1).AddHours(startHour);
+                    continue;
+                }
+
+                // If current time is before business hours, move to start
+                if (current.TimeOfDay.TotalHours < startHour)
+                {
+                    current = current.Date.AddHours(startHour);
+                }
+
+                // If current time is after or at business end, move to next day
+                if (current.TimeOfDay.TotalHours >= endHour)
+                {
+                    current = current.Date.AddDays(1).AddHours(startHour);
+                    continue;
+                }
+
+                // Calculate time remaining in today's business hours
+                double hoursLeftToday = endHour - current.TimeOfDay.TotalHours;
+
+                if (remainingHours <= hoursLeftToday)
+                {
+                    current = current.AddHours(remainingHours);
+                    remainingHours = 0;
+                }
+                else
+                {
+                    remainingHours -= hoursLeftToday;
+                    current = current.Date.AddDays(1).AddHours(startHour);
+                }
+            }
+
+            return current;
+        }
     }
 }

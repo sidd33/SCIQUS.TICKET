@@ -53,11 +53,12 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<TicketAcceptance> TicketAcceptances { get; set; }
 		// 🎫 [END: TICKET TRANSACTION] 
 
-		// 🎫 [TEAM: SUPPORT PLANS] 
+		// 🚀 [TEAM: SUPPORT PLANS] 
 		public DbSet<SupportPlan> SupportPlans { get; set; }
 		public DbSet<AccountSupportPlan> AccountSupportPlans { get; set; }
 		public DbSet<SupportPlanConsumption> SupportPlanConsumptions { get; set; }
-		// 🎫 [END: SUPPORT PLANS] 
+		public DbSet<AccountDedicatedEmployee> AccountDedicatedEmployees { get; set; }
+		// 🚀 [END: SUPPORT PLANS] 
 
 		// ── [TEAM: TICKET TRANSACTION] ────────────────────────────────
 		public DbSet<Ticket> Tickets { get; set; }
@@ -484,6 +485,7 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithMany()
 				.HasForeignKey(spc => spc.TicketId)
 				.OnDelete(DeleteBehavior.Restrict);
+
 			// 🎫 [END: SUPPORT PLANS] ──────────────────────────────────
 
 			builder.Entity<EmployeeEmailNotificationPreference>()
@@ -509,6 +511,21 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.WithMany()
 				.HasForeignKey(c => c.EmployeeId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+
+			builder.Entity<AccountDedicatedEmployee>()
+				.HasOne<Account>()
+				.WithMany()
+				.HasForeignKey(ade => ade.AccountId)
+				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<AccountDedicatedEmployee>()
+				.HasOne<Employee>()
+				.WithMany()
+				.HasForeignKey(ade => ade.EmployeeUserId)
+				.OnDelete(DeleteBehavior.Cascade);
+			// 🚀 [END: SUPPORT PLANS] 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀──────────────────────────────────
+
 		}
 	}
 }

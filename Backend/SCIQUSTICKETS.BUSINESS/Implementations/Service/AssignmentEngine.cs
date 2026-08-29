@@ -543,11 +543,40 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				?? globalConfig.DefaultMaxConcurrentOpenTickets;
 
 			// Active employees in department
-			// Active employees in department
 			var activeEmployees = await _context.Employees
 				.AsNoTracking()
 				.Where(e => e.DepartmentId == deptId && !e.IsDeleted)
 				.ToListAsync();
+
+			// --- Support Plan Dedicated Agent Routing ---
+			if (!string.IsNullOrEmpty(ticket.AccountId) && !ticket.IsInternal)
+			{
+				var activePlan = await _context.AccountSupportPlans
+					.Include(asp => asp.SupportPlan)
+					.AsNoTracking()
+					.Where(asp => asp.AccountId == ticket.AccountId && asp.Status == "Active" && 
+								  asp.StartDate <= now && asp.EndDate >= now)
+					.Select(asp => asp.SupportPlan)
+					.FirstOrDefaultAsync();
+
+				if (activePlan != null && (activePlan.AssignmentStrategy == "AllocatedGroup" || activePlan.AssignmentStrategy == "DedicatedPrimary"))
+				{
+					var dedicatedEmployeeIds = await _context.AccountDedicatedEmployees
+						.AsNoTracking()
+						.Where(ade => ade.AccountId == ticket.AccountId)
+						.Select(ade => ade.EmployeeUserId)
+						.ToListAsync();
+
+					if (dedicatedEmployeeIds.Any())
+					{
+						// Restrict activeEmployees to ONLY those who are dedicated to this account
+						activeEmployees = activeEmployees
+							.Where(e => dedicatedEmployeeIds.Contains(e.Id))
+							.ToList();
+					}
+				}
+			}
+			// --------------------------------------------
 
 			if (excludedAgentIds != null && excludedAgentIds.Count > 0)
 			{

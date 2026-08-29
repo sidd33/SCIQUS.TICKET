@@ -172,6 +172,22 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             await CreateNotificationAsync("SlaBreached", ticketId, null, recipients);
         }
 
+        public async Task NotifySlaWarningAsync(Guid ticketId)
+        {
+            var ticket = await GetTicketDetailsAsync(ticketId);
+            if (ticket == null) return;
+
+            var recipients = new List<string>();
+            if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
+                recipients.Add(ticket.AssignedToUserId);
+            
+            // Warnings can also go to department heads if needed, let's include them.
+            if (!string.IsNullOrEmpty(ticket.Department?.DepartmentHeadId))
+                recipients.Add(ticket.Department.DepartmentHeadId);
+
+            await CreateNotificationAsync("SlaWarning", ticketId, null, recipients);
+        }
+
         public async Task NotifyPendingClosureAsync(Guid ticketId, string? actorUserId)
         {
             var ticket = await GetTicketDetailsAsync(ticketId);

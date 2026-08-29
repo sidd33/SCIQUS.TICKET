@@ -199,34 +199,76 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var contactEmail = ticket.Account.Contacts.FirstOrDefault()?.Email;
             if (string.IsNullOrEmpty(contactEmail)) return false;
 
-            // Send outbound email via configured provider (SMTP)
             var config = await _context.EmailTicketConfigs.FirstOrDefaultAsync();
-            if (config != null && config.IsEnabled && !string.IsNullOrEmpty(config.AppPassword))
+            if (config != null && config.IsEnabled)
             {
                 try
                 {
-                    string smtpHost = config.Provider == "Outlook" ? "smtp.office365.com" : "smtp.gmail.com";
-                    int smtpPort = 587; // STARTTLS
-
-                    var message = new MimeMessage();
-                    message.From.Add(new MailboxAddress("Support", config.EmailAddress));
-                    message.To.Add(new MailboxAddress(ticket.Account.AccountName, contactEmail));
-                    message.Subject = $"Re: [TKT-{ticket.TicketNumber}] {ticket.Title}";
-                    
-                    message.Body = new TextPart("plain")
+                    if ((config.Provider == "Microsoft 365" || config.Provider.Contains("Microsoft") || config.Provider == "Outlook") && !string.IsNullOrEmpty(config.EncryptedAccessToken))
                     {
-                        Text = body
-                    };
+                        // Use Microsoft Graph API to send email
+                        var sendRequestObj = new
+                        {
+                            message = new
+                            {
+                                subject = $"Re: [TKT-{ticket.TicketNumber}] {ticket.Title}",
+                                body = new
+                                {
+                                    contentType = "Text",
+                                    content = body
+                                },
+                                toRecipients = new[]
+                                {
+                                    new
+                                    {
+                                        emailAddress = new { address = contactEmail, name = ticket.Account.AccountName }
+                                    }
+                                }
+                            },
+                            saveToSentItems = "true"
+                        };
 
-                    using var client = new MailKit.Net.Smtp.SmtpClient();
-                    await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                    await client.AuthenticateAsync(config.EmailAddress, config.AppPassword);
-                    await client.SendAsync(message);
-                    await client.DisconnectAsync(true);
+                        using var httpClient = new System.Net.Http.HttpClient();
+                        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", config.EncryptedAccessToken);
+                        var content = new System.Net.Http.StringContent(
+                            System.Text.Json.JsonSerializer.Serialize(sendRequestObj),
+                            System.Text.Encoding.UTF8,
+                            "application/json"
+                        );
+                        
+                        var response = await httpClient.PostAsync("https://graph.microsoft.com/v1.0/me/sendMail", content);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var err = await response.Content.ReadAsStringAsync();
+                            _logger.LogError("Failed to send email via Graph API: {Error}", err);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(config.AppPassword))
+                    {
+                        // Fallback to traditional SMTP
+                        string smtpHost = config.Provider == "Outlook" ? "smtp.office365.com" : "smtp.gmail.com";
+                        int smtpPort = 587; // STARTTLS
+
+                        var message = new MimeMessage();
+                        message.From.Add(new MailboxAddress("Support", config.EmailAddress));
+                        message.To.Add(new MailboxAddress(ticket.Account.AccountName, contactEmail));
+                        message.Subject = $"Re: [TKT-{ticket.TicketNumber}] {ticket.Title}";
+                        
+                        message.Body = new TextPart("plain")
+                        {
+                            Text = body
+                        };
+
+                        using var client = new MailKit.Net.Smtp.SmtpClient();
+                        await client.ConnectAsync(smtpHost, smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+                        await client.AuthenticateAsync(config.EmailAddress, config.AppPassword);
+                        await client.SendAsync(message);
+                        await client.DisconnectAsync(true);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to send SMTP email to {Email}", contactEmail);
+                    _logger.LogError(ex, "Failed to send outbound email to {Email}", contactEmail);
                 }
             }
 
@@ -310,6 +352,54 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "[Gmail Poller] Exception occurred while refreshing token");
+                }
+            }
+            else if (!string.IsNullOrEmpty(config.EncryptedRefreshToken) && (config.Provider == "Microsoft 365" || config.Provider.Contains("Microsoft") || config.Provider == "Outlook"))
+            {
+                try
+                {
+                    var clientId = _configuration["OAuthSettings:Outlook:ClientId"];
+                    var clientSecret = _configuration["OAuthSettings:Outlook:ClientSecret"];
+                    var tenantId = _configuration["OAuthSettings:Outlook:TenantId"] ?? "common";
+
+                    using var httpClient = new System.Net.Http.HttpClient();
+                    var tokenRequest = new System.Net.Http.FormUrlEncodedContent(new Dictionary<string, string>
+                    {
+                        { "client_id", clientId ?? "" },
+                        { "client_secret", clientSecret ?? "" },
+                        { "refresh_token", config.EncryptedRefreshToken },
+                        { "grant_type", "refresh_token" }
+                    });
+
+                    _logger.LogInformation("[Microsoft Poller] Refreshing access token...");
+                    var response = await httpClient.PostAsync($"https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/token", tokenRequest);
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var responseContent = await response.Content.ReadAsStringAsync();
+                        var tokenData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonObject>(responseContent);
+                        var newAccessToken = tokenData?["access_token"]?.ToString();
+                        if (!string.IsNullOrEmpty(newAccessToken))
+                        {
+                            config.EncryptedAccessToken = newAccessToken;
+                            var newRefreshToken = tokenData?["refresh_token"]?.ToString();
+                            if (!string.IsNullOrEmpty(newRefreshToken))
+                            {
+                                config.EncryptedRefreshToken = newRefreshToken;
+                            }
+                            await _context.SaveChangesAsync();
+                            accessToken = newAccessToken;
+                            _logger.LogInformation("[Microsoft Poller] Access token successfully refreshed!");
+                        }
+                    }
+                    else
+                    {
+                        var err = await response.Content.ReadAsStringAsync();
+                        _logger.LogError("[Microsoft Poller] Failed to refresh access token: {Error}", err);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "[Microsoft Poller] Exception occurred while refreshing token");
                 }
             }
 
@@ -457,6 +547,126 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 else
                 {
                     _logger.LogWarning("Google Workspace API token missing — skipping Gmail REST API fetch.");
+                }
+            }
+            else if (config.Provider == "Microsoft 365" || config.Provider.Contains("Microsoft") || config.Provider == "Outlook")
+            {
+                // ── Microsoft Graph API Polling ──
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    try
+                    {
+                        using var httpClient = new System.Net.Http.HttpClient();
+                        httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                        _logger.LogInformation("[Microsoft Poller] Sync started via Microsoft Graph API...");
+                        var listResponse = await httpClient.GetAsync("https://graph.microsoft.com/v1.0/me/messages?$filter=isRead eq false");
+                        if (!listResponse.IsSuccessStatusCode)
+                        {
+                            var err = await listResponse.Content.ReadAsStringAsync();
+                            _logger.LogError("Failed to list Microsoft messages: {Error}", err);
+                            config.LastError = $"Failed to list messages: {err}";
+                            await _context.SaveChangesAsync();
+                            return;
+                        }
+
+                        var listContent = await listResponse.Content.ReadAsStringAsync();
+                        var listData = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.Nodes.JsonObject>(listContent);
+                        var messagesArray = listData?["value"]?.AsArray();
+
+                        _logger.LogInformation("[Microsoft Poller] found {Count} unseen messages.", messagesArray?.Count ?? 0);
+
+                        if (messagesArray != null && messagesArray.Count > 0)
+                        {
+                            var existingIds = new HashSet<string>(
+                                await _context.EmailInboxMessages
+                                    .Select(m => m.ProviderMessageId)
+                                    .ToListAsync()
+                            );
+
+                            foreach (var msgNode in messagesArray)
+                            {
+                                var msgId = msgNode?["id"]?.ToString();
+                                if (string.IsNullOrEmpty(msgId) || existingIds.Contains(msgId)) continue;
+
+                                var fromNode = msgNode?["from"]?["emailAddress"];
+                                string fromEmail = fromNode?["address"]?.ToString() ?? "unknown@unknown.com";
+                                string fromName = fromNode?["name"]?.ToString() ?? "";
+
+                                string subject = msgNode?["subject"]?.ToString() ?? "(No Subject)";
+                                
+                                string body = "";
+                                var bodyNode = msgNode?["body"];
+                                if (bodyNode != null)
+                                {
+                                    string contentType = bodyNode["contentType"]?.ToString() ?? "";
+                                    body = bodyNode["content"]?.ToString() ?? "";
+                                    if (contentType.ToLower() == "html")
+                                    {
+                                        body = System.Text.RegularExpressions.Regex.Replace(body, "<.*?>", " ").Trim();
+                                        body = System.Net.WebUtility.HtmlDecode(body);
+                                    }
+                                }
+
+                                DateTime receivedDate = DateTime.UtcNow;
+                                var receivedNode = msgNode?["receivedDateTime"]?.ToString();
+                                if (!string.IsNullOrEmpty(receivedNode) && DateTime.TryParse(receivedNode, out var parsedDate))
+                                {
+                                    receivedDate = parsedDate.ToUniversalTime();
+                                }
+
+                                var inboxMsg = new EmailInboxMessage
+                                {
+                                    EmailInboxMessageId = Guid.NewGuid(),
+                                    ProviderMessageId = msgId,
+                                    FromEmail = fromEmail,
+                                    FromName = string.IsNullOrEmpty(fromName) ? null : fromName,
+                                    Subject = subject,
+                                    Body = body,
+                                    EmailReceivedDate = receivedDate,
+                                    ProcessingStatus = "Pending",
+                                    CreatedDate = DateTime.UtcNow
+                                };
+
+                                _context.EmailInboxMessages.Add(inboxMsg);
+
+                                // Mark as read via Graph API
+                                var modifyRequestObj = new { isRead = true };
+                                var modifyContent = new System.Net.Http.StringContent(
+                                    System.Text.Json.JsonSerializer.Serialize(modifyRequestObj),
+                                    System.Text.Encoding.UTF8,
+                                    "application/json"
+                                );
+                                var patchReq = new System.Net.Http.HttpRequestMessage(new System.Net.Http.HttpMethod("PATCH"), $"https://graph.microsoft.com/v1.0/me/messages/{msgId}")
+                                {
+                                    Content = modifyContent
+                                };
+                                var modifyResponse = await httpClient.SendAsync(patchReq);
+                                if (modifyResponse.IsSuccessStatusCode)
+                                {
+                                    _logger.LogInformation("[Microsoft Poller] Marked message {MsgId} as read.", msgId);
+                                }
+                            }
+
+                            await _context.SaveChangesAsync();
+                        }
+
+                        // Update last poll date
+                        config.LastPollDate = DateTime.UtcNow;
+                        config.LastError = null;
+                        config.IsAuthValid = true;
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Microsoft Graph API sync error for {EmailAddress}", emailAddress);
+                        config.LastError = ex.Message;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Microsoft OAuth token missing — skipping Graph API fetch.");
                 }
             }
             else
