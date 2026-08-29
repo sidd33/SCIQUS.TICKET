@@ -9,6 +9,7 @@ using SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs;
 using SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
+using SCIQUSTICKETS.COMMON.Enums;
 using SCIQUSTICKETS.COMMON.Helpers;
 using SCIQUSTICKETS.DATA.Contexts;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
@@ -247,6 +248,126 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return ticket == null ? null : MapToResponse(ticket);
 		}
 
+		public async Task<AssignmentExplanationResponse?> GetAssignmentExplanationAsync(Guid ticketId)
+		{
+			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
+			if (ticket == null) return null;
+
+			// Truly unassigned -> engine simulation of "what would happen now" is legitimate here
+			if (string.IsNullOrWhiteSpace(ticket.AssignedToUserId))
+				return await _assignmentEngine.ResolveAssignmentExplanationAsync(ticket);
+
+			// Already assigned -> explain what actually happened, don't re-simulate
+			var latest = await _ticketRepository.GetLatestAssignmentAsync(ticketId);
+
+			var employee = await _context.Employees
+				.AsNoTracking()
+				.FirstOrDefaultAsync(e => e.Id == ticket.AssignedToUserId);
+
+			string assignedName = employee?.Name
+				?? (await _context.Users.AsNoTracking()
+					  .FirstOrDefaultAsync(u => u.Id == ticket.AssignedToUserId))?.UserName
+				?? ticket.AssignedToUserId;
+
+			if (latest == null)
+			{
+				return new AssignmentExplanationResponse
+				{
+					AssignedEmployeeId = ticket.AssignedToUserId,
+					AssignedEmployeeName = assignedName,
+					AssignmentType = "Manual",
+					AssignmentMethod = "Unknown (pre-audit)",
+					Reason = $"{assignedName} is currently assigned, but no assignment history record exists to explain how.",
+					IsAvailable = true
+				};
+			}
+
+			string assignmentType = latest.IsAutoAssigned ? "Automatic" : "Manual";
+
+			string method = latest.Status switch
+			{
+				"Transferred" => "Department Transfer",
+				"Reassigned" => "Manual Reassignment",
+				"FallbackReassigned" => "Automatic Fallback Reassignment",
+				"Assigned" when latest.IsAutoAssigned => "Assignment Engine",
+				"Assigned" => "Manual Assignment",
+				_ => latest.Status
+			};
+
+			var dept = await _context.Departments
+	.AsNoTracking()
+	.FirstOrDefaultAsync(d => d.DepartmentId == ticket.DepartmentId && !d.IsDeleted);
+
+			var globalConfig = await _context.SlaConfigurations
+				.AsNoTracking()
+				.FirstOrDefaultAsync(s => s.IsActive)
+				?? new SlaConfiguration();
+
+			string configuredMethod = dept?.TicketAutoAssignMethod
+				?? globalConfig.DefaultAutoAssignMethod
+				?? "LoadBalanced";
+
+			string methodDescription = configuredMethod switch
+			{
+				"RoundRobin" => "the department's round-robin rotation (whoever had been idle longest)",
+				"LoadBalanced" => "the department's load-balancing rule (whoever had the fewest open tickets)",
+				_ => "the department's custom multi-factor scoring formula (open load, severity, and recency combined)"
+			};
+
+			string methodDescriptionShort = configuredMethod switch
+			{
+				"RoundRobin" => "round-robin rotation",
+				"LoadBalanced" => "load balancing",
+				_ => "custom scoring"
+			};
+			string? algorithmName = latest.IsAutoAssigned
+	? configuredMethod switch
+	{
+		"RoundRobin" => "Round Robin",
+		"LoadBalanced" => "Load Balanced",
+		_ => "Custom Formula"
+	}
+	: null;
+
+			string reason = latest.Status switch
+			{
+				"Transferred" when latest.IsAutoAssigned =>
+					$"Auto-selected after department transfer.",
+				"Transferred" =>
+					$"Assigned after department transfer.",
+				"Reassigned" =>
+					$"Manually reassigned by an agent.",
+				"FallbackReassigned" =>
+					$"Re-routed after the previous agent's acceptance was rejected or expired.",
+				"Assigned" when latest.IsAutoAssigned =>
+					$"Selected using {methodDescription}.",
+				"Assigned" =>
+					$"Manually assigned at ticket creation.",
+				_ => $"Currently assigned."
+			};
+
+			string? shortReason = latest.Status switch
+			{
+				"Transferred" => $"Assigned after department transfer",
+				"Reassigned" => $"Manually reassigned",
+				"FallbackReassigned" => $"Re-routed after {(latest.Remarks?.Contains("timeout") == true ? "acceptance timeout" : "rejection")}",
+				"Assigned" when latest.IsAutoAssigned => $"Auto-assigned at ticket creation",
+				"Assigned" => "Manually assigned",
+				_ => null
+			};
+
+			return new AssignmentExplanationResponse
+			{
+				AssignedEmployeeId = ticket.AssignedToUserId,
+				AssignedEmployeeName = assignedName,
+				AssignmentType = assignmentType,
+				AssignmentMethod = method,
+				Reason = reason,
+				ShortReason = shortReason,
+				AlgorithmName = algorithmName,
+				IsAvailable = true
+			};
+		}
 		public async Task<TicketResponse> CreateAsync(string userId, CreateTicketRequest request)
 		{
 			// Resolve the customer's AccountId when it is not supplied by the frontend.
@@ -376,8 +497,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 
 			// Write Created TicketHistory row
-			await _timelineService.WriteHistoryAsync(created.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Created, null, created.StatusId.ToString(), $"Ticket created. Assigned to: {(assignedEmployee?.Name ?? "Unassigned (Department Queue)")}", userId);
-
+			await _timelineService.WriteHistoryAsync(
+				created.TicketId,
+				TicketChangeType.Created,
+				null,
+				created.StatusId.ToString(),
+				$"Ticket created. Assigned to: {(assignedEmployee?.Name ?? "Unassigned (Department Queue)")}",
+				userId);
 			await _context.SaveChangesAsync();
 
 			var full = await _ticketRepository.GetByIdWithDetailsAsync(created.TicketId);
@@ -610,7 +736,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Remarks = request.Remarks
 			});
 
-			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Assigned, ticket.AssignedToUserId, request.AssignedToUserId, $"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}", actorUserId);
+			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Assigned, oldAssigneeId,request.AssignedToUserId, $"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}", actorUserId);
 
 			await _context.SaveChangesAsync();
 			return true;

@@ -150,13 +150,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			});
 
 			await _employeeEmailNotificationService.SendTicketNotificationAsync(
-	ticket.TicketId,
-	"Rejected",
-	employeeId,
-	reason);
+ticket.TicketId,
+"Rejected",
+employeeId,
+reason);
 
 
-			await RouteToFallbackOrQueueAsync(ticket, employeeId, now);
+			await RouteToFallbackOrQueueAsync(ticket, employeeId, now, "rejection");
 
 			await _context.SaveChangesAsync();
 			return true;
@@ -202,7 +202,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					await RouteToFallbackOrQueueAsync(
 						ticket,
 						expiredAgentId,
-						now);
+						now,
+						"acceptance timeout");
 				}
 				else
 				{
@@ -220,7 +221,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		/// this ticket, tries the next fallback agent via the assignment engine, and stops
 		/// rotating once MaxFallbackAttempts is reached (parks in queue + manager escalation).
 		/// </summary>
-		private async Task RouteToFallbackOrQueueAsync(Ticket ticket, string excludedAgentId, DateTime now)
+		private async Task RouteToFallbackOrQueueAsync(Ticket ticket, string excludedAgentId, DateTime now, string trigger)
 		{
 			var config = await _context.SlaConfigurations.AsNoTracking().FirstOrDefaultAsync(s => s.IsActive);
 			int maxAttempts = config?.MaxFallbackAttempts ?? 3;
@@ -261,9 +262,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				AssignedToUserId = nextAgent.Id,
 				AssignedByUserId = SEED.SystemActorUserId,
 				AssignedDate = now,
-				Status = "Assigned",
+				Status = "FallbackReassigned",
 				IsAutoAssigned = true,
-				Remarks = "Fallback re-route after reject/expire"
+				Remarks = $"Fallback re-route after {trigger} (attempt {ticket.CurrentFallbackAttempt})"
 			});
 
 			_context.TicketAcceptances.Add(new TicketAcceptance

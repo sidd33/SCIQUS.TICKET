@@ -36,6 +36,10 @@ namespace SCIQUSTICKETS.DATA.Interfaces.IRepositories
 		Task<TicketStatus?> GetStatusByNameAsync(string name);
 
 		Task<TicketComment?> GetCommentAsync(Guid ticketId, Guid commentId);
+
+		Task<TicketAssignment?> GetLatestAssignmentAsync(Guid ticketId);
+
 		void UpdateComment(TicketComment comment);
+
 	}
 }

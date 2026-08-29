@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 
@@ -18,6 +19,11 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		/// Step 5: Return selected assignee or null (queue)
 		/// </summary>
 		Task<Employee?> ResolveAssigneeAsync(
+			Ticket ticket,
+			string? requestedAgentId = null,
+			HashSet<string>? excludedAgentIds = null);
+
+		Task<AssignmentExplanationResponse?> ResolveAssignmentExplanationAsync(
 			Ticket ticket,
 			string? requestedAgentId = null,
 			HashSet<string>? excludedAgentIds = null);

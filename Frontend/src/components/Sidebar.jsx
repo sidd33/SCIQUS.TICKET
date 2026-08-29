@@ -16,7 +16,8 @@ import {
   PlusCircle,
   Inbox,
   MessageSquare,
-  CalendarOff
+  CalendarOff,
+  CalendarDays
 } from 'lucide-react';
 import { isAdmin, isCustomer, isEmployee } from '../auth/roles';
 import { clearToken } from '../auth/tokenManager';
@@ -118,10 +119,21 @@ export default function Sidebar() {
             }
             title="My Leave"
           >
+            
             <CalendarOff size={20} />
             {!isCollapsed && <span>My Leave</span>}
           </NavLink>
 
+          <NavLink
+            to="/my-holidays"
+            className={({ isActive }) =>
+              isActive ? 'nav-link active' : 'nav-link'
+            }
+            title="My Holidays"
+          >
+            <CalendarDays size={20} />
+            {!isCollapsed && <span>My Holidays</span>}
+          </NavLink>
             <NavLink
               to="/tickets/department-queue"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
@@ -164,6 +176,16 @@ export default function Sidebar() {
             <CalendarOff size={20} />
             {!isCollapsed && <span>Leave Management</span>}
           </NavLink>
+                  <NavLink
+          to="/holidays"
+          className={({ isActive }) =>
+            isActive ? 'nav-link active' : 'nav-link'
+          }
+          title="Holiday Management"
+        >
+          <CalendarDays size={20} />
+          {!isCollapsed && <span>Holiday Management</span>}
+        </NavLink>
             <NavLink
               to="/departments"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}

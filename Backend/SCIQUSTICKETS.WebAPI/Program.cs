@@ -176,6 +176,8 @@ builder.Services.AddScoped<ITicketEmailNotificationService, TicketEmailNotificat
 builder.Services.AddScoped<IEmployeeEmailNotificationService,
 	EmployeeEmailNotificationService>();
 
+builder.Services.AddScoped<IHolidayService, HolidayService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

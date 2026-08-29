@@ -51,5 +51,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task<IEnumerable<TicketAttachmentResponse>> GetAttachmentsAsync(Guid ticketId);
 		Task<IEnumerable<TicketCommentResponse>> GetCommentsAsync(Guid ticketId);
 		Task<bool> DeleteAttachmentAsync(Guid ticketId, Guid attachmentId, string actorUserId, bool canManageAll);
+
+		Task<AssignmentExplanationResponse?> GetAssignmentExplanationAsync(Guid ticketId);
 	}
 }

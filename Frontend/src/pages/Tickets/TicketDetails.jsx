@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, UserCheck, ArrowRightLeft, ShieldAlert, CheckCircle2, RotateCcw, MessageSquare, Paperclip, History, Mail, Send } from 'lucide-react';
+import {
+  ArrowLeft,
+  UserCheck,
+  ArrowRightLeft,
+  ShieldAlert,
+  CheckCircle2,
+  RotateCcw,
+  MessageSquare,
+  Paperclip,
+  History,
+  Mail,
+  Send,
+  ChevronDown,
+  Globe,
+  MessageCircle
+} from 'lucide-react';
 import api from '../../api/axios';
 import SlaBadge from '../../components/SlaBadge';
 import AcceptanceBar from '../../components/AcceptanceBar';
@@ -11,6 +26,154 @@ import TransferModal from '../../components/TransferModal';
 import PriorityImpactModal from '../../components/PriorityImpactModal';
 import './Tickets.scss';
 
+const ASSIGNMENT_TYPE_COLORS = {
+  Automatic: { text: '#5eead4', bg: 'rgba(94, 234, 212, 0.12)' },
+  Manual: { text: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)' },
+  Queue: { text: '#94a3b8', bg: 'rgba(148, 163, 184, 0.12)' },
+};
+
+function AssignmentReasonPanel({ assignmentReason }) {
+  const [expanded, setExpanded] = useState(false);
+  const [showCandidates, setShowCandidates] = useState(false);
+
+  if (!assignmentReason) return null;
+
+  const colors = ASSIGNMENT_TYPE_COLORS[assignmentReason.assignmentType] || ASSIGNMENT_TYPE_COLORS.Queue;
+  const hasCandidates = (assignmentReason.candidates?.length ?? 0) > 0;
+
+  return (
+    <div>
+      <span style={{ color: 'var(--text-muted)' }}>Why assigned:</span>
+
+      <div
+        style={{
+          marginTop: '6px',
+          padding: '0.6rem 0.75rem',
+          background: 'rgba(99, 102, 241, 0.08)',
+          border: '1px solid var(--bg-card-border)',
+          borderRadius: '8px',
+          fontSize: '0.8rem'
+        }}
+      >
+        <div
+          onClick={() => setExpanded(e => !e)}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', gap: '8px' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+            <span
+  style={{
+    display: 'inline-block',
+    padding: '2px 8px',
+    borderRadius: '999px',
+    fontSize: '0.65rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.03em',
+    color: colors.text,
+    background: colors.bg,
+    flexShrink: 0
+  }}
+>
+  {assignmentReason.assignmentType}
+  {assignmentReason.algorithmName ? ` · ${assignmentReason.algorithmName}` : ''}
+</span>
+            <span style={{ color: 'white', fontSize: '0.78rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {assignmentReason.shortReason || assignmentReason.reason}
+            </span>
+          </div>
+          <ChevronDown
+            size={13}
+            style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0, color: 'var(--text-dim)' }}
+          />
+        </div>
+
+        {expanded && (
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--bg-card-border)' }}>
+            <div style={{ color: 'white', lineHeight: '1.5' }}>
+              {assignmentReason.reason}
+            </div>
+
+            {assignmentReason.context && (
+              <div style={{ marginTop: '6px', color: 'var(--text-dim)', fontSize: '0.72rem', fontStyle: 'italic' }}>
+                {assignmentReason.context}
+              </div>
+            )}
+
+            {hasCandidates && (
+              <div style={{ marginTop: '0.6rem', borderTop: '1px solid var(--bg-card-border)', paddingTop: '0.5rem' }}>
+                <button
+                  onClick={() => setShowCandidates(s => !s)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: '#818cf8', fontSize: '0.75rem', fontWeight: 500, cursor: 'pointer', padding: 0 }}
+                >
+                  Why this employee over others ({assignmentReason.candidates.length} eligible)
+                  <ChevronDown size={12} style={{ transform: showCandidates ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }} />
+                </button>
+
+                {showCandidates && (
+                  <table style={{ width: '100%', marginTop: '0.5rem', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                    <thead>
+                      <tr style={{ color: 'var(--text-dim)', textAlign: 'left' }}>
+                        <th style={{ paddingBottom: '4px', fontWeight: 500 }}>Employee</th>
+                        <th style={{ paddingBottom: '4px', fontWeight: 500, textAlign: 'right' }}>Score</th>
+                        <th style={{ paddingBottom: '4px', fontWeight: 500, textAlign: 'right' }}>Open</th>
+                        <th style={{ paddingBottom: '4px', fontWeight: 500, textAlign: 'right' }}>Severity</th>
+                        <th style={{ paddingBottom: '4px', fontWeight: 500, textAlign: 'right' }}>Idle (h)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assignmentReason.candidates.map((c) => (
+                        <tr key={c.employeeId} style={{ borderTop: '1px solid var(--bg-card-border)', background: c.selected ? 'rgba(94, 234, 212, 0.06)' : 'transparent' }}>
+                          <td style={{ padding: '4px 0', color: c.selected ? 'white' : 'var(--text-dim)', fontWeight: c.selected ? 600 : 400 }}>
+                            {c.selected && <CheckCircle2 size={11} style={{ marginRight: '4px', verticalAlign: '-2px', color: '#5eead4' }} />}
+                            {c.employeeName}
+                          </td>
+                          <td style={{ padding: '4px 0', textAlign: 'right', color: 'var(--text-dim)' }}>{c.score.toFixed(2)}</td>
+                          <td style={{ padding: '4px 0', textAlign: 'right', color: 'var(--text-dim)' }}>{c.openTicketCount}</td>
+                          <td style={{ padding: '4px 0', textAlign: 'right', color: 'var(--text-dim)' }}>{c.severityLoad}</td>
+                          <td style={{ padding: '4px 0', textAlign: 'right', color: 'var(--text-dim)' }}>{c.hoursSinceLastAssignment.toFixed(1)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function getSourceInfo(sourceType) {
+  switch (sourceType?.toLowerCase()) {
+    case 'email':
+      return {
+        label: 'Email',
+        icon: Mail
+      };
+
+    case 'whatsapp':
+      return {
+        label: 'WhatsApp',
+        icon: MessageCircle
+      };
+
+    case 'internal':
+      return {
+        label: 'Internal',
+        icon: UserCheck
+      };
+
+    case 'portal':
+    default:
+      return {
+        label: 'Portal',
+        icon: Globe
+      };
+  }
+}
+
 export default function TicketDetails() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
@@ -18,6 +181,7 @@ export default function TicketDetails() {
   const [ticket, setTicket] = useState(null);
   const [comments, setComments] = useState([]);
   const [histories, setHistories] = useState([]);
+  const [assignmentReason, setAssignmentReason] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
 
@@ -30,45 +194,54 @@ export default function TicketDetails() {
   const [submittingComment, setSubmittingComment] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem('user') || 'null');
-const currentUserId = storedUser?.id;
+  const currentUserId = storedUser?.id;
 
   useEffect(() => {
     loadTicketDetails();
   }, [ticketId]);
 
   async function loadTicketDetails() {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    // Load the ticket itself first
-    const tRes = await api.get(`/tickets/${ticketId}`);
-    setTicket(tRes.data);
-
-    // Load comments separately
     try {
-      const cRes = await api.get(`/tickets/${ticketId}/comments`);
-      setComments(cRes.data?.items || cRes.data || []);
-    } catch (err) {
-      console.error('Failed to load comments:', err);
-      setComments([]);
-    }
+      // Load the ticket itself first
+      const tRes = await api.get(`/tickets/${ticketId}`);
+      setTicket(tRes.data);
 
-    // Load timeline separately
-    try {
-      const hRes = await api.get(`/tickets/${ticketId}/timeline`);
-      setHistories(hRes.data?.items || hRes.data || []);
-    } catch (err) {
-      console.error('Failed to load ticket timeline:', err);
-      setHistories([]);
-    }
+      // Load comments separately
+      try {
+        const cRes = await api.get(`/tickets/${ticketId}/comments`);
+        setComments(cRes.data?.items || cRes.data || []);
+      } catch (err) {
+        console.error('Failed to load comments:', err);
+        setComments([]);
+      }
 
-  } catch (err) {
-    console.error('Failed to load ticket:', err);
-    setTicket(null);
-  } finally {
-    setLoading(false);
+      // Load timeline separately
+      try {
+        const hRes = await api.get(`/tickets/${ticketId}/timeline`);
+        setHistories(hRes.data?.items || hRes.data || []);
+      } catch (err) {
+        console.error('Failed to load ticket timeline:', err);
+        setHistories([]);
+      }
+
+      // Load assignment reason separately
+      try {
+        const arRes = await api.get(`/tickets/${ticketId}/assignment-reason`);
+        setAssignmentReason(arRes.data);
+      } catch (err) {
+        console.error('Failed to load assignment reason:', err);
+        setAssignmentReason(null);
+      }
+
+    } catch (err) {
+      console.error('Failed to load ticket:', err);
+      setTicket(null);
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   const handlePostComment = async (e) => {
     e.preventDefault();
@@ -89,28 +262,28 @@ const currentUserId = storedUser?.id;
     }
   };
 
- const handleStatusTransition = async (statusName) => {
-  try {
-   const statusIds = {
-  'Open': '10000000-0000-0000-0000-000000000001',
-  'In Progress': '10000000-0000-0000-0000-000000000002',
-  'Pending': '10000000-0000-0000-0000-000000000003',
-  'Resolved': '10000000-0000-0000-0000-000000000004',
-  'Closed': '10000000-0000-0000-0000-000000000005',
-  'PendingClosure': '10000000-0000-0000-0000-000000000006',
-  'Reopened': '10000000-0000-0000-0000-000000000007'
-};;
+  const handleStatusTransition = async (statusName) => {
+    try {
+      const statusIds = {
+        'Open': '10000000-0000-0000-0000-000000000001',
+        'In Progress': '10000000-0000-0000-0000-000000000002',
+        'Pending': '10000000-0000-0000-0000-000000000003',
+        'Resolved': '10000000-0000-0000-0000-000000000004',
+        'Closed': '10000000-0000-0000-0000-000000000005',
+        'PendingClosure': '10000000-0000-0000-0000-000000000006',
+        'Reopened': '10000000-0000-0000-0000-000000000007'
+      };
 
-    await api.patch(`/tickets/${ticketId}/status`, {
-      statusId: statusIds[statusName]
-    });
+      await api.patch(`/tickets/${ticketId}/status`, {
+        statusId: statusIds[statusName]
+      });
 
-    await loadTicketDetails();
-  } catch (err) {
-    console.error('Failed to update status:', err.response?.data || err);
-    alert(err.response?.data?.message || 'Failed to update status');
-  }
-};
+      await loadTicketDetails();
+    } catch (err) {
+      console.error('Failed to update status:', err.response?.data || err);
+      alert(err.response?.data?.message || 'Failed to update status');
+    }
+  };
 
   if (loading) {
     return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-dim)' }}>Loading ticket details...</div>;
@@ -131,105 +304,102 @@ const currentUserId = storedUser?.id;
             <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span>{ticket.ticketNumber || `TKT-${ticket.id?.substring(0, 6)}`}</span>
               <span
-  className={`badge badge--${
-    ticket.acceptanceStatus === 'Pending'
-      ? 'awaiting-acceptance'
-      : (ticket.statusName || 'Open').toLowerCase().replace(' ', '')
-  }`}
->
-  {ticket.acceptanceStatus === 'Pending'
-    ? 'Awaiting Acceptance'
-    : ticket.statusName || 'Open'}
-</span>
+                className={`badge badge--${
+                  ticket.acceptanceStatus === 'Pending'
+                    ? 'awaiting-acceptance'
+                    : (ticket.statusName || 'Open').toLowerCase().replace(' ', '')
+                }`}
+              >
+                {ticket.acceptanceStatus === 'Pending'
+                  ? 'Awaiting Acceptance'
+                  : ticket.statusName || 'Open'}
+              </span>
             </h1>
             <p style={{ margin: '2px 0 0 0', fontSize: '0.9rem', color: 'white' }}>{ticket.title}</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-  <button
-    className="btn btn--secondary btn--sm"
-    onClick={() => setShowReassignModal(true)}
-  >
-    <UserCheck size={14} /> Assign / Reassign
-  </button>
+          <button
+            className="btn btn--secondary btn--sm"
+            onClick={() => setShowReassignModal(true)}
+          >
+            <UserCheck size={14} /> Assign / Reassign
+          </button>
 
-  <button
-    className="btn btn--secondary btn--sm"
-    onClick={() => setShowTransferModal(true)}
-  >
-    <ArrowRightLeft size={14} /> Transfer Dept
-  </button>
+          <button
+            className="btn btn--secondary btn--sm"
+            onClick={() => setShowTransferModal(true)}
+          >
+            <ArrowRightLeft size={14} /> Transfer Dept
+          </button>
 
-  <button
-    className="btn btn--secondary btn--sm"
-    onClick={() => setShowPriorityModal(true)}
-  >
-    <ShieldAlert size={14} /> Priority / SLA
-  </button>
+          <button
+            className="btn btn--secondary btn--sm"
+            onClick={() => setShowPriorityModal(true)}
+          >
+            <ShieldAlert size={14} /> Priority / SLA
+          </button>
 
-  {/* Resolve */}
-{/* Request Closure */}
-{(
-  ticket.statusName === 'Open' ||
-  ticket.statusName === 'In Progress' ||
-  ticket.statusName === 'Pending' ||
-  ticket.statusName === 'Resolved'
-) && (
-  <button
-    className="btn btn--primary btn--sm"
-    onClick={() => handleStatusTransition('PendingClosure')}
-  >
-    <CheckCircle2 size={14} /> Request Closure
-  </button>
-)}
+          {/* Request Closure */}
+          {(
+            ticket.statusName === 'Open' ||
+            ticket.statusName === 'In Progress' ||
+            ticket.statusName === 'Pending' ||
+            ticket.statusName === 'Resolved'
+          ) && (
+            <button
+              className="btn btn--primary btn--sm"
+              onClick={() => handleStatusTransition('PendingClosure')}
+            >
+              <CheckCircle2 size={14} /> Request Closure
+            </button>
+          )}
 
-  
+          {/* Reopen */}
+          {ticket.statusName === 'Closed' && (
+            <button
+              className="btn btn--secondary btn--sm"
+              onClick={async () => {
+                try {
+                  const reason = window.prompt('Why are you reopening this ticket?');
 
+                  if (!reason?.trim()) return;
 
-{/* Reopen */}
-{ticket.statusName === 'Closed' && (
-  <button
-    className="btn btn--secondary btn--sm"
-    onClick={async () => {
-      try {
-        const reason = window.prompt('Why are you reopening this ticket?');
+                  await api.post(
+                    `/tickets/${ticketId}/reopen`,
+                    reason.trim()
+                  );
 
-        if (!reason?.trim()) return;
+                  await loadTicketDetails();
+                } catch (err) {
+                  console.error(
+                    'Failed to reopen ticket:',
+                    err.response?.data || err
+                  );
 
-        await api.post(
-          `/tickets/${ticketId}/reopen`,
-          reason.trim()
-        );
-
-        await loadTicketDetails();
-      } catch (err) {
-        console.error(
-          'Failed to reopen ticket:',
-          err.response?.data || err
-        );
-
-        alert(
-          err.response?.data?.message ||
-          'Failed to reopen ticket'
-        );
-      }
-    }}
-  >
-    <RotateCcw size={14} /> Reopen
-  </button>
-)}
-</div>
+                  alert(
+                    err.response?.data?.message ||
+                    'Failed to reopen ticket'
+                  );
+                }
+              }}
+            >
+              <RotateCcw size={14} /> Reopen
+            </button>
+          )}
+        </div>
       </div>
 
       {ticket.acceptanceStatus === 'Pending' && (
-<AcceptanceBar 
-  ticketId={ticket.id || ticketId} 
-  deadline={ticket.acceptanceDeadlineAt} 
-  assignedToUserId={ticket.assignedToUserId} 
-  currentUserId={currentUserId} 
-  onAction={loadTicketDetails} 
-/>      )}
+        <AcceptanceBar
+          ticketId={ticket.id || ticketId}
+          deadline={ticket.acceptanceDeadlineAt}
+          assignedToUserId={ticket.assignedToUserId}
+          currentUserId={currentUserId}
+          onAction={loadTicketDetails}
+        />
+      )}
 
       {ticket.statusName === 'PendingClosure' && (
         <ConfirmationBanner ticketId={ticket.id || ticketId} onAction={loadTicketDetails} />
@@ -238,7 +408,7 @@ const currentUserId = storedUser?.id;
       {/* Main Workspace Card */}
       <div className="glass-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
         {/* Workspace Nav Tabs */}
-        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--bg-card-border)', pb: '0.75rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--bg-card-border)', paddingBottom: '0.75rem', marginBottom: '1.5rem' }}>
           <button className={`btn btn--sm ${activeTab === 'details' ? 'btn--primary' : 'btn--secondary'}`} onClick={() => setActiveTab('details')}>
             Ticket Overview
           </button>
@@ -262,74 +432,130 @@ const currentUserId = storedUser?.id;
             <div className="glass-card" style={{ padding: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
               <h4 style={{ color: 'white', marginBottom: '1rem', fontSize: '0.9rem' }}>Ticket Attributes</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.825rem' }}>
+                              {(() => {
+  const source = getSourceInfo(ticket.sourceType);
+  const SourceIcon = source.icon;
+
+  return (
+    <div>
+      <span style={{ color: 'var(--text-muted)' }}>Source:</span>
+
+      <strong
+        style={{
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginTop: '4px'
+        }}
+      >
+        <SourceIcon size={15} />
+        {source.label}
+      </strong>
+    </div>
+  );
+})()}
+
+{ticket.sourceMessageId && (
+  <div>
+    <span style={{ color: 'var(--text-muted)' }}>Source Message ID:</span>
+
+    <strong
+      style={{
+        color: 'white',
+        display: 'block',
+        marginTop: '4px',
+        wordBreak: 'break-all'
+      }}
+    >
+      {ticket.sourceMessageId}
+    </strong>
+  </div>
+)}
+
+{ticket.emailReceivedDate && (
+  <div>
+    <span style={{ color: 'var(--text-muted)' }}>Received:</span>
+
+    <strong
+      style={{
+        color: 'white',
+        display: 'block',
+        marginTop: '4px'
+      }}
+    >
+      {new Date(ticket.emailReceivedDate).toLocaleString()}
+    </strong>
+  </div>
+)}
                 <div><span style={{ color: 'var(--text-muted)' }}>Department:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.departmentName || 'IT Support'}</strong></div>
                 <div><span style={{ color: 'var(--text-muted)' }}>Assigned Agent:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.assignedToUserName || 'Unassigned'}</strong></div>
+
+               <AssignmentReasonPanel assignmentReason={assignmentReason} />
+
                 <div><span style={{ color: 'var(--text-muted)' }}>Priority Severity:</span> <strong style={{ color: '#fbbf24', display: 'block' }}>{ticket.priorityName || 'Medium'}</strong></div>
                 <div><span style={{ color: 'var(--text-muted)' }}>Business Impact:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.businessImpactName || 'Single User'}</strong></div>
-                
+
                 <div><span style={{ color: 'var(--text-muted)' }}>SLA Countdown:</span> <div style={{ marginTop: '4px' }}><SlaBadge dueDate={ticket.slaDueDate} isBreached={ticket.isSlaBreached} statusName={ticket.statusName} /></div></div>
-                <div><span style={{ color: 'var(--text-muted)' }}>Business Impact:</span> <strong style={{ color: 'white', display: 'block' }}>{ticket.businessImpactName || 'Single User'}</strong></div>
 
-<div><span style={{ color: 'var(--text-muted)' }}>SLA Countdown:</span> <div style={{ marginTop: '4px' }}><SlaBadge dueDate={ticket.slaDueDate} isBreached={ticket.isSlaBreached} statusName={ticket.statusName} /></div></div>
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Assignment Log:</span>
 
-<div>
-  <span style={{ color: 'var(--text-muted)' }}>Assignment Log:</span>
+                  <div
+                    style={{
+                      marginTop: '6px',
+                      padding: '0.75rem',
+                      background: 'rgba(99, 102, 241, 0.08)',
+                      border: '1px solid var(--bg-card-border)',
+                      borderRadius: '8px',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    {histories.filter(h =>
+                      (h.changeDescription || h.description || '')
+                        .toLowerCase()
+                        .includes('assign')
+                    ).length === 0 ? (
+                      <span style={{ color: 'var(--text-dim)' }}>
+                        No assignment history available
+                      </span>
+                    ) : (
+                      histories
+                        .filter(h =>
+                          (h.changeDescription || h.description || '')
+                            .toLowerCase()
+                            .includes('assign')
+                        )
+                        .map((h, index) => (
+                          <div
+                            key={h.id || h.ticketHistoryId || index}
+                            style={{
+                              marginBottom: index === 0 ? '0' : '0.6rem',
+                              paddingBottom: index === 0 ? '0' : '0.6rem',
+                              borderBottom:
+                                index === 0 ? 'none' : '1px solid var(--bg-card-border)'
+                            }}
+                          >
+                            <div style={{ color: 'white' }}>
+                              ✓ {h.changeDescription || h.description}
+                            </div>
 
-  <div
-    style={{
-      marginTop: '6px',
-      padding: '0.75rem',
-      background: 'rgba(99, 102, 241, 0.08)',
-      border: '1px solid var(--bg-card-border)',
-      borderRadius: '8px',
-      fontSize: '0.8rem'
-    }}
-  >
-    {histories.filter(h =>
-      (h.changeDescription || h.description || '')
-        .toLowerCase()
-        .includes('assign')
-    ).length === 0 ? (
-      <span style={{ color: 'var(--text-dim)' }}>
-        No assignment history available
-      </span>
-    ) : (
-      histories
-        .filter(h =>
-          (h.changeDescription || h.description || '')
-            .toLowerCase()
-            .includes('assign')
-        )
-        .map((h, index) => (
-          <div
-            key={h.id || h.ticketHistoryId || index}
-            style={{
-              marginBottom: index === 0 ? '0' : '0.6rem',
-              paddingBottom: index === 0 ? '0' : '0.6rem',
-              borderBottom:
-                index === 0 ? 'none' : '1px solid var(--bg-card-border)'
-            }}
-          >
-            <div style={{ color: 'white' }}>
-              ✓ {h.changeDescription || h.description}
-            </div>
-
-            <div
-              style={{
-                color: 'var(--text-dim)',
-                marginTop: '3px',
-                fontSize: '0.75rem'
-              }}
-            >
-              {h.createdDate
-                ? new Date(h.createdDate).toLocaleString()
-                : ''}
-            </div>
-          </div>
-        ))
-    )}
-  </div>
-</div>
+                            <div
+                              style={{
+                                color: 'var(--text-dim)',
+                                marginTop: '3px',
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              {h.createdDate
+                                ? new Date(h.createdDate).toLocaleString()
+                                : ''}
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
