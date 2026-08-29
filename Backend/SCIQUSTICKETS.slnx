@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SCIQUSTICKETS.BUSINESS/SCIQUSTICKETS.BUSINESS.csproj" />
+  <Project Path="SCIQUSTICKETS.COMMON/SCIQUSTICKETS.COMMON.csproj" />
+  <Project Path="SCIQUSTICKETS.DATA/SCIQUSTICKETS.DATA.csproj" />
+  <Project Path="SCIQUSTICKETS.WebAPI/SCIQUSTICKETS.WebAPI.csproj" />
+</Solution>

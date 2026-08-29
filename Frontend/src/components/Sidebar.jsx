@@ -17,7 +17,8 @@ import {
   Inbox,
   MessageSquare,
   CalendarOff,
-  CalendarDays
+  CalendarDays,
+  Bell
 } from 'lucide-react';
 import { isAdmin, isCustomer, isEmployee } from '../auth/roles';
 import { clearToken } from '../auth/tokenManager';
@@ -244,6 +245,14 @@ export default function Sidebar() {
               <MessageSquare size={20} />
               {!isCollapsed && <span>WhatsApp Channel</span>}
             </NavLink>
+            <NavLink
+            to="/admin/email-notification-preferences"
+            className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            title="Notification Preferences"
+          >
+            <Bell size={20} />
+            {!isCollapsed && <span>Notification Preferences</span>}
+          </NavLink>
           </div>
         )}
 

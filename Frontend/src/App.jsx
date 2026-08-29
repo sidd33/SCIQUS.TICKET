@@ -30,7 +30,7 @@ import Leave from './pages/Leave/Leave';
 import MyLeave from './pages/Leave/MyLeave';
 import Holiday from './pages/Holiday/Holiday';
 import MyHoliday from './pages/Holiday/MyHoliday';
-
+import EmailNotificationPreferences from './pages/Admin/EmailNotificationPreferences/EmailNotificationPreferences';
 
 export default function App() {
   const token = getAccessToken();
@@ -127,7 +127,8 @@ export default function App() {
             <Route path="/admin/email-inbox-review" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><EmailInboxReview /></ProtectedRoute>} />
             <Route path="/admin/whatsapp-config" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><WhatsAppConfig /></ProtectedRoute>} />
             <Route path="/admin/whatsapp-review" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><WhatsAppInboxReview /></ProtectedRoute>} />
-
+            <Route path="/admin/email-notification-preferences" element={<ProtectedRoute allow={['Admin', 'SuperAdmin']}><EmailNotificationPreferences /></ProtectedRoute>} />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

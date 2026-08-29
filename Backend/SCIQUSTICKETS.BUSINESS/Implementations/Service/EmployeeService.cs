@@ -692,12 +692,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 
 		private static EmployeeListResponse
-			MapToListResponse(Employee e)
+	MapToListResponse(Employee e)
 		{
 			return new EmployeeListResponse
 			{
 				Id = e.Id,
 				Name = e.Name,
+				Email = e.Email,
 				Designation = e.Designation,
 				DepartmentName = e.Department?.Name,
 				ProfileImageUrl = e.ProfileImageUrl

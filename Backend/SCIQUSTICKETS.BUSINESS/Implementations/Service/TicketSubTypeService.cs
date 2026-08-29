@@ -53,22 +53,27 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             var now = TimeHelper.GetIndianTime();
 
-            var entity = new TicketSubType
-            {
-                Name = request.Name.Trim(),
-                Description = request.Description,
-                TicketTypeId = request.TicketTypeId,
-                DepartmentId = request.DepartmentId,
-                DefaultUserId = request.DefaultUserId,
-                Status = true,
-                IsDeleted = false,
-                CreatedDate = now,
-                LastUpdatedDate = now,
-                CreatedByUserId = actorUserId,
-                LastUpdatedByUserId = actorUserId
-            };
+			var entity = new TicketSubType
+			{
+				Name = request.Name.Trim(),
+				Description = request.Description,
+				TicketTypeId = request.TicketTypeId,
+				DepartmentId = request.DepartmentId,
+				DefaultUserId = request.DefaultUserId,
 
-            await _ticketSubTypeRepository.AddAsync(entity);
+				RequiresAcceptance = request.RequiresAcceptance,
+				AcceptanceDeadlineHours = request.AcceptanceDeadlineHours,
+				ManualOnly = request.ManualOnly,
+
+				Status = true,
+				IsDeleted = false,
+				CreatedDate = now,
+				LastUpdatedDate = now,
+				CreatedByUserId = actorUserId,
+				LastUpdatedByUserId = actorUserId
+			};
+
+			await _ticketSubTypeRepository.AddAsync(entity);
             await _ticketSubTypeRepository.SaveChangesAsync();
 
             var created = await _ticketSubTypeRepository.GetByIdWithDetailsAsync(entity.TicketSubTypeId);
@@ -88,16 +93,19 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (entity.Status && !request.Status && await _ticketSubTypeRepository.IsUsedByOpenTicketsAsync(id))
                 throw new InvalidOperationException("Cannot deactivate: this Sub-Type is in use by open tickets.");
 
-            entity.Name = request.Name.Trim();
-            entity.Description = request.Description;
-            entity.TicketTypeId = request.TicketTypeId;
-            entity.DepartmentId = request.DepartmentId;
-            entity.DefaultUserId = request.DefaultUserId;
-            entity.Status = request.Status;
-            entity.LastUpdatedDate = TimeHelper.GetIndianTime();
-            entity.LastUpdatedByUserId = actorUserId;
+			entity.Name = request.Name.Trim();
+			entity.Description = request.Description;
+			entity.TicketTypeId = request.TicketTypeId;
+			entity.DepartmentId = request.DepartmentId;
+			entity.DefaultUserId = request.DefaultUserId;
+			entity.RequiresAcceptance = request.RequiresAcceptance;
+			entity.AcceptanceDeadlineHours = request.AcceptanceDeadlineHours;
+			entity.ManualOnly = request.ManualOnly;
+			entity.Status = request.Status;
+			entity.LastUpdatedDate = TimeHelper.GetIndianTime();
+			entity.LastUpdatedByUserId = actorUserId;
 
-            _ticketSubTypeRepository.Update(entity);
+			_ticketSubTypeRepository.Update(entity);
             await _ticketSubTypeRepository.SaveChangesAsync();
 
             var updated = await _ticketSubTypeRepository.GetByIdWithDetailsAsync(id);
@@ -166,7 +174,10 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 DepartmentName = st.Department?.Name,
                 DefaultUserId = st.DefaultUserId,
                 DefaultUserName = st.DefaultUser?.Name,
-                Status = st.Status,
+				RequiresAcceptance = st.RequiresAcceptance,
+				AcceptanceDeadlineHours = st.AcceptanceDeadlineHours,
+				ManualOnly = st.ManualOnly,
+				Status = st.Status,
                 CreatedDate = st.CreatedDate,
                 LastUpdatedDate = st.LastUpdatedDate
             };
