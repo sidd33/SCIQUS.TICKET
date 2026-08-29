@@ -174,7 +174,10 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 DepartmentName = st.Department?.Name,
                 DefaultUserId = st.DefaultUserId,
                 DefaultUserName = st.DefaultUser?.Name,
-                Status = st.Status,
+				RequiresAcceptance = st.RequiresAcceptance,
+				AcceptanceDeadlineHours = st.AcceptanceDeadlineHours,
+				ManualOnly = st.ManualOnly,
+				Status = st.Status,
                 CreatedDate = st.CreatedDate,
                 LastUpdatedDate = st.LastUpdatedDate
             };
