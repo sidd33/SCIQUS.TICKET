@@ -13,6 +13,7 @@ const EMPTY_EMPLOYEE = {
   reportsTo: '',
   departmentId: '',
   gradeId: '',
+  supportPlanId: '',
   profileImageUrl: ''
 };
 
@@ -132,6 +133,7 @@ export default function Employees() {
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [grades, setGrades] = useState([]);
+  const [supportPlans, setSupportPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
@@ -159,12 +161,14 @@ export default function Employees() {
 
   const loadSupportingData = useCallback(async () => {
     try {
-      const [dRes, gRes] = await Promise.all([
+      const [dRes, gRes, spRes] = await Promise.all([
         api.get('/departments', { params: { pageSize: 100 } }),
-        api.get('/grades', { params: { pageSize: 100 } })
+        api.get('/grades', { params: { pageSize: 100 } }),
+        api.get('/SupportPlan', { params: { pageSize: 100 } })
       ]);
       setDepartments(dRes.data.items || dRes.data || []);
       setGrades(gRes.data.items || gRes.data || []);
+      setSupportPlans(spRes.data.items || spRes.data || []);
     } catch {
       // fallback
     }
@@ -205,6 +209,7 @@ export default function Employees() {
         reportsTo: emp.reportsTo || '',
         departmentId: emp.departmentId || '',
         gradeId: emp.gradeId || '',
+        supportPlanId: emp.supportPlanId || '',
         profileImageUrl: emp.profileImageUrl || ''
       }
     });
@@ -221,6 +226,7 @@ export default function Employees() {
         ...empModal.data,
         gradeId: empModal.data.gradeId || null,
         reportsTo: empModal.data.reportsTo || null,
+        supportPlanId: empModal.data.supportPlanId || null,
         secondMobileNumber: empModal.data.secondMobileNumber || null,
         profileImageUrl: empModal.data.profileImageUrl || null
       };
@@ -231,6 +237,7 @@ export default function Employees() {
         ...empModal.data,
         gradeId: empModal.data.gradeId || null,
         reportsTo: empModal.data.reportsTo || null,
+        supportPlanId: empModal.data.supportPlanId || null,
         secondMobileNumber: empModal.data.secondMobileNumber || null,
         profileImageUrl: empModal.data.profileImageUrl || null
       });
@@ -545,6 +552,16 @@ export default function Employees() {
                     <option value="">No grade</option>
                     {grades.map((g) => (
                       <option key={g.id} value={g.id}>Level {g.gradeLevel}{g.description ? ` — ${g.description}` : ''}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="emp-field">
+                  <label>Assigned Tier (optional)</label>
+                  <select value={empModal.data.supportPlanId || ''} onChange={(e) => setEmpModal({ ...empModal, data: { ...empModal.data, supportPlanId: e.target.value } })}>
+                    <option value="">No dedicated tier</option>
+                    {supportPlans.map((sp) => (
+                      <option key={sp.supportPlanId || sp.id} value={sp.supportPlanId || sp.id}>{sp.name}</option>
                     ))}
                   </select>
                 </div>

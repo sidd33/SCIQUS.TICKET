@@ -691,6 +691,8 @@ namespace SCIQUSTICKETS.WebAPI
 				var subTypeObj = context.TicketSubTypes.FirstOrDefault();
 				var typeObj = context.TicketTypes.FirstOrDefault(t => subTypeObj != null && t.TicketTypeId == subTypeObj.TicketTypeId);
 
+				var config = serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+
 				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
 				{
 					WhatsAppChannelConfigId = Guid.NewGuid(),
@@ -698,11 +700,11 @@ namespace SCIQUSTICKETS.WebAPI
 
 					BusinessPhoneNumberId = "1264781743381359", // From your Meta dashboard screenshot
 
-					EncryptedApiToken = "EAAbjZAv1XkAUBSbhN9H7osPsWp9otlDc2M9ZB82lQUr3ZCdzFPAWtCQAEe3HYnJMSnep424Hkd4WauBHMlAMRq3wl9lXciEVZBBR51uQCTO1MiH1ZBkyqCZBXYnscZA1yj62OMJHfVE2B9ZB54iVFdAtZCqYlIyj2NeCv0iCt0ask3VWWqytLYnCMlvfyktEpfjrQZAwGk0pPYVJB0XrdPnpE6oOyxhZCkVdbqyzmMYHcZCSb2MjtZB5zjB5OlMUHy1RRyp1kdAGHZAkQM1ydnOpdqsemq", // Update this if you generated it!
+					EncryptedApiToken = config["WhatsAppConfig:EncryptedApiToken"] ?? "MOCK_TOKEN", // Update this if you generated it!
 
-					WebhookVerifyToken = "MySecretToken123", // Matches what you entered in the Webhooks page
+					WebhookVerifyToken = config["WhatsAppConfig:WebhookVerifyToken"] ?? "MySecretToken123", // Matches what you entered in the Webhooks page
 
-					AppSecret = "603e5be7252bb996d4c4c9f1ddde9f12", // Update this to your real App Secret from Basic Settings
+					AppSecret = config["WhatsAppConfig:AppSecret"] ?? "MOCK_SECRET", // Update this to your real App Secret from Basic Settings
 
 					IsEnabled = true,
 					AutoCreateEnabled = true,
