@@ -16,17 +16,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository _authRepository;
+        private readonly IAccountContactRepository _accountContactRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<UserRole> _roleManager;
         private readonly IConfiguration _configuration;
 
         public AuthService(
             IAuthRepository authRepository,
+            IAccountContactRepository accountContactRepository,
             UserManager<ApplicationUser> userManager,
             RoleManager<UserRole> roleManager,
             IConfiguration configuration)
         {
             _authRepository = authRepository;
+            _accountContactRepository = accountContactRepository;
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
@@ -59,7 +62,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 await _userManager.AddToRoleAsync(user, request.Role);
 
             var roles = await _userManager.GetRolesAsync(user);
-            var (accessToken, expiresAt) = GenerateAccessToken(user, roles);
+            var (accessToken, expiresAt) = await GenerateAccessTokenAsync(user, roles);
             var refreshToken = GenerateRefreshToken();
 
             await _authRepository.SaveRefreshTokenAsync(new RefreshToken
@@ -89,7 +92,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             await _authRepository.RevokeAllUserTokensAsync(user.Id);
 
             var roles = await _userManager.GetRolesAsync(user);
-            var (accessToken, expiresAt) = GenerateAccessToken(user, roles);
+            var (accessToken, expiresAt) = await GenerateAccessTokenAsync(user, roles);
             var refreshToken = GenerateRefreshToken();
 
             await _authRepository.SaveRefreshTokenAsync(new RefreshToken
@@ -118,7 +121,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             var user = storedToken.User;
             var roles = await _userManager.GetRolesAsync(user);
-            var (accessToken, expiresAt) = GenerateAccessToken(user, roles);
+            var (accessToken, expiresAt) = await GenerateAccessTokenAsync(user, roles);
             var newRefreshToken = GenerateRefreshToken();
 
             await _authRepository.SaveRefreshTokenAsync(new RefreshToken
@@ -149,18 +152,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         // ── Private Helpers ────────────────────────────────────────────
 
-        private (string token, DateTime expiresAt) GenerateAccessToken(ApplicationUser user, IList<string> roles)
+        private async Task<(string token, DateTime expiresAt)> GenerateAccessTokenAsync(ApplicationUser user, IList<string> roles)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var contact = await _accountContactRepository.FirstOrDefaultAsync(c => c.Email == user.Email && !c.IsDeleted);
+            string accountIdClaimValue = contact != null && !string.IsNullOrEmpty(contact.AccountId) 
+                ? contact.AccountId 
+                : user.Id;
 
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-				new Claim("AccountId", user.Id)
+				new Claim("AccountId", accountIdClaimValue)
 			};
 
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
