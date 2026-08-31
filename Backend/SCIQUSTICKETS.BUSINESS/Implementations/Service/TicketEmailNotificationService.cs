@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 using SCIQUSTICKETS.COMMON.Helpers;
 using SCIQUSTICKETS.DATA.Contexts;
+using SCIQUSTICKETS.COMMON.Enums;
 
 namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 {
@@ -43,6 +44,19 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					"Cannot send status email. Ticket {TicketId} was not found.",
 					ticketId);
 
+				return;
+			}
+
+			var isCustomerEmailEnabled = await _context.CustomerNotificationPreferences
+				.Where(p => p.Category == EmailNotificationCategory.StatusChange)
+				.Select(p => (bool?)p.IsEnabled)
+				.FirstOrDefaultAsync();
+
+			if (isCustomerEmailEnabled != true)
+			{
+				_logger.LogInformation(
+					"Customer status emails are disabled for StatusChange. Skipping ticket {TicketId}.",
+					ticketId);
 				return;
 			}
 

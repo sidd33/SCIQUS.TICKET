@@ -74,10 +74,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return reports.Select(MapToListResponse).ToList();
 		}
 
-		public async Task<EmployeeResponse> CreateAsync(
-	CreateEmployeeRequest request)
+		public async Task<EmployeeResponse> CreateAsync(CreateEmployeeRequest request)
 		{
-			// Check whether an account with this email already exists
 			var existingUser = await _userManager.FindByEmailAsync(request.Email);
 
 			if (existingUser != null)
@@ -86,35 +84,28 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					"A user with this email address already exists.");
 			}
 
-			// Create the login account
-			var applicationUser = new ApplicationUser
-			{
-				UserName = request.Email,
-				Email = request.Email,
-				CreatedDate = DateTime.UtcNow,
-				LastModifiedDate = DateTime.UtcNow,
-				Status = true,
-				HasLoginAccess = true
-			};
-
-			var userResult = await _userManager.CreateAsync(
-				applicationUser,
-				request.Password);
-
-			if (!userResult.Succeeded)
-			{
-				var errors = string.Join(
-					"; ",
-					userResult.Errors.Select(e => e.Description));
-
-				throw new InvalidOperationException(
-					$"Unable to create login account: {errors}");
-			}
+			await using var transaction = await _context.Database.BeginTransactionAsync();
 
 			try
 			{
-				// Create the employee profile using the newly-created
-				// ApplicationUser ID.
+				var applicationUser = new ApplicationUser
+				{
+					UserName = request.Email,
+					Email = request.Email,
+					CreatedDate = DateTime.UtcNow,
+					LastModifiedDate = DateTime.UtcNow,
+					Status = true,
+					HasLoginAccess = true
+				};
+
+				var userResult = await _userManager.CreateAsync(applicationUser, request.Password);
+
+				if (!userResult.Succeeded)
+				{
+					var errors = string.Join("; ", userResult.Errors.Select(e => e.Description));
+					throw new InvalidOperationException($"Unable to create login account: {errors}");
+				}
+
 				var employee = new Employee
 				{
 					Id = applicationUser.Id,
@@ -136,14 +127,38 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				await _employeeRepository.AddAsync(employee);
 				await _employeeRepository.SaveChangesAsync();
 
+				var template = await _context.DefaultEmployeeEmailNotificationPreferences
+					.AsNoTracking()
+					.FirstOrDefaultAsync(t => t.Id == 1);
+
+				var now = TimeHelper.GetIndianTime();
+
+				_context.EmployeeEmailNotificationPreferences.Add(new EmployeeEmailNotificationPreference
+				{
+					EmployeeEmailNotificationPreferenceId = Guid.NewGuid(),
+					EmployeeId = employee.Id,
+					ReceiveAll = template?.ReceiveAll ?? false,
+					Assignment = template?.Assignment ?? false,
+					Acceptance = template?.Acceptance ?? false,
+					Rejection = template?.Rejection ?? false,
+					Expiry = template?.Expiry ?? false,
+					Reassignment = template?.Reassignment ?? false,
+					StatusChange = template?.StatusChange ?? false,
+					Closure = template?.Closure ?? false,
+					Reopen = template?.Reopen ?? false,
+					CreatedDate = now,
+					LastUpdatedDate = now
+				});
+
+				await _context.SaveChangesAsync();
+
+				await transaction.CommitAsync();
+
 				return MapToResponse(employee);
 			}
 			catch
 			{
-				// If Employee creation fails, remove the ApplicationUser
-				// so we don't leave an orphaned login account.
-				await _userManager.DeleteAsync(applicationUser);
-
+				await transaction.RollbackAsync();
 				throw;
 			}
 		}

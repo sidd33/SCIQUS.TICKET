@@ -96,6 +96,9 @@ namespace SCIQUSTICKETS.DATA.Contexts
 		public DbSet<Holiday> Holidays { get; set; }
 		public DbSet<HolidayConfirmation> HolidayConfirmations { get; set; }
 		// ── [END: HOLIDAY] ────────────────────────────────────────────
+
+		public DbSet<DefaultEmployeeEmailNotificationPreference> DefaultEmployeeEmailNotificationPreferences { get; set; }
+		public DbSet<CustomerNotificationPreference> CustomerNotificationPreferences { get; set; }
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
@@ -526,6 +529,9 @@ namespace SCIQUSTICKETS.DATA.Contexts
 				.OnDelete(DeleteBehavior.Cascade);
 			// 🚀 [END: SUPPORT PLANS] 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀──────────────────────────────────
 
+			builder.Entity<CustomerNotificationPreference>()
+			.HasIndex(c => c.Category)
+			.IsUnique();
 		}
 	}
 }
