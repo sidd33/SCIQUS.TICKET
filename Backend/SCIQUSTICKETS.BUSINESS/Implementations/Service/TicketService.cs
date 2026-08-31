@@ -740,7 +740,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			return true;
 		}
 
-		public async Task<bool> ReassignAsync(Guid ticketId, AssignTicketRequest request, string actorUserId)
+		
+public async Task<bool> ReassignAsync(
+	Guid ticketId,
+	AssignTicketRequest request,
+	string actorUserId)
 		{
 			var ticket = await _ticketRepository.GetByIdAsync(ticketId);
 			if (ticket == null) return false;
@@ -750,11 +754,30 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
 			var now = TimeHelper.GetIndianTime();
 			var oldAssigneeId = ticket.AssignedToUserId;
+			var oldStatusId = ticket.StatusId;
+
+			// Manual reassignment
 			ticket.AssignedToUserId = request.AssignedToUserId;
+
+			// Manual assignment means the new employee can start working immediately.
+			// Therefore, move the ticket to In Progress regardless of its previous
+			// acceptance status or whether the acceptance deadline has expired.
+			var inProgressStatus = await _ticketRepository.GetStatusByNameAsync("In Progress")
+				?? throw new InvalidOperationException("The 'In Progress' status is not seeded.");
+
+			ticket.StatusId = inProgressStatus.TicketStatusId;
+			ticket.IsOpen = true;
+
+			// Manual reassignment bypasses the acceptance workflow.
+			ticket.AcceptanceStatus = "Accepted";
+			ticket.AcceptanceDeadlineAt = null;
+			ticket.AcceptanceDeadlineHours = null;
+
 			ticket.LastUpdatedDate = now;
 
 			_ticketRepository.Update(ticket);
 
+			// Assignment history
 			await _context.TicketAssignments.AddAsync(new TicketAssignment
 			{
 				TicketAssignmentId = Guid.NewGuid(),
@@ -767,11 +790,41 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Remarks = request.Remarks
 			});
 
-			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Assigned, oldAssigneeId,request.AssignedToUserId, $"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}", actorUserId);
+			// Assignment timeline
+			await _timelineService.WriteHistoryAsync(
+				ticket.TicketId,
+				SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Assigned,
+				oldAssigneeId,
+				request.AssignedToUserId,
+				$"Reassigned to user: {request.AssignedToUserId}. Remarks: {request.Remarks}",
+				actorUserId);
+
+			// Status timeline
+			if (oldStatusId != inProgressStatus.TicketStatusId)
+			{
+				await _timelineService.WriteHistoryAsync(
+					ticket.TicketId,
+					SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged,
+					oldStatusId.ToString(),
+					inProgressStatus.TicketStatusId.ToString(),
+					"Ticket moved to In Progress after manual reassignment.",
+					actorUserId);
+			}
 
 			await _context.SaveChangesAsync();
+
+			// Trigger In Progress acknowledgement/notification
+			if (oldStatusId != inProgressStatus.TicketStatusId)
+			{
+				await _acknowledgementService.HandleAsync(
+					ticket.TicketId,
+					"InProgress",
+					actorUserId);
+			}
+
 			return true;
 		}
+
 
 		public async Task<bool> TransferDepartmentAsync(Guid ticketId, TransferTicketDepartmentRequest request, string actorUserId)
 		{

@@ -8,6 +8,7 @@ using SCIQUSTICKETS.DATA.DomainModels.DepartmentsDATA;
 using SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA;
 using SCIQUSTICKETS.DATA.DomainModels.TicketDATA;
 using SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA;
+using SCIQUSTICKETS.COMMON.Enums;
 
 namespace SCIQUSTICKETS.WebAPI
 {
@@ -441,6 +442,42 @@ namespace SCIQUSTICKETS.WebAPI
 				};
 
 				context.TicketTypes.Add(otherType);
+			}
+
+			await context.SaveChangesAsync();
+
+			// Seed default employee notification preference template (single row)
+			if (!await context.DefaultEmployeeEmailNotificationPreferences.AnyAsync(t => t.Id == 1))
+			{
+				context.DefaultEmployeeEmailNotificationPreferences.Add(new DefaultEmployeeEmailNotificationPreference
+				{
+					Id = 1,
+					ReceiveAll = false,
+					Assignment = false,
+					Acceptance = false,
+					Rejection = false,
+					Expiry = false,
+					Reassignment = false,
+					StatusChange = false,
+					Closure = false,
+					Reopen = false,
+					LastUpdatedDate = DateTime.UtcNow
+				});
+			}
+
+			// Seed customer notification preferences (one row per category)
+			foreach (EmailNotificationCategory category in Enum.GetValues(typeof(EmailNotificationCategory)))
+			{
+				var exists = await context.CustomerNotificationPreferences.AnyAsync(p => p.Category == category);
+				if (!exists)
+				{
+					context.CustomerNotificationPreferences.Add(new CustomerNotificationPreference
+					{
+						Category = category,
+						IsEnabled = category == EmailNotificationCategory.StatusChange, // adjust as needed
+						LastUpdatedDate = DateTime.UtcNow
+					});
+				}
 			}
 
 			await context.SaveChangesAsync();
