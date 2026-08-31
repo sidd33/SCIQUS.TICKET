@@ -559,20 +559,36 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					.Select(asp => asp.SupportPlan)
 					.FirstOrDefaultAsync();
 
-				if (activePlan != null && (activePlan.AssignmentStrategy == "AllocatedGroup" || activePlan.AssignmentStrategy == "DedicatedPrimary"))
+				if (activePlan != null)
 				{
-					var dedicatedEmployeeIds = await _context.AccountDedicatedEmployees
-						.AsNoTracking()
-						.Where(ade => ade.AccountId == ticket.AccountId)
-						.Select(ade => ade.EmployeeUserId)
-						.ToListAsync();
-
-					if (dedicatedEmployeeIds.Any())
+					// 1. Support Plan Tier Routing (e.g. Platinum agents handle Platinum tickets)
+					var planEmployees = activeEmployees.Where(e => e.SupportPlanId == activePlan.SupportPlanId).ToList();
+					if (planEmployees.Any())
 					{
-						// Restrict activeEmployees to ONLY those who are dedicated to this account
-						activeEmployees = activeEmployees
-							.Where(e => dedicatedEmployeeIds.Contains(e.Id))
-							.ToList();
+						activeEmployees = planEmployees;
+					}
+
+					// 2. Account Dedicated Routing
+					if (activePlan.AssignmentStrategy == "AllocatedGroup" || activePlan.AssignmentStrategy == "DedicatedPrimary")
+					{
+						var dedicatedEmployeeIds = await _context.AccountDedicatedEmployees
+							.AsNoTracking()
+							.Where(ade => ade.AccountId == ticket.AccountId)
+							.Select(ade => ade.EmployeeUserId)
+							.ToListAsync();
+
+						if (dedicatedEmployeeIds.Any())
+						{
+							// Restrict activeEmployees to ONLY those who are dedicated to this account
+							var dedicatedEmployees = activeEmployees
+								.Where(e => dedicatedEmployeeIds.Contains(e.Id))
+								.ToList();
+							
+							if (dedicatedEmployees.Any())
+							{
+								activeEmployees = dedicatedEmployees;
+							}
+						}
 					}
 				}
 			}

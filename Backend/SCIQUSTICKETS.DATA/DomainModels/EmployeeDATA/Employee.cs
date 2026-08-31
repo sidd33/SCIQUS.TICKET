@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -43,6 +43,10 @@ namespace SCIQUSTICKETS.DATA.DomainModels.EmployeeDATA
 		public Guid? GradeId { get; set; }
 		[ForeignKey("GradeId")]
 		public Grade? Grade { get; set; }
+
+		public Guid? SupportPlanId { get; set; }
+		[ForeignKey("SupportPlanId")]
+		public SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA.SupportPlan? SupportPlan { get; set; }
 
 		public ICollection<EmployeeWorkingHour> WorkingHours { get; set; }
 	= new List<EmployeeWorkingHour>();
