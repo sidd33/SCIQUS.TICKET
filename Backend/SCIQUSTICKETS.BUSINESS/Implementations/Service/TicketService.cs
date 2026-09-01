@@ -1099,6 +1099,14 @@ public async Task<bool> ReassignAsync(
 				});
 		}
 
+		public async Task<string?> GetStatusNameAsync(Guid statusId)
+		{
+			return await _context.TicketStatuses
+				.Where(s => s.TicketStatusId == statusId && !s.IsDeleted)
+				.Select(s => s.Name)
+				.FirstOrDefaultAsync();
+		}
+
 		private async Task RestartAcceptanceIfRequiredAsync(
 	Ticket ticket,
 	DateTime now)

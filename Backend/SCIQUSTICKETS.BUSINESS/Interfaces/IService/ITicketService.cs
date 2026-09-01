@@ -53,5 +53,6 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task<bool> DeleteAttachmentAsync(Guid ticketId, Guid attachmentId, string actorUserId, bool canManageAll);
 
 		Task<AssignmentExplanationResponse?> GetAssignmentExplanationAsync(Guid ticketId);
+		Task<string?> GetStatusNameAsync(Guid statusId);
 	}
 }

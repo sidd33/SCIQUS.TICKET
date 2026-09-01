@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs
 {
@@ -26,5 +27,6 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs
 
 		public Guid? GradeId { get; set; }
 		public string? ProfileImageUrl { get; set; }
+
 	}
 }
