@@ -6,10 +6,9 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
-	// TODO: add [Authorize(Policy = "ticket.report.view" / "ticket.report.all")] once policies are wired.
 	[ApiController]
 	[Route("api/[controller]")]
-	[Authorize]
+	[Authorize(Policy = "ticket.report.view")]
 	public class TicketReportController : ControllerBase
 	{
 		private readonly ITicketReportService _reportService;

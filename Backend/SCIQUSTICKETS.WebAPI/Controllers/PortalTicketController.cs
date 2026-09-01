@@ -8,10 +8,11 @@ using SCIQUSTICKETS.BUSINESS.Interfaces.IService;
 
 namespace SCIQUSTICKETS.WebAPI.Controllers
 {
-	[ApiController]
-	[Route("api/[controller]")]
-	[Authorize(Policy = "portalticket.access")]
-	public class PortalTicketController : ControllerBase
+		[ApiController]
+		[Route("api/[controller]")]
+		[Authorize(Policy = "portalticket.access")]
+		public class PortalTicketController : ControllerBase
+
 	{
 		private readonly IPortalTicketService _portalTicketService;
 

@@ -8,9 +8,12 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketMasterRequestD
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }
-    }
 
-    public class UpdateTicketTypeRequest
+		public bool Status { get; set; } = true;
+
+	}
+
+	public class UpdateTicketTypeRequest
     {
         [Required, MaxLength(150)]
         public string Name { get; set; } = string.Empty;

@@ -41,11 +41,14 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var breachedCount = await q.CountAsync(t => t.IsOpen && t.IsSlaBreached == true);
 			var closedToday = await q.CountAsync(t => t.ClosedDate != null && t.ClosedDate.Value >= todayStart);
 
-			var avgResolution = await q
-				.Where(t => t.ResolutionTimeInHours != null)
-				.Select(t => t.ResolutionTimeInHours!.Value)
-				.DefaultIfEmpty(0)
-				.AverageAsync();
+			var resolutionTimes = await q
+			.Where(t => t.ResolutionTimeInHours != null)
+			.Select(t => t.ResolutionTimeInHours!.Value)
+			.ToListAsync();
+
+			var avgResolution = resolutionTimes.Count > 0
+				? resolutionTimes.Average()
+				: 0;
 
 			return new DashboardSummaryResponse
 			{
@@ -130,17 +133,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				? Math.Round((double)metCount / totalEvaluated * 100, 2)
 				: 0;
 
-			var avgResolution = await q
-				.Where(t => t.ResolutionTimeInHours != null)
-				.Select(t => t.ResolutionTimeInHours!.Value)
-				.DefaultIfEmpty(0)
-				.AverageAsync();
+			var resolutionTimes = await q
+			.Where(t => t.ResolutionTimeInHours != null)
+			.Select(t => t.ResolutionTimeInHours!.Value)
+			.ToListAsync();
 
-			var avgOverdueOnMisses = await q
-				.Where(t => t.SlaMetStatus == "Missed" && t.OverdueHours != null)
-				.Select(t => t.OverdueHours!.Value)
-				.DefaultIfEmpty(0)
-				.AverageAsync();
+			var avgResolution = resolutionTimes.Count > 0
+				? resolutionTimes.Average()
+				: 0;
+
+			var overdueHours = await q
+			.Where(t => t.SlaMetStatus == "Missed" && t.OverdueHours != null)
+			.Select(t => t.OverdueHours!.Value)
+			.ToListAsync();
+
+			var avgOverdueOnMisses = overdueHours.Count > 0
+				? overdueHours.Average()
+				: 0;
 
 			return new SlaComplianceResponse
 			{

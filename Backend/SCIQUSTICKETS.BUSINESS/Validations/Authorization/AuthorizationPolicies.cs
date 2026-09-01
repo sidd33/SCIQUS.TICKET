@@ -61,7 +61,7 @@ namespace SCIQUSTICKETS.BUSINESS.Validations.Authorization
 
 				// ── Module 1: Ticket Master Data & Configuration ──────
 				options.AddPolicy("ticketmaster.view", policy =>
-					policy.RequireRole("Admin", "SuperAdmin"));
+    policy.RequireRole("Employee", "Customer", "Admin", "SuperAdmin"));
 
 				options.AddPolicy("ticketmaster.manage", policy =>
 					policy.RequireRole("Admin", "SuperAdmin"));

@@ -154,15 +154,31 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 					return NotFound();
 
 				// Notify on status change
-				try 
+				// Notify based on the actual status name.
+				// Do not rely on GUID values or suffixes.
+				try
 				{
-					if (request.StatusId.ToString().EndsWith("5"))
-						await _notificationService.NotifyClosedAsync(id, userId);
-					else if (request.StatusId.ToString().EndsWith("6"))
-						await _notificationService.NotifyPendingClosureAsync(id, userId);
-					else if (request.StatusId.ToString().EndsWith("7"))
-						await _notificationService.NotifyReopenedAsync(id, userId);
-				} catch { }
+					var statusName = await _ticketService.GetStatusNameAsync(request.StatusId);
+
+					switch (statusName?.Trim().ToLowerInvariant())
+					{
+						case "closed":
+							await _notificationService.NotifyClosedAsync(id, userId);
+							break;
+
+						case "pending closure":
+							await _notificationService.NotifyPendingClosureAsync(id, userId);
+							break;
+
+						case "reopened":
+							await _notificationService.NotifyReopenedAsync(id, userId);
+							break;
+					}
+				}
+				catch
+				{
+					// Notification failure must not fail the status change.
+				}
 
 				return Ok(new { Message = "Ticket status updated successfully." });
 			}
@@ -259,7 +275,12 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
 			try
 			{
-				var result = await _ticketService.DeleteAttachmentAsync(id, attachmentId, userId, canManageAll: false);
+				var result = await _ticketService.DeleteAttachmentAsync(
+					id,
+					attachmentId,
+					userId,
+					canManageAll: User.IsInRole("Admin"));
+
 				if (!result) return NotFound();
 
 				return Ok(new { Message = "Attachment deleted successfully." });
@@ -488,11 +509,17 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 			var result = await _ticketService.GetCommentsAsync(id);
 			return Ok(result);
 		}
-
 		[HttpGet("faq-suggestions")]
-		public async Task<IActionResult> GetFaqSuggestions([FromQuery] Guid ticketTypeId, [FromQuery] Guid? subTypeId, [FromQuery] string? query)
+		public async Task<IActionResult> GetFaqSuggestions(
+	[FromQuery] Guid ticketTypeId,
+	[FromQuery] Guid? ticketSubTypeId,
+	[FromQuery] string? query)
 		{
-			var result = await _faqArticleService.GetSuggestionsAsync(ticketTypeId, subTypeId, query);
+			var result = await _faqArticleService.GetSuggestionsAsync(
+				ticketTypeId,
+				ticketSubTypeId,
+				query);
+
 			return Ok(result);
 		}
 

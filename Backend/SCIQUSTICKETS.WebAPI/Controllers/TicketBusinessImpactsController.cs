@@ -20,15 +20,17 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             _ticketBusinessImpactService = ticketBusinessImpactService;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] TicketMasterQueryParams queryParams)
+		[HttpGet]
+		[Authorize(Policy = "ticketmaster.view")]
+		public async Task<IActionResult> GetAll([FromQuery] TicketMasterQueryParams queryParams)
         {
             var result = await _ticketBusinessImpactService.GetAllAsync(queryParams);
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
+		[HttpGet("{id}")]
+		[Authorize(Policy = "ticketmaster.view")]
+		public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _ticketBusinessImpactService.GetByIdAsync(id);
             if (result == null) return NotFound(new { message = $"Business Impact with ID {id} not found." });
@@ -36,9 +38,10 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
+		[HttpPost]
+		[Authorize(Policy = "ticketmaster.manage")]
 
-        public async Task<IActionResult> Create([FromBody] CreateTicketBusinessImpactRequest request)
+		public async Task<IActionResult> Create([FromBody] CreateTicketBusinessImpactRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -56,8 +59,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketBusinessImpactRequest request)
+		[HttpPut("{id}")]
+		[Authorize(Policy = "ticketmaster.manage")]
+		public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketBusinessImpactRequest request)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -77,8 +81,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             }
         }
 
-        [HttpPatch("{id}/status")]
-        public async Task<IActionResult> SetStatus(Guid id, [FromQuery] bool status)
+		[HttpPatch("{id}/status")]
+		[Authorize(Policy = "ticketmaster.manage")]
+		public async Task<IActionResult> SetStatus(Guid id, [FromQuery] bool status)
         {
             var actorUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(actorUserId)) return Unauthorized();
@@ -96,8 +101,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> SoftDelete(Guid id)
+		[HttpDelete("{id}")]
+		[Authorize(Policy = "ticketmaster.manage")]
+		public async Task<IActionResult> SoftDelete(Guid id)
         {
             try
             {

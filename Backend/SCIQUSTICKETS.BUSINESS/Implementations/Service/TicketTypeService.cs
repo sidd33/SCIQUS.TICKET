@@ -56,19 +56,19 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
             var now = TimeHelper.GetIndianTime();
 
-            var entity = new TicketType
-            {
-                Name = request.Name.Trim(),
-                Description = request.Description,
-                Status = true,
-                IsDeleted = false,
-                CreatedDate = now,
-                LastUpdatedDate = now,
-                CreatedByUserId = actorUserId,
-                LastUpdatedByUserId = actorUserId
-            };
+			var entity = new TicketType
+			{
+				Name = request.Name.Trim(),
+				Description = request.Description,
+				Status = request.Status,
+				IsDeleted = false,
+				CreatedDate = now,
+				LastUpdatedDate = now,
+				CreatedByUserId = actorUserId,
+				LastUpdatedByUserId = actorUserId
+			};
 
-            await _ticketTypeRepository.AddAsync(entity);
+			await _ticketTypeRepository.AddAsync(entity);
             await _ticketTypeRepository.SaveChangesAsync();
 
             return await MapToResponseAsync(entity);

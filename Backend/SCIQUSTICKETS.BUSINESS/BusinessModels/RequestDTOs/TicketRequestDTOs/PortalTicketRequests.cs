@@ -1,5 +1,6 @@
 ﻿// SCIQUSTICKETS.BUSINESS/BusinessModels/RequestDTOs/TicketRequestDTOs/PortalTicketRequests.cs
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs
 {
@@ -22,6 +23,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs
 
 		[Required]
 		public Guid BusinessImpactId { get; set; }
+
+		public IFormFile? Attachment { get; set; }
 	}
 
 	public class PortalAddCommentRequest
