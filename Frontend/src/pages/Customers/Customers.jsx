@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Building2, Phone, Mail, MapPin, Plus, Search, Settings, Trash2, ShieldAlert, User } from 'lucide-react';
+import { Building2, Phone, Mail, MapPin, Plus, Search, Settings, Trash2, ShieldAlert, User, X } from 'lucide-react';
 import api from '../../api/axios';
 import { isAdmin, isDepartmentHead, isEmployee } from '../../auth/roles';
 
@@ -25,6 +25,11 @@ export default function Customers() {
 
   const [newCompany, setNewCompany] = useState({ name: '', email: '', phone: '', address: '' });
   const [message, setMessage] = useState(null);
+
+  // BUG-050 Customer Drawer state
+  const [drawerCustomer, setDrawerCustomer] = useState(null);
+  const [activePlan, setActivePlan] = useState(null);
+  const [loadingPlan, setLoadingPlan] = useState(false);
 
   const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
   const userIsAdmin = isAdmin(currentUser);
@@ -77,10 +82,9 @@ export default function Customers() {
     try {
       // Fetch current plan
       const planRes = await api.get(`/SupportPlan/account/${customer.accountId}`);
-      const activePlans = planRes.data || [];
-      if (activePlans.length > 0 && activePlans[0].status === 'Active') {
-        setCurrentPlan(activePlans[0]);
-      }
+      const plans = Array.isArray(planRes.data) ? planRes.data : [];
+      const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
+      setCurrentPlan(active || null);
 
       // Fetch dedicated employees
       const empsRes = await api.get(`/SupportPlan/dedicated-employees/${customer.accountId}`);
@@ -93,8 +97,26 @@ export default function Customers() {
     }
   };
 
+  const handleCustomerClick = async (customer) => {
+    setDrawerCustomer(customer);
+    setActivePlan(null);
+    setLoadingPlan(true);
+    try {
+      const accountId = customer.accountId || customer.id;
+      const res = await api.get(`/SupportPlan/account/${accountId}`);
+      const plans = Array.isArray(res.data) ? res.data : [];
+      const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
+      setActivePlan(active || null);
+    } catch (err) {
+      console.error('Failed to fetch active support plan:', err);
+      setActivePlan(null);
+    } finally {
+      setLoadingPlan(false);
+    }
+  };
+
   const handleAssignPlan = async () => {
-    if (!selectedPlanId) return;
+    if (!selectedPlanId || !selectedCustomer) return;
     try {
       await api.post('/SupportPlan/assign', {
         accountId: selectedCustomer.accountId,
@@ -102,16 +124,19 @@ export default function Customers() {
       });
       // Refresh current plan
       const planRes = await api.get(`/SupportPlan/account/${selectedCustomer.accountId}`);
-      setCurrentPlan(planRes.data[0]);
+      const plans = Array.isArray(planRes.data) ? planRes.data : [];
+      const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
+      setCurrentPlan(active || null);
+      setSelectedPlanId('');
       setMessage({ type: 'success', text: 'Support Plan assigned successfully.' });
     } catch (err) {
       console.error('Failed to assign plan:', err);
-      setMessage({ type: 'error', text: 'Failed to assign Support Plan.' });
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to assign Support Plan.' });
     }
   };
 
   const handleAssignEmployee = async () => {
-    if (!selectedEmployeeId) return;
+    if (!selectedEmployeeId || !selectedCustomer) return;
     try {
       await api.post('/SupportPlan/dedicated-employees/assign', {
         accountId: selectedCustomer.accountId,
@@ -135,6 +160,7 @@ export default function Customers() {
       setMessage({ type: 'success', text: 'Employee removed successfully.' });
     } catch (err) {
       console.error('Failed to remove employee:', err);
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to remove employee.' });
     }
   };
 
@@ -150,7 +176,7 @@ export default function Customers() {
         AccountManagerId: currentUser?.id,
       };
       await api.post('/Accounts', newAccount);
-      setMessage({ type: 'success', text: `Customer company '${newCompany.name}' created.` });
+      setMessage({ type: 'success', text: `Customer company '${newCompany.name}' created successfully.` });
       setShowAddModal(false);
       setNewCompany({ name: '', email: '', phone: '', address: '' });
       fetchCustomers();
@@ -209,7 +235,7 @@ export default function Customers() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
           {filtered.map((c, i) => (
-            <div key={c.accountId || i} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div key={c.accountId || i} className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', cursor: 'pointer' }} onClick={() => handleCustomerClick(c)}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h3 style={{ color: 'white', fontSize: '1.1rem', margin: 0 }}>{c.accountName || c.name || 'Company Account'}</h3>
                 <span className="badge badge--resolved">Active</span>
@@ -222,15 +248,22 @@ export default function Customers() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Phone size={14} /> <span>{c.registeredMobileNumber || c.phone || '+1 (555) 019-2831'}</span>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={14} /> <span>HQ Office: San Francisco, CA</span>
+                </div>
               </div>
 
               {userIsAdmin && (
                 <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
-                  <button className="btn btn--secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={() => handleManageConfig(c)}>
+                  <button className="btn btn--secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={(e) => { e.stopPropagation(); handleManageConfig(c); }}>
                     <Settings size={14} /> Manage Configuration
                   </button>
                 </div>
               )}
+
+              <div style={{ marginTop: '0.25rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Click to view account details →
+              </div>
             </div>
           ))}
         </div>
@@ -279,10 +312,10 @@ export default function Customers() {
                 <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '1rem 1.25rem', borderRadius: '10px', marginBottom: '1.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ color: 'white', fontWeight: 600, fontSize: '1.05rem' }}>{currentPlan.planName} Tier</div>
+                      <div style={{ color: 'white', fontWeight: 600, fontSize: '1.05rem' }}>{currentPlan.planName || currentPlan.supportPlanName || currentPlan.name} Tier</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>Assigned Support Level</div>
                     </div>
-                    <span className="badge badge--resolved" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>{currentPlan.status}</span>
+                    <span className="badge badge--resolved" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>{currentPlan.status || 'Active'}</span>
                   </div>
                 </div>
               ) : (
@@ -322,7 +355,7 @@ export default function Customers() {
 
             {/* DEDICATED EMPLOYEES SECTION */}
             {(() => {
-              const planName = (currentPlan?.planName || '').toLowerCase();
+              const planName = (currentPlan?.planName || currentPlan?.supportPlanName || currentPlan?.name || '').toLowerCase();
               const isPlatinum = planName.includes('platinum');
               const isGold = planName.includes('gold');
               const isTierAllowed = isPlatinum || isGold;
@@ -411,6 +444,49 @@ export default function Customers() {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
               <button className="btn btn--secondary" onClick={() => setShowConfigModal(false)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BUG-050 CUSTOMER DETAILS DRAWER */}
+      {drawerCustomer && !showConfigModal && (
+        <div onClick={() => setDrawerCustomer(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1100 }}>
+          <div onClick={e => e.stopPropagation()} className="glass-card" style={{ position: 'absolute', top: 0, right: 0, height: '100%', width: '440px', maxWidth: '90vw', padding: '2rem', overflowY: 'auto', borderRadius: 0, borderTopLeftRadius: '16px', borderBottomLeftRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div>
+                <h2 style={{ color: 'white', margin: 0 }}>Customer Account</h2>
+                <p style={{ color: 'var(--text-muted)', margin: '6px 0 0' }}>Account and support plan details</p>
+              </div>
+              <button type="button" className="btn btn--secondary" onClick={() => setDrawerCustomer(null)} style={{ padding: '8px' }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.25rem', marginBottom: '1.25rem' }}>
+              <h3 style={{ color: 'white', marginTop: 0 }}>{drawerCustomer.accountName || drawerCustomer.name || 'Company Account'}</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                <div><Mail size={14} style={{ marginRight: '8px' }} />{drawerCustomer.email || 'N/A'}</div>
+                <div><Phone size={14} style={{ marginRight: '8px' }} />{drawerCustomer.registeredMobileNumber || drawerCustomer.phone || 'N/A'}</div>
+                <div><MapPin size={14} style={{ marginRight: '8px' }} />{drawerCustomer.address || 'Address not available'}</div>
+              </div>
+            </div>
+
+            <div className="glass-card" style={{ padding: '1.25rem' }}>
+              <h3 style={{ color: 'white', marginTop: 0 }}>Active Support Plan</h3>
+              {loadingPlan ? (
+                <p style={{ color: 'var(--text-muted)' }}>Loading support plan...</p>
+              ) : activePlan ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-muted)' }}>
+                  <div><strong style={{ color: 'white' }}>Plan:</strong> {activePlan.planName || activePlan.supportPlanName || activePlan.name || 'Active Plan'}</div>
+                  {activePlan.startDate && <div><strong style={{ color: 'white' }}>Start Date:</strong> {new Date(activePlan.startDate).toLocaleDateString()}</div>}
+                  {activePlan.endDate && <div><strong style={{ color: 'white' }}>End Date:</strong> {new Date(activePlan.endDate).toLocaleDateString()}</div>}
+                </div>
+              ) : (
+                <div style={{ padding: '1rem', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}>
+                  No active support plan found for this account.
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -12,5 +12,7 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs
 		public string? Designation { get; set; }
 		public string? DepartmentName { get; set; }
 		public string? ProfileImageUrl { get; set; }
+		public List<string> Roles { get; set; } = new();
+
 	}
 }
