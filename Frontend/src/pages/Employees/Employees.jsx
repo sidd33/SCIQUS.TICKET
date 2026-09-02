@@ -423,18 +423,19 @@ export default function Employees() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Full Name</th>
-                <th>Email Address</th>
-                <th>Department</th>
-                <th>Grade</th>
-                <th></th>
-              </tr>
+  <th>Full Name</th>
+  <th>Email Address</th>
+  <th>Department</th>
+  <th>Grade</th>
+  <th>Role</th>
+  <th></th>
+</tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Loading workforce roster...</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Loading workforce roster...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>No employee records found.</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>No employee records found.</td></tr>
               ) : (
                 filtered.map((emp) => (
                   <tr key={emp.id}>
@@ -442,6 +443,11 @@ export default function Employees() {
                     <td>{emp.email}</td>
                     <td>{emp.departmentName || '—'}</td>
                     <td>{emp.gradeLevel ? `Level ${emp.gradeLevel}` : '—'}</td>
+                    <td>
+  {emp.roles?.length
+    ? emp.roles.join(', ')
+    : '—'}
+</td>
                     <td>
                       <div className="row-actions">
                         <button className="icon-btn" title="Manage Schedule" onClick={() => openSchedule(emp)}><Clock size={14} /></button>
