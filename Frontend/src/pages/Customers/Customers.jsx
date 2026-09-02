@@ -321,58 +321,93 @@ export default function Customers() {
             </div>
 
             {/* DEDICATED EMPLOYEES SECTION */}
-            <div>
-              <h3 style={{ color: 'white', fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <User size={18} color="#3b82f6" /> Dedicated Employees
-              </h3>
-              {dedicatedEmployees.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.25rem' }}>
-                  {dedicatedEmployees.map(emp => (
-                    <div key={emp.accountDedicatedEmployeeId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.85rem 1.25rem', borderRadius: '10px' }}>
-                      <div>
-                        <div style={{ color: 'white', fontWeight: 500, fontSize: '0.95rem' }}>{emp.employeeName}</div>
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{emp.employeeEmail}</div>
-                      </div>
-                      <button className="btn btn--secondary" style={{ padding: '6px 10px', borderRadius: '6px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }} onClick={() => handleRemoveEmployee(emp.accountDedicatedEmployeeId)}>
-                        <Trash2 size={14} color="#f87171" />
+            {(() => {
+              const planName = (currentPlan?.planName || '').toLowerCase();
+              const isPlatinum = planName.includes('platinum');
+              const isGold = planName.includes('gold');
+              const isTierAllowed = isPlatinum || isGold;
+              const maxAllowed = isPlatinum ? 1 : isGold ? 3 : 0;
+              const isLimitReached = isTierAllowed && dedicatedEmployees.length >= maxAllowed;
+
+              return (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ color: 'white', fontSize: '1.1rem', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <User size={18} color="#3b82f6" /> Dedicated Employees
+                    </h3>
+                    {isPlatinum && (
+                      <span className="badge badge--resolved" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
+                        {dedicatedEmployees.length} / 1 Dedicated 24/7 Agent
+                      </span>
+                    )}
+                    {isGold && (
+                      <span className="badge badge--resolved" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
+                        {dedicatedEmployees.length} / 3 Dedicated Agents
+                      </span>
+                    )}
+                  </div>
+
+                  {!isTierAllowed && (
+                    <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)', color: '#fef08a', padding: '0.85rem 1rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                      ⚠️ Dedicated agents are exclusive to <strong>Gold</strong> (up to 3 agents) and <strong>Platinum</strong> (1 dedicated 24/7 agent) plans. Upgrade the plan above to assign dedicated staff.
+                    </div>
+                  )}
+
+                  {dedicatedEmployees.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '1.25rem' }}>
+                      {dedicatedEmployees.map(emp => (
+                        <div key={emp.accountDedicatedEmployeeId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.85rem 1.25rem', borderRadius: '10px' }}>
+                          <div>
+                            <div style={{ color: 'white', fontWeight: 500, fontSize: '0.95rem' }}>{emp.employeeName}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{emp.employeeEmail}</div>
+                          </div>
+                          <button className="btn btn--secondary" style={{ padding: '6px 10px', borderRadius: '6px', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }} onClick={() => handleRemoveEmployee(emp.accountDedicatedEmployeeId)}>
+                            <Trash2 size={14} color="#f87171" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    isTierAllowed && <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem', fontStyle: 'italic' }}>No dedicated employees assigned.</div>
+                  )}
+
+                  {isTierAllowed && (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <select
+                        className="input-field"
+                        value={selectedEmployeeId}
+                        onChange={(e) => setSelectedEmployeeId(e.target.value)}
+                        disabled={isLimitReached}
+                        style={{
+                          flex: 1,
+                          background: isLimitReached ? '#0f172a' : '#1e293b',
+                          color: isLimitReached ? '#64748b' : 'white',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: '8px',
+                          padding: '0.65rem 1rem',
+                          outline: 'none',
+                          cursor: isLimitReached ? 'not-allowed' : 'pointer'
+                        }}
+                      >
+                        <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>
+                          {isLimitReached ? `Tier limit reached (${maxAllowed} max allowed)` : 'Select an employee to assign as dedicated agent...'}
+                        </option>
+                        {availableEmployees
+                          .filter(e => !dedicatedEmployees.some(de => de.employeeUserId === e.id))
+                          .map(e => (
+                            <option key={e.id} value={e.id} style={{ background: '#0f172a', color: 'white' }}>
+                              {e.name} ({e.email})
+                            </option>
+                          ))}
+                      </select>
+                      <button className="btn btn--primary" onClick={handleAssignEmployee} disabled={!selectedEmployeeId || isLimitReached} style={{ padding: '0.65rem 1.25rem' }}>
+                        + Add Employee
                       </button>
                     </div>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem', fontStyle: 'italic' }}>No dedicated employees assigned.</div>
-              )}
-
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <select
-                  className="input-field"
-                  value={selectedEmployeeId}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  style={{
-                    flex: 1,
-                    background: '#1e293b',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '8px',
-                    padding: '0.65rem 1rem',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>Select an employee to assign as dedicated agent...</option>
-                  {availableEmployees
-                    .filter(e => !dedicatedEmployees.some(de => de.employeeUserId === e.id))
-                    .map(e => (
-                      <option key={e.id} value={e.id} style={{ background: '#0f172a', color: 'white' }}>
-                        {e.name} ({e.email})
-                      </option>
-                    ))}
-                </select>
-                <button className="btn btn--primary" onClick={handleAssignEmployee} disabled={!selectedEmployeeId} style={{ padding: '0.65rem 1.25rem' }}>
-                  + Add Employee
-                </button>
-              </div>
-            </div>
+              );
+            })()}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
               <button className="btn btn--secondary" onClick={() => setShowConfigModal(false)}>Close</button>

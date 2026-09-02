@@ -743,8 +743,8 @@ namespace SCIQUSTICKETS.WebAPI
 				{
 					SupportPlanId = Guid.NewGuid(),
 					Name = "Silver",
-					Description = "50 tickets/month, Medium Priority",
-					TicketQuota = 50,
+					Description = "75 tickets/month, Standard Business Hours",
+					TicketQuota = 75,
 					PeriodType = "Monthly",
 					ValidityDays = 30,
 					BlockWhenExhausted = true,
@@ -760,8 +760,8 @@ namespace SCIQUSTICKETS.WebAPI
 				{
 					SupportPlanId = Guid.NewGuid(),
 					Name = "Gold",
-					Description = "100 tickets/month, High Priority, Allocated Agents",
-					TicketQuota = 100,
+					Description = "250 tickets/month, Up to 3 Dedicated Agents, Extended Hours",
+					TicketQuota = 250,
 					PeriodType = "Monthly",
 					ValidityDays = 30,
 					BlockWhenExhausted = false,

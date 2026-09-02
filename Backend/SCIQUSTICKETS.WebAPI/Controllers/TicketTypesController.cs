@@ -8,6 +8,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 {
 	[ApiController]
 	[Route("api/TicketTypes")]
+	[Authorize]
 	public class TicketTypesController : ControllerBase
 	{
 		private readonly ITicketTypeService _ticketTypeService;
@@ -18,6 +19,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpGet]
+		[Authorize(Policy = "ticketmaster.view")]
 		public async Task<IActionResult> GetAll([FromQuery] TicketMasterQueryParams queryParams)
 		{
 			var result = await _ticketTypeService.GetAllAsync(queryParams);
@@ -25,6 +27,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpGet("{id}")]
+		[Authorize(Policy = "ticketmaster.view")]
 		public async Task<IActionResult> GetById(Guid id)
 		{
 			var result = await _ticketTypeService.GetByIdAsync(id);
@@ -34,6 +37,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpPost]
+		[Authorize(Policy = "ticketmaster.manage")]
 		public async Task<IActionResult> Create([FromBody] CreateTicketTypeRequest request)
 		{
 			if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -53,6 +57,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpPut("{id}")]
+		[Authorize(Policy = "ticketmaster.manage")]
 		public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketTypeRequest request)
 		{
 			if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -74,6 +79,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpPatch("{id}/status")]
+		[Authorize(Policy = "ticketmaster.manage")]
 		public async Task<IActionResult> SetStatus(Guid id, [FromQuery] bool status)
 		{
 			var actorUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -93,6 +99,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		}
 
 		[HttpDelete("{id}")]
+		[Authorize(Policy = "ticketmaster.manage")]
 		public async Task<IActionResult> SoftDelete(Guid id)
 		{
 			try

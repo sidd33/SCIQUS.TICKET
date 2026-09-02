@@ -159,9 +159,9 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             }
         }
 
-        // Temporary endpoint so you can see your messages in the browser
+        // Debug endpoint restricted to Admins
         [HttpGet("debug-inbox")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> DebugInbox()
         {
             var messages = await _context.WhatsAppInboxMessages.OrderByDescending(m => m.ReceivedDate).ToListAsync();

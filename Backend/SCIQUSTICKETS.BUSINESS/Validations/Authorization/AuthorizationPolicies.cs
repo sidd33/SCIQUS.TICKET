@@ -18,8 +18,8 @@ namespace SCIQUSTICKETS.BUSINESS.Validations.Authorization
 			var currentUserId = context.User.FindFirst(
 				System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
 
-			// Admins always pass
-			if (context.User.IsInRole("Admin"))
+			// Admins, SuperAdmins, and DepartmentHeads always pass
+			if (context.User.IsInRole("Admin") || context.User.IsInRole("SuperAdmin") || context.User.IsInRole("DepartmentHead"))
 			{
 				context.Succeed(requirement);
 				return Task.CompletedTask;
@@ -98,7 +98,7 @@ namespace SCIQUSTICKETS.BUSINESS.Validations.Authorization
 
 				// ── Module 7: Customer / Account Portal ───────────────
 				options.AddPolicy("portalticket.access", policy =>
-					policy.RequireRole("Customer"));
+					policy.RequireRole("Customer", "Admin", "SuperAdmin"));
 
 				// ── Module 8: WhatsApp Channel ────────────────────────
 				options.AddPolicy("whatsapp.config", policy =>
@@ -109,7 +109,7 @@ namespace SCIQUSTICKETS.BUSINESS.Validations.Authorization
 
 				// ── Module 10: Reporting & Dashboard ──────────────────
 				options.AddPolicy("ticket.report.view", policy =>
-					policy.RequireRole("Manager", "Admin", "SuperAdmin"));
+					policy.RequireRole("DepartmentHead", "Employee", "Agent", "Manager", "Admin", "SuperAdmin"));
 
 				options.AddPolicy("ticket.report.all", policy =>
 					policy.RequireRole("Admin", "SuperAdmin"));

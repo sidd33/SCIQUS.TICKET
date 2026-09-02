@@ -284,6 +284,33 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public async Task<DedicatedEmployeeResponse> AssignDedicatedEmployeeAsync(AssignDedicatedEmployeeRequest request)
         {
+            var activeAccountPlan = await _context.AccountSupportPlans
+                .Include(ap => ap.SupportPlan)
+                .FirstOrDefaultAsync(ap => ap.AccountId == request.AccountId && ap.Status == "Active");
+
+            if (activeAccountPlan == null || activeAccountPlan.SupportPlan == null)
+            {
+                throw new InvalidOperationException("Account does not have an active support plan. Dedicated employees require a Gold or Platinum plan.");
+            }
+
+            var planName = activeAccountPlan.SupportPlan.Name?.ToLower() ?? "";
+            if (planName.Contains("basic") || planName.Contains("silver"))
+            {
+                throw new InvalidOperationException($"Dedicated employees are not available on the {activeAccountPlan.SupportPlan.Name} plan. Upgrade to Gold or Platinum.");
+            }
+
+            var currentDedicatedCount = await _context.AccountDedicatedEmployees.CountAsync(ade => ade.AccountId == request.AccountId);
+
+            if (planName.Contains("platinum") && currentDedicatedCount >= 1)
+            {
+                throw new InvalidOperationException("Platinum plan allows a maximum of 1 dedicated 24/7 employee.");
+            }
+
+            if (planName.Contains("gold") && currentDedicatedCount >= 3)
+            {
+                throw new InvalidOperationException("Gold plan allows a maximum of 3 dedicated employees.");
+            }
+
             var existing = await _context.AccountDedicatedEmployees
                 .FirstOrDefaultAsync(ade => ade.AccountId == request.AccountId && ade.EmployeeUserId == request.EmployeeUserId);
             

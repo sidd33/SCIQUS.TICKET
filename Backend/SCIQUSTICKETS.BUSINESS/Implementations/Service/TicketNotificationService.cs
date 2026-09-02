@@ -142,9 +142,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
                 recipients.Add(ticket.AssignedToUserId);
             
-            if (isCustomerVisible && ticket.SourceType == "Portal" && !string.IsNullOrEmpty(ticket.AccountId))
+            if (isCustomerVisible && !string.IsNullOrEmpty(ticket.CreatedByUserId))
             {
-                recipients.Add(ticket.AccountId);
+                recipients.Add(ticket.CreatedByUserId);
             }
 
             await CreateNotificationAsync("CommentAdded", ticketId, actorUserId, recipients, new { IsCustomerVisible = isCustomerVisible });
@@ -205,9 +205,9 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (!string.IsNullOrEmpty(ticket.AssignedToUserId))
                 recipients.Add(ticket.AssignedToUserId);
 
-            if (ticket.SourceType == "Portal" && !string.IsNullOrEmpty(ticket.AccountId))
+            if (!string.IsNullOrEmpty(ticket.CreatedByUserId))
             {
-                recipients.Add(ticket.AccountId);
+                recipients.Add(ticket.CreatedByUserId);
             }
 
             await CreateNotificationAsync("Closed", ticketId, actorUserId, recipients);
