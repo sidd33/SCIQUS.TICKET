@@ -19,5 +19,10 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
         Task<bool> ConsumeQuotaAsync(string accountId, Guid ticketId);
         
         Task ValidateAndExpirePlansAsync();
+
+        // Dedicated Employees
+        Task<List<DedicatedEmployeeResponse>> GetDedicatedEmployeesAsync(string accountId);
+        Task<DedicatedEmployeeResponse> AssignDedicatedEmployeeAsync(AssignDedicatedEmployeeRequest request);
+        Task<bool> RemoveDedicatedEmployeeAsync(Guid accountDedicatedEmployeeId);
     }
 }
