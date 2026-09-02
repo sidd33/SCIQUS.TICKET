@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
 {
@@ -6,6 +7,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
     {
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
+
+        [Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
         public int TicketQuota { get; set; }
         public string PeriodType { get; set; } = "Monthly";
         public int? ValidityDays { get; set; }
@@ -16,6 +19,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
     {
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
+
+        [Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
         public int TicketQuota { get; set; }
         public string PeriodType { get; set; } = "Monthly";
         public int? ValidityDays { get; set; }

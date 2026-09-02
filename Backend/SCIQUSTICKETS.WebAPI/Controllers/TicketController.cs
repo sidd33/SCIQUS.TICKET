@@ -279,7 +279,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 					id,
 					attachmentId,
 					userId,
-					canManageAll: User.IsInRole("Admin"));
+					canManageAll: User.IsInRole("Admin") || User.IsInRole("SuperAdmin") || User.IsInRole("DepartmentHead"));
 
 				if (!result) return NotFound();
 

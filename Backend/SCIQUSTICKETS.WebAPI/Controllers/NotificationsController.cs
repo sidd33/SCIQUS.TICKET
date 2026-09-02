@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SCIQUSTICKETS.DATA.Contexts;
+using SCIQUSTICKETS.COMMON.Helpers;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -65,7 +66,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             if (notificationUser == null) return NotFound();
 
             notificationUser.IsRead = true;
-            notificationUser.ReadDate = DateTime.UtcNow;
+            notificationUser.ReadDate = TimeHelper.GetIndianTime();
 
             await _context.SaveChangesAsync();
             return Ok();

@@ -6,11 +6,14 @@ export default function Header() {
   const user = JSON.parse(localStorage.getItem('user') || 'null');
 
   const getRoleLabel = () => {
-    if (!user || !user.role) return 'User';
-    const r = Array.isArray(user.role) ? user.role : [user.role];
-    if (r.includes('Admin') || r.includes('SuperAdmin')) return 'System Administrator';
+    if (!user) return 'User';
+    const r = Array.isArray(user?.role) ? user.role : [user?.role || ''];
+    if (r.includes('SuperAdmin')) return 'Super Administrator';
+    if (r.includes('Admin')) return 'Administrator';
+    if (user?.isDepartmentHead || r.includes('DepartmentHead')) return 'Department Head';
     if (r.includes('Customer')) return 'Customer Account';
-    return 'Support Agent / Employee';
+    if (r.includes('Employee') || r.includes('SupportAgent')) return 'Support Agent';
+    return 'User';
   };
 
   const initials = `${user?.firstName?.[0] || 'U'}${user?.lastName?.[0] || ''}`;
