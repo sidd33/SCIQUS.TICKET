@@ -67,3 +67,8 @@ meta developer account ss/
 
 docs/
 WhatsAppIntegrationDocs.md
+
+# Logs & Process Dumps
+*.log
+hs_err_pid*.log
+replay_pid*.log
