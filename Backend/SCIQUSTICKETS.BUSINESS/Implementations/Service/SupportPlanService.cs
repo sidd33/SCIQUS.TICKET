@@ -251,6 +251,75 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<DedicatedEmployeeResponse>> GetDedicatedEmployeesAsync(string accountId)
+        {
+            var employees = await _context.AccountDedicatedEmployees
+                .Where(ade => ade.AccountId == accountId)
+                .Select(ade => new DedicatedEmployeeResponse
+                {
+                    AccountDedicatedEmployeeId = ade.AccountDedicatedEmployeeId,
+                    EmployeeUserId = ade.EmployeeUserId,
+                    // Note: Ideally join with Users table, but since Employee.Name is available, we could fetch from Employee.
+                    // For now, returning IDs. We will fetch Name in the Controller or UI, or include Employee relation if configured.
+                })
+                .ToListAsync();
+            
+            // Let's manually fetch names if Employee table is mapped
+            var employeeIds = employees.Select(e => e.EmployeeUserId).ToList();
+            var employeeDetails = await _context.Employees
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToDictionaryAsync(e => e.Id, e => new { e.Name, e.Email });
+
+            foreach (var emp in employees)
+            {
+                if (employeeDetails.TryGetValue(emp.EmployeeUserId, out var details))
+                {
+                    emp.EmployeeName = details.Name;
+                    emp.EmployeeEmail = details.Email;
+                }
+            }
+
+            return employees;
+        }
+
+        public async Task<DedicatedEmployeeResponse> AssignDedicatedEmployeeAsync(AssignDedicatedEmployeeRequest request)
+        {
+            var existing = await _context.AccountDedicatedEmployees
+                .FirstOrDefaultAsync(ade => ade.AccountId == request.AccountId && ade.EmployeeUserId == request.EmployeeUserId);
+            
+            if (existing != null) throw new InvalidOperationException("Employee is already dedicated to this account.");
+
+            var newAssign = new AccountDedicatedEmployee
+            {
+                AccountDedicatedEmployeeId = Guid.NewGuid(),
+                AccountId = request.AccountId,
+                EmployeeUserId = request.EmployeeUserId
+            };
+
+            _context.AccountDedicatedEmployees.Add(newAssign);
+            await _context.SaveChangesAsync();
+
+            var emp = await _context.Employees.FirstOrDefaultAsync(e => e.Id == request.EmployeeUserId);
+
+            return new DedicatedEmployeeResponse
+            {
+                AccountDedicatedEmployeeId = newAssign.AccountDedicatedEmployeeId,
+                EmployeeUserId = newAssign.EmployeeUserId,
+                EmployeeName = emp?.Name ?? "Unknown",
+                EmployeeEmail = emp?.Email ?? ""
+            };
+        }
+
+        public async Task<bool> RemoveDedicatedEmployeeAsync(Guid accountDedicatedEmployeeId)
+        {
+            var existing = await _context.AccountDedicatedEmployees.FindAsync(accountDedicatedEmployeeId);
+            if (existing == null) return false;
+
+            _context.AccountDedicatedEmployees.Remove(existing);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private static SupportPlanResponse MapToResponse(SupportPlan plan)
         {
             return new SupportPlanResponse

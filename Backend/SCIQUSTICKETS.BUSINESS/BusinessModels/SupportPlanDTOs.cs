@@ -56,4 +56,18 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public int ConsumedQuota { get; set; }
         public int RemainingQuota { get; set; }
     }
+
+    public class AssignDedicatedEmployeeRequest
+    {
+        public string AccountId { get; set; } = null!;
+        public string EmployeeUserId { get; set; } = null!;
+    }
+
+    public class DedicatedEmployeeResponse
+    {
+        public Guid AccountDedicatedEmployeeId { get; set; }
+        public string EmployeeUserId { get; set; } = null!;
+        public string EmployeeName { get; set; } = null!;
+        public string EmployeeEmail { get; set; } = null!;
+    }
 }

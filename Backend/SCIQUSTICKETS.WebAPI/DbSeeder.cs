@@ -720,7 +720,7 @@ namespace SCIQUSTICKETS.WebAPI
 			}
 
 			// 13. Seed Support Plans and Contacts for Local Dev Testing
-			if (!context.SupportPlans.Any())
+			if (!context.SupportPlans.Any(p => p.Name == "Platinum"))
 			{
 				var basicPlan = new SupportPlan
 				{

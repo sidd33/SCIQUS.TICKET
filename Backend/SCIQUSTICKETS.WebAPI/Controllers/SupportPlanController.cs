@@ -61,5 +61,37 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             var result = await _supportPlanService.GetAccountPlansAsync(accountId);
             return Ok(result);
         }
+
+        [HttpGet("dedicated-employees/{accountId}")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<ActionResult<List<DedicatedEmployeeResponse>>> GetDedicatedEmployees(string accountId)
+        {
+            var result = await _supportPlanService.GetDedicatedEmployeesAsync(accountId);
+            return Ok(result);
+        }
+
+        [HttpPost("dedicated-employees/assign")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<ActionResult<DedicatedEmployeeResponse>> AssignDedicatedEmployee(AssignDedicatedEmployeeRequest request)
+        {
+            try
+            {
+                var result = await _supportPlanService.AssignDedicatedEmployeeAsync(request);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("dedicated-employees/{id:guid}")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
+        public async Task<IActionResult> RemoveDedicatedEmployee(Guid id)
+        {
+            var result = await _supportPlanService.RemoveDedicatedEmployeeAsync(id);
+            if (!result) return NotFound();
+            return NoContent();
+        }
     }
 }
