@@ -509,13 +509,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 
 			// Write Created TicketHistory row
-			await _timelineService.WriteHistoryAsync(
+			/*await _timelineService.WriteHistoryAsync(
 				created.TicketId,
 				TicketChangeType.Created,
 				null,
 				created.StatusId.ToString(),
 				$"Ticket created. Assigned to: {(assignedEmployee?.Name ?? "Unassigned (Department Queue)")}",
-				userId);
+				userId);*/
 			await _context.SaveChangesAsync();
 
 			var full = await _ticketRepository.GetByIdWithDetailsAsync(created.TicketId);

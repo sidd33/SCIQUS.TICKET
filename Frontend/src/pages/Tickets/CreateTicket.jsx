@@ -36,6 +36,9 @@ export default function CreateTicket({ isPortal = false }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Client-side validation errors
+  const [validationErrors, setValidationErrors] = useState({});
+
   /*
    * Load ticket master data
    */
@@ -144,6 +147,63 @@ export default function CreateTicket({ isPortal = false }) {
   }, [selectedTypeId, subTypes]);
 
   /*
+   * Clear validation error for a specific field
+   */
+  const clearValidationError = (field) => {
+    setValidationErrors(prev => {
+      if (!prev[field]) {
+        return prev;
+      }
+
+      const updated = { ...prev };
+      delete updated[field];
+
+      return updated;
+    });
+  };
+
+  /*
+   * Validate mandatory fields before submission
+   */
+  const validateForm = () => {
+    const errors = {};
+
+    if (!title.trim()) {
+      errors.title =
+        'Subject / Short Summary is required.';
+    }
+
+    if (!description.trim()) {
+      errors.description =
+        'Detailed Problem Description is required.';
+    }
+
+    if (!selectedTypeId) {
+      errors.ticketType =
+        'Please select a Ticket Type.';
+    }
+
+    if (!selectedSubTypeId) {
+      errors.ticketSubType =
+        'Please select an Issue Sub-Type.';
+    }
+
+    if (!selectedPriorityId) {
+      errors.priority =
+        'Please select a Priority Severity.';
+    }
+
+    if (!selectedImpactId) {
+      errors.impact =
+        'Please select a Business Impact.';
+    }
+
+    setValidationErrors(errors);
+
+    return Object.keys(errors).length === 0;
+  };
+
+  /*
    * Handle file selection
    */
   const handleAttachmentChange = (e) => {
@@ -179,26 +239,21 @@ export default function CreateTicket({ isPortal = false }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !title.trim() ||
-      !description.trim() ||
-      !selectedTypeId ||
-      !selectedSubTypeId ||
-      !selectedPriorityId ||
-      !selectedImpactId
-    ) {
+    // Clear previous server/API error
+    setError('');
+
+    /*
+     * Validate form instead of silently returning.
+     */
+    if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       /*
        * Ticket creation payload
-       *
-       * Your current CreateTicketRequest is still a JSON DTO,
-       * so create the ticket first as JSON.
        */
       const payload = {
         title: title.trim(),
@@ -280,6 +335,42 @@ export default function CreateTicket({ isPortal = false }) {
     }
   };
 
+  /*
+   * Return error styling when a field is invalid
+   */
+  const getFieldStyle = (field) => {
+    if (!validationErrors[field]) {
+      return {};
+    }
+
+    return {
+      border: '1px solid #ef4444',
+      boxShadow:
+        '0 0 0 1px rgba(239, 68, 68, 0.15)'
+    };
+  };
+
+  /*
+   * Reusable validation message
+   */
+  const ValidationMessage = ({ field }) => {
+    if (!validationErrors[field]) {
+      return null;
+    }
+
+    return (
+      <div
+        style={{
+          color: '#f87171',
+          fontSize: '0.75rem',
+          marginTop: '0.35rem'
+        }}
+      >
+        {validationErrors[field]}
+      </div>
+    );
+  };
+
   return (
     <div className="tickets-page">
 
@@ -293,6 +384,7 @@ export default function CreateTicket({ isPortal = false }) {
           }}
         >
           <button
+            type="button"
             className="btn btn--secondary btn--sm"
             onClick={() => navigate(-1)}
           >
@@ -312,7 +404,36 @@ export default function CreateTicket({ isPortal = false }) {
         }}
       />
 
-      {/* Error */}
+      {/* Validation Error Banner */}
+      {Object.keys(validationErrors).length > 0 && (
+        <div
+          style={{
+            padding: '0.85rem 1rem',
+            background:
+              'rgba(239,68,68,0.15)',
+            border:
+              '1px solid rgba(239,68,68,0.35)',
+            borderRadius: '8px',
+            color: '#f87171',
+            marginBottom: '1.25rem',
+            fontSize: '0.85rem'
+          }}
+        >
+          <strong>
+            Please complete all required fields.
+          </strong>
+
+          <div
+            style={{
+              marginTop: '0.4rem'
+            }}
+          >
+            {Object.values(validationErrors).join(' ')}
+          </div>
+        </div>
+      )}
+
+      {/* Server/API Error */}
       {error && (
         <div
           style={{
@@ -370,6 +491,7 @@ export default function CreateTicket({ isPortal = false }) {
             }}
           >
 
+            {/* Ticket Type */}
             <div className="form-group">
               <label>
                 Ticket Type *
@@ -378,11 +500,22 @@ export default function CreateTicket({ isPortal = false }) {
               <select
                 required
                 value={selectedTypeId}
-                onChange={(e) =>
+                onChange={(e) => {
                   setSelectedTypeId(
                     e.target.value
-                  )
-                }
+                  );
+
+                  clearValidationError(
+                    'ticketType'
+                  );
+
+                  clearValidationError(
+                    'ticketSubType'
+                  );
+                }}
+                style={getFieldStyle(
+                  'ticketType'
+                )}
               >
                 <option value="">
                   Select Category...
@@ -397,8 +530,13 @@ export default function CreateTicket({ isPortal = false }) {
                   </option>
                 ))}
               </select>
+
+              <ValidationMessage
+                field="ticketType"
+              />
             </div>
 
+            {/* Issue Sub-Type */}
             <div className="form-group">
               <label>
                 Issue Sub-Type *
@@ -407,12 +545,19 @@ export default function CreateTicket({ isPortal = false }) {
               <select
                 required
                 value={selectedSubTypeId}
-                onChange={(e) =>
+                onChange={(e) => {
                   setSelectedSubTypeId(
                     e.target.value
-                  )
-                }
+                  );
+
+                  clearValidationError(
+                    'ticketSubType'
+                  );
+                }}
                 disabled={!selectedTypeId}
+                style={getFieldStyle(
+                  'ticketSubType'
+                )}
               >
                 <option value="">
                   Select Specific Issue...
@@ -421,14 +566,16 @@ export default function CreateTicket({ isPortal = false }) {
                 {filteredSubTypes.map(st => (
                   <option
                     key={st.ticketSubTypeId}
-                    value={
-                      st.ticketSubTypeId
-                    }
+                    value={st.ticketSubTypeId}
                   >
                     {st.name}
                   </option>
                 ))}
               </select>
+
+              <ValidationMessage
+                field="ticketSubType"
+              />
             </div>
           </div>
 
@@ -442,6 +589,7 @@ export default function CreateTicket({ isPortal = false }) {
             }}
           >
 
+            {/* Priority */}
             <div className="form-group">
               <label>
                 Priority Severity *
@@ -449,15 +597,26 @@ export default function CreateTicket({ isPortal = false }) {
 
               <select
                 required
-                value={
-                  selectedPriorityId
-                }
-                onChange={(e) =>
+                value={selectedPriorityId}
+                onChange={(e) => {
                   setSelectedPriorityId(
                     e.target.value
-                  )
-                }
+                  );
+
+                  clearValidationError(
+                    'priority'
+                  );
+                }}
+                style={getFieldStyle(
+                  'priority'
+                )}
               >
+                {priorities.length === 0 && (
+                  <option value="">
+                    Select Priority...
+                  </option>
+                )}
+
                 {priorities.map(p => (
                   <option
                     key={
@@ -472,8 +631,13 @@ export default function CreateTicket({ isPortal = false }) {
                   </option>
                 ))}
               </select>
+
+              <ValidationMessage
+                field="priority"
+              />
             </div>
 
+            {/* Business Impact */}
             <div className="form-group">
               <label>
                 Business Impact *
@@ -481,15 +645,26 @@ export default function CreateTicket({ isPortal = false }) {
 
               <select
                 required
-                value={
-                  selectedImpactId
-                }
-                onChange={(e) =>
+                value={selectedImpactId}
+                onChange={(e) => {
                   setSelectedImpactId(
                     e.target.value
-                  )
-                }
+                  );
+
+                  clearValidationError(
+                    'impact'
+                  );
+                }}
+                style={getFieldStyle(
+                  'impact'
+                )}
               >
+                {impacts.length === 0 && (
+                  <option value="">
+                    Select Business Impact...
+                  </option>
+                )}
+
                 {impacts.map(imp => (
                   <option
                     key={
@@ -504,6 +679,10 @@ export default function CreateTicket({ isPortal = false }) {
                   </option>
                 ))}
               </select>
+
+              <ValidationMessage
+                field="impact"
+              />
             </div>
           </div>
 
@@ -561,9 +740,18 @@ export default function CreateTicket({ isPortal = false }) {
               required
               placeholder="E.g., Cannot connect to corporate VPN after password change..."
               value={title}
-              onChange={(e) =>
-                setTitle(e.target.value)
-              }
+              onChange={(e) => {
+                setTitle(e.target.value);
+
+                clearValidationError(
+                  'title'
+                );
+              }}
+              style={getFieldStyle('title')}
+            />
+
+            <ValidationMessage
+              field="title"
             />
           </div>
 
@@ -578,11 +766,22 @@ export default function CreateTicket({ isPortal = false }) {
               rows={5}
               placeholder="Provide exact error messages, steps to reproduce, or affected systems..."
               value={description}
-              onChange={(e) =>
+              onChange={(e) => {
                 setDescription(
                   e.target.value
-                )
-              }
+                );
+
+                clearValidationError(
+                  'description'
+                );
+              }}
+              style={getFieldStyle(
+                'description'
+              )}
+            />
+
+            <ValidationMessage
+              field="description"
             />
           </div>
 
@@ -707,15 +906,7 @@ export default function CreateTicket({ isPortal = false }) {
             <button
               type="submit"
               className="btn btn--primary"
-              disabled={
-                loading ||
-                !title.trim() ||
-                !description.trim() ||
-                !selectedTypeId ||
-                !selectedSubTypeId ||
-                !selectedPriorityId ||
-                !selectedImpactId
-              }
+              disabled={loading}
             >
               <Send size={16} />
 
