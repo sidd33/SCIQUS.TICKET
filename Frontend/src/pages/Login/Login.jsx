@@ -36,7 +36,7 @@ export default function Login() {
 
       const decoded = jwtDecode(accessToken);
       const userId = decoded.sub || decoded.nameid || decoded.id || decoded.name;
-      const rawRole = decoded.role || decoded[ROLE_CLAIM_URI] || 'Admin';
+      const rawRole = decoded.role || decoded[ROLE_CLAIM_URI];
       const role = Array.isArray(rawRole) ? rawRole[0] : rawRole;
 
       let user;
@@ -52,14 +52,14 @@ export default function Login() {
             role: 'Customer',
             profilePicture: data.profilePicture,
           };
-        } else {
+                } else {
           const { data } = await api.get(`/employees/${userId}`);
           user = {
             id: data.id || userId,
-            firstName: data.firstName || data.name || 'Super',
-            lastName: data.lastName || 'Admin',
+            firstName: data.firstName || data.name || '',
+            lastName: data.lastName || '',
             email: data.email || email,
-            role: role || 'Admin',
+            role: role || '',
             departmentId: data.departmentId,
             departmentName: data.departmentName,
             profilePicture: data.profilePicture,
@@ -69,12 +69,13 @@ export default function Login() {
       } catch {
         user = {
           id: userId,
-          firstName: 'Super',
-          lastName: 'Admin',
+          firstName: email.split('@')[0],
+          lastName: '',
           email: email,
-          role: role || 'Admin'
+          role: role || ''
         };
       }
+      
 
       localStorage.setItem('user', JSON.stringify(user));
       navigate(user.role === 'Customer' ? '/portal/tickets' : '/dashboard');

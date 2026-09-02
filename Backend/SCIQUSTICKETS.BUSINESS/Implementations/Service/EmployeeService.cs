@@ -42,7 +42,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 
 		public async Task<PagedResponse<EmployeeListResponse>> GetAllAsync(
-			EmployeeQueryParams queryParams)
+	EmployeeQueryParams queryParams)
 		{
 			var (items, totalCount) =
 				await _employeeRepository.GetAllPagedAsync(
@@ -56,9 +56,16 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					queryParams.Page,
 					queryParams.PageSize);
 
+			var responses = new List<EmployeeListResponse>();
+
+			foreach (var employee in items)
+			{
+				responses.Add(await MapToListResponseAsync(employee));
+			}
+
 			return new PagedResponse<EmployeeListResponse>
 			{
-				Items = items.Select(MapToListResponse).ToList(),
+				Items = responses,
 				TotalCount = totalCount,
 				Page = queryParams.Page,
 				PageSize = queryParams.PageSize
@@ -66,12 +73,19 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 
 		public async Task<List<EmployeeListResponse>> GetDirectReportsAsync(
-			string employeeId)
+	string employeeId)
 		{
 			var reports =
 				await _employeeRepository.GetDirectReportsAsync(employeeId);
 
-			return reports.Select(MapToListResponse).ToList();
+			var responses = new List<EmployeeListResponse>();
+
+			foreach (var employee in reports)
+			{
+				responses.Add(await MapToListResponseAsync(employee));
+			}
+
+			return responses;
 		}
 
 		public async Task<EmployeeResponse> CreateAsync(CreateEmployeeRequest request)
@@ -706,9 +720,14 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 
 
-		private static EmployeeListResponse
-	MapToListResponse(Employee e)
+		private async Task<EmployeeListResponse> MapToListResponseAsync(Employee e)
 		{
+			var user = await _userManager.FindByIdAsync(e.Id);
+
+			var roles = user != null
+				? await _userManager.GetRolesAsync(user)
+				: new List<string>();
+
 			return new EmployeeListResponse
 			{
 				Id = e.Id,
@@ -716,7 +735,8 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Email = e.Email,
 				Designation = e.Designation,
 				DepartmentName = e.Department?.Name,
-				ProfileImageUrl = e.ProfileImageUrl
+				ProfileImageUrl = e.ProfileImageUrl,
+				Roles = roles.ToList()
 			};
 		}
 	}

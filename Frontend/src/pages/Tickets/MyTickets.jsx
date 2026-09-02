@@ -11,9 +11,10 @@ export default function MyTickets() {
   useEffect(() => {
     async function loadMyTickets() {
       try {
-const res = await api.get('/tickets', {
-  params: { pageSize: 50 }
-});        setTickets(res.data.items || res.data || []);
+        const res = await api.get('/tickets', {
+          params: { pageSize: 50 }
+        });
+        setTickets(res.data.items || res.data || []);
       } catch {
         // fallback
       } finally {
@@ -49,30 +50,89 @@ const res = await api.get('/tickets', {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>Loading your tickets...</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    style={{
+                      textAlign: 'center',
+                      color: 'var(--text-dim)',
+                      padding: '2rem'
+                    }}
+                  >
+                    Loading your tickets...
+                  </td>
+                </tr>
               ) : tickets.length === 0 ? (
-                <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-dim)', padding: '2rem' }}>You have not raised any support tickets yet.</td></tr>
+                <tr>
+                  <td
+                    colSpan={5}
+                    style={{
+                      textAlign: 'center',
+                      color: 'var(--text-dim)',
+                      padding: '2rem'
+                    }}
+                  >
+                    You have not raised any support tickets yet.
+                  </td>
+                </tr>
               ) : (
                 tickets.map(t => (
                   <tr key={t.id || t.ticketId}>
                     <td>
-                      <Link to={`/portal/ticket/${t.id || t.ticketId}`} className="ticket-code">
+                      <Link
+                        to={`/portal/ticket/${t.id || t.ticketId}`}
+                        className="ticket-code"
+                      >
                         {t.ticketNumber || `TKT-${(t.id || '').substring(0, 6)}`}
                       </Link>
                     </td>
+
                     <td>
-                      <Link to={`/portal/ticket/${t.id || t.ticketId}`} className="ticket-title-link">
+                      <Link
+                        to={`/portal/ticket/${t.id || t.ticketId}`}
+                        className="ticket-title-link"
+                      >
                         {t.title}
                       </Link>
                     </td>
+
                     <td>
-                      <span className={`badge badge--${(t.statusName || 'Open').toLowerCase().replace(' ', '')}`}>
-                        {t.statusName || 'Open'}
-                      </span>
+                      {(() => {
+                        const isAwaitingAcceptance =
+                          t.isAwaitingAcceptance === true ||
+                          (
+                            String(t.acceptanceStatus || '').toLowerCase() === 'pending' &&
+                            ['open', 'reopened'].includes(
+                              String(t.statusName || '').toLowerCase()
+                            )
+                          );
+
+                        const displayStatus = isAwaitingAcceptance
+                          ? 'Awaiting Acceptance'
+                          : (t.statusName || 'Open');
+
+                        const statusClass = isAwaitingAcceptance
+                          ? 'badge--awaiting'
+                          : `badge--${displayStatus
+                              .toLowerCase()
+                              .replace(/\s+/g, '')}`;
+
+                        return (
+                          <span className={`badge ${statusClass}`}>
+                            {displayStatus}
+                          </span>
+                        );
+                      })()}
                     </td>
+
                     <td>{t.priorityName || 'Medium'}</td>
+
                     <td>
-                      <SlaBadge dueDate={t.slaDueDate} isBreached={t.isSlaBreached} statusName={t.statusName} />
+                      <SlaBadge
+                        dueDate={t.slaDueDate}
+                        isBreached={t.isSlaBreached}
+                        statusName={t.statusName}
+                      />
                     </td>
                   </tr>
                 ))
