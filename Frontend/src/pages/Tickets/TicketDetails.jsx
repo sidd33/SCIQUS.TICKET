@@ -1414,15 +1414,16 @@ export default function TicketDetails() {
 
       {showReassignModal && (
         <ReassignModal
-          ticketId={ticket.id || ticketId}
-          currentAssigneeId={
-            ticket.assignedToUserId
-          }
-          onClose={() =>
-            setShowReassignModal(false)
-          }
-          onSuccess={loadTicketDetails}
-        />
+  ticketId={ticket.id || ticketId}
+  currentAssigneeId={
+    ticket.assignedToUserId
+  }
+  departmentId={ticket.departmentId}
+  onClose={() =>
+    setShowReassignModal(false)
+  }
+  onSuccess={loadTicketDetails}
+/>
       )}
 
       {showTransferModal && (

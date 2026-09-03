@@ -21,6 +21,14 @@ export default function SlaBadge({ dueDate, isBreached, statusName, isMet }) {
     );
   }
 
+  console.log('SLA DEBUG:', {
+  dueDate,
+  parsedDueDate: new Date(dueDate).toString(),
+  dueTimestamp: new Date(dueDate).getTime(),
+  now: new Date().toString(),
+  nowTimestamp: Date.now()
+});
+
   const dueTime = new Date(dueDate).getTime();
   const now = Date.now();
   const diffMs = dueTime - now;

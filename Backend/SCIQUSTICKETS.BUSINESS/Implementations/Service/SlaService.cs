@@ -21,39 +21,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 
 		public DateTime GetClockStart(Ticket ticket)
-			=> ticket.EmailReceivedDate ?? ticket.CreatedDate;
+	=> ticket.EmailReceivedDate ?? ticket.CreatedDate;
 
-		public (DateTime? SlaDueDate, string? SlaMetStatus) ComputeSlaDueDate(Ticket ticket, TicketPriority? priority)
+		public (DateTime? SlaDueDate, string? SlaMetStatus) ComputeSlaDueDate(
+			Ticket ticket,
+			TicketPriority? priority)
 		{
-			if (priority != null && priority.SlaInHours > 0)
-			{
-				var clockStart = GetClockStart(ticket);
-				
-				// Fallback to Standard
-				string supportHours = "StandardBusinessHours";
-				bool includesWeekend = false;
+			if (priority == null || priority.SlaInHours <= 0)
+				return (null, "Not Applicable");
 
-				if (!string.IsNullOrEmpty(ticket.AccountId))
-				{
-					var activePlan = _context.AccountSupportPlans
-						.Include(asp => asp.SupportPlan)
-						.Where(asp => asp.AccountId == ticket.AccountId && asp.Status == "Active" && 
-									  asp.StartDate <= DateTime.UtcNow && asp.EndDate >= DateTime.UtcNow)
-						.Select(asp => asp.SupportPlan)
-						.FirstOrDefault();
-					
-					if (activePlan != null)
-					{
-						supportHours = activePlan.SupportHours;
-						includesWeekend = activePlan.IncludesWeekendSupport;
-					}
-				}
+			var clockStart = GetClockStart(ticket);
 
-				DateTime dueDate = TimeHelper.CalculateSlaBusinessHours(clockStart, priority.SlaInHours, supportHours, includesWeekend);
+			var dueDate = clockStart.AddHours(priority.SlaInHours);
 
-				return (dueDate, null);
-			}
-			return (null, "Not Applicable");
+			return (dueDate, null);
 		}
 
 		public void FinalizeOnClose(Ticket ticket, string closureConfirmedBy)
