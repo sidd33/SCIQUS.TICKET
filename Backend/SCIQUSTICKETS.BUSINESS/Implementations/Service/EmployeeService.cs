@@ -734,6 +734,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				Name = e.Name,
 				Email = e.Email,
 				Designation = e.Designation,
+				DepartmentId = e.DepartmentId,
 				DepartmentName = e.Department?.Name,
 				ProfileImageUrl = e.ProfileImageUrl,
 				Roles = roles.ToList()

@@ -2,22 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { UserCheck, X } from 'lucide-react';
 import api from '../api/axios';
 
-export default function ReassignModal({ ticketId, currentAssigneeId, onClose, onSuccess }) {
-  const [employees, setEmployees] = useState([]);
+export default function ReassignModal({
+  ticketId,
+  currentAssigneeId,
+  departmentId,
+  onClose,
+  onSuccess
+}) {
+    const [employees, setEmployees] = useState([]);
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     async function loadAgents() {
       try {
-        const res = await api.get('/employees', { params: { pageSize: 100 } });
+        const res = await api.get('/employees', {
+  params: {
+    pageSize: 100,
+    departmentId
+  }
+});
         setEmployees(res.data.items || res.data || []);
       } catch {
         // fallback
       }
     }
     loadAgents();
-  }, []);
+  }, [departmentId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -370,6 +370,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 		public async Task<TicketResponse> CreateAsync(string userId, CreateTicketRequest request)
 		{
+			Console.WriteLine("========== BUG-057 CREATEASYNC REACHED ==========");
 			// Resolve the customer's AccountId when it is not supplied by the frontend.
 			// In this project, the customer AspNetUsers.Id matches Accounts.AccountId.
 			if (!request.IsInternal && string.IsNullOrWhiteSpace(request.AccountId))
@@ -418,13 +419,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var subType = await _ticketSubTypeRepository.GetByIdAsync(request.TicketSubTypeId);
 			var priority = await _ticketPriorityRepository.GetByIdAsync(request.PriorityId);
 
+			Console.WriteLine(
+				$"BUG-057 DEBUG | Priority: {priority?.Name} | SlaInHours: {priority?.SlaInHours}");
+
 			var now = TimeHelper.GetIndianTime();
+
 			var openStatus = await _ticketRepository.GetStatusByNameAsync("Open")
 				?? throw new InvalidOperationException("The 'Open' ticket status is not seeded.");
 
-			// SLA Due Date calculation
 			var tempTicketForClock = new Ticket { CreatedDate = now };
-			var (slaDueDate, slaMetStatus) = _slaService.ComputeSlaDueDate(tempTicketForClock, priority as TicketPriority);
+
+			var (slaDueDate, slaMetStatus) =
+				_slaService.ComputeSlaDueDate(
+					tempTicketForClock,
+					priority as TicketPriority);
+
+			Console.WriteLine(
+				$"BUG-057 DEBUG | Now: {now:yyyy-MM-dd HH:mm:ss} | SLA Due: {slaDueDate:yyyy-MM-dd HH:mm:ss}");
 
 			// Inherit Department from SubType if not explicitly passed
 			Guid departmentId = request.DepartmentId ?? subType!.DepartmentId;
@@ -836,6 +847,13 @@ public async Task<bool> ReassignAsync(
 
 			var now = TimeHelper.GetIndianTime();
 			var oldDeptId = ticket.DepartmentId;
+
+			var targetDepartment = await _context.Departments
+				.FirstOrDefaultAsync(d => d.DepartmentId == request.DepartmentId);
+
+			if (targetDepartment == null)
+				throw new InvalidOperationException("Target department does not exist.");
+
 			ticket.DepartmentId = request.DepartmentId;
 
 			// Resolve new assignee in target department
@@ -859,8 +877,13 @@ public async Task<bool> ReassignAsync(
 				Remarks = request.Comment
 			});
 
-			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Transferred, ticket.DepartmentId.ToString(), request.DepartmentId.ToString(), $"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}", actorUserId);
-
+			await _timelineService.WriteHistoryAsync(
+				ticket.TicketId,
+				SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Transferred,
+				oldDeptId.ToString(),
+				request.DepartmentId.ToString(),
+				$"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}",
+				actorUserId);
 			await _context.SaveChangesAsync();
 			return true;
 		}
@@ -1191,6 +1214,8 @@ public async Task<bool> ReassignAsync(
 				AssignedToUserName = t.AssignedToUser?.UserName,
 				SlaDueDate = t.SlaDueDate,
 				SlaMetStatus = t.SlaMetStatus,
+				IsBreached = t.IsSlaBreached == true
+	|| string.Equals(t.SlaMetStatus, "Missed", StringComparison.OrdinalIgnoreCase),
 				AcceptanceStatus = t.AcceptanceStatus,
 				AcceptanceDeadlineAt = t.AcceptanceDeadlineAt,
 

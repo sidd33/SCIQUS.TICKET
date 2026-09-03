@@ -443,6 +443,7 @@ export default function TicketDetails() {
   const currentUserId = storedUser?.id;
 
   const canDeleteTicket = isAdmin(storedUser);
+  const [attachments, setAttachments] = useState([]);
 
   useEffect(() => {
     loadTicketDetails();
@@ -476,6 +477,24 @@ export default function TicketDetails() {
 
         setComments([]);
       }
+
+      // Load attachments separately
+try {
+  const aRes = await api.get(
+    `/tickets/${ticketId}/attachments`
+  );
+
+  setAttachments(
+    aRes.data?.items || aRes.data || []
+  );
+} catch (err) {
+  console.error(
+    'Failed to load attachments:',
+    err
+  );
+
+  setAttachments([]);
+}
 
       // Load timeline separately
       try {
@@ -549,6 +568,41 @@ export default function TicketDetails() {
       );
     }
   };
+
+  const handleDeleteAttachment = async (attachmentId) => {
+  const confirmed = window.confirm(
+    'Are you sure you want to delete this attachment?'
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await api.delete(
+      `/tickets/${ticketId}/attachments/${attachmentId}`
+    );
+
+    setAttachments(prev =>
+  prev.filter(
+    a => a.ticketAttachmentId !== attachmentId
+  )
+);
+    alert('Attachment deleted successfully.');
+  } catch (err) {
+    console.error(
+      'Failed to delete attachment:',
+      err.response?.data || err
+    );
+
+    if (err.response?.status === 403) {
+      alert('You are not authorized to delete this attachment.');
+    } else {
+      alert(
+        err.response?.data?.message ||
+        'Failed to delete attachment.'
+      );
+    }
+  }
+};
 
   const handlePostComment = async e => {
     e.preventDefault();
@@ -789,9 +843,14 @@ export default function TicketDetails() {
                   if (!reason?.trim()) return;
 
                   await api.post(
-                    `/tickets/${ticketId}/reopen`,
-                    reason.trim()
-                  );
+  `/tickets/${ticketId}/reopen`,
+  JSON.stringify(reason.trim()),
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+);
 
                   await loadTicketDetails();
                 } catch (err) {
@@ -911,7 +970,97 @@ export default function TicketDetails() {
               >
                 Problem Description
               </h4>
+<div style={{ marginTop: '1.5rem' }}>
+  <h4
+    style={{
+      color: 'var(--text-muted)',
+      marginBottom: '0.75rem',
+      fontSize: '0.85rem',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px'
+    }}
+  >
+    <Paperclip size={15} />
+    Attachments ({attachments.length})
+  </h4>
 
+  {attachments.length === 0 ? (
+    <div
+      style={{
+        color: 'var(--text-dim)',
+        fontSize: '0.85rem',
+        padding: '0.75rem',
+        background: 'rgba(0,0,0,0.2)',
+        borderRadius: '8px'
+      }}
+    >
+      No attachments on this ticket.
+    </div>
+  ) : (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem'
+      }}
+    >
+      {attachments.map(a => {
+        const attachmentId = a.ticketAttachmentId;
+
+        return (
+          <div
+            key={attachmentId}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.75rem',
+              background: 'rgba(15, 23, 42, 0.4)',
+              border: '1px solid var(--bg-card-border)',
+              borderRadius: '8px'
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              <Paperclip size={15} />
+
+              <span style={{ color: 'white' }}>
+                {a.fileName ||
+                  a.originalFileName ||
+                  a.name ||
+                  'Attachment'}
+              </span>
+            </div>
+
+            {isAdmin(storedUser) && (
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() =>
+                  handleDeleteAttachment(attachmentId)
+                }
+                title="Delete Attachment"
+                style={{
+                  color: '#f87171',
+                  borderColor:
+                    'rgba(248, 113, 113, 0.35)'
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
               <div
                 style={{
                   background: 'rgba(0,0,0,0.3)',
@@ -1051,7 +1200,7 @@ export default function TicketDetails() {
                     }}
                   >
                     {ticket.departmentName ||
-                      'IT Support'}
+  'Unknown Department'}
                   </strong>
                 </div>
 
@@ -1134,14 +1283,11 @@ export default function TicketDetails() {
                     }}
                   >
                     <SlaBadge
-                      dueDate={ticket.slaDueDate}
-                      isBreached={
-                        ticket.isSlaBreached
-                      }
-                      statusName={
-                        ticket.statusName
-                      }
-                    />
+  dueDate={ticket.slaDueDate}
+  isBreached={ticket.isBreached}
+  statusName={ticket.statusName}
+  isMet={ticket.slaMetStatus === 'Met'}
+/>
                   </div>
                 </div>
 
@@ -1414,27 +1560,29 @@ export default function TicketDetails() {
 
       {showReassignModal && (
         <ReassignModal
-          ticketId={ticket.id || ticketId}
-          currentAssigneeId={
-            ticket.assignedToUserId
-          }
-          onClose={() =>
-            setShowReassignModal(false)
-          }
-          onSuccess={loadTicketDetails}
-        />
+  ticketId={ticket.id || ticketId}
+  currentAssigneeId={
+    ticket.assignedToUserId
+  }
+  departmentId={ticket.departmentId}
+  onClose={() =>
+    setShowReassignModal(false)
+  }
+  onSuccess={loadTicketDetails}
+/>
       )}
 
       {showTransferModal && (
-        <TransferModal
-          ticketId={ticket.id || ticketId}
-          onClose={() =>
-            setShowTransferModal(false)
-          }
-          onSuccess={loadTicketDetails}
-        />
-      )}
-
+  <TransferModal
+    ticketId={ticket.id || ticketId}
+    onClose={() =>
+      setShowTransferModal(false)
+    }
+    onSuccess={async () => {
+      await loadTicketDetails();
+    }}
+  />
+)}
       {showPriorityModal && (
         <PriorityImpactModal
           ticketId={ticket.id || ticketId}

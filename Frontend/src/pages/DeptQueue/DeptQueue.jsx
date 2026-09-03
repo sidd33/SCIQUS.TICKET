@@ -8,7 +8,7 @@ import ReassignModal from '../../components/ReassignModal';
 export default function DeptQueue() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTicketId, setSelectedTicketId] = useState(null);
+const [selectedTicket, setSelectedTicket] = useState(null);
 
   useEffect(() => {
     fetchDeptQueue();
@@ -87,7 +87,7 @@ export default function DeptQueue() {
                       <SlaBadge dueDate={t.slaDueDate} isBreached={t.isSlaBreached} statusName={t.statusName} />
                     </td>
                     <td>
-                      <button className="btn btn--secondary btn--sm" onClick={() => setSelectedTicketId(t.id || t.ticketId)}>
+                      <button className="btn btn--secondary btn--sm" onClick={() => setSelectedTicket(t)}>
                         <UserCheck size={14} /> Quick Assign
                       </button>
                     </td>
@@ -99,9 +99,14 @@ export default function DeptQueue() {
         </div>
       </div>
 
-      {selectedTicketId && (
-        <ReassignModal ticketId={selectedTicketId} onClose={() => setSelectedTicketId(null)} onSuccess={fetchDeptQueue} />
-      )}
+      {selectedTicket && (
+  <ReassignModal
+    ticketId={selectedTicket.id || selectedTicket.ticketId}
+    departmentId={selectedTicket.departmentId}
+    onClose={() => setSelectedTicket(null)}
+    onSuccess={fetchDeptQueue}
+  />
+)}
     </div>
   );
 }
