@@ -5,6 +5,7 @@ import api from '../api/axios';
 export default function TransferModal({ ticketId, onClose, onSuccess }) {
   const [departments, setDepartments] = useState([]);
   const [selectedDeptId, setSelectedDeptId] = useState('');
+  const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -18,22 +19,37 @@ export default function TransferModal({ ticketId, onClose, onSuccess }) {
     }
     loadDepts();
   }, []);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!selectedDeptId) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedDeptId) return;
+  setSubmitting(true);
 
-    setSubmitting(true);
-    try {
-      await api.post(`/tickets/${ticketId}/transfer`, { targetDepartmentId: selectedDeptId });
-      if (onSuccess) onSuccess();
-      onClose();
-    } catch {
-      alert('Failed to transfer department');
-    } finally {
-      setSubmitting(false);
+  try {
+    await api.post(`/tickets/${ticketId}/transfer`, {
+      departmentId: selectedDeptId,
+      comment: comment
+    });
+
+    if (onSuccess) {
+      await onSuccess();
     }
-  };
+
+    onClose();
+  } catch (err) {
+    console.error(
+      'Failed to transfer department:',
+      err.response?.data || err
+    );
+
+    alert(
+      err.response?.data?.message ||
+      'Failed to transfer department'
+    );
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
@@ -53,10 +69,20 @@ export default function TransferModal({ ticketId, onClose, onSuccess }) {
             >
               <option value="">Select Department...</option>
               {departments.map(d => (
-                <option key={d.id} value={d.id}>{d.name}</option>
-              ))}
+  <option key={d.departmentId} value={d.departmentId}>{d.name}</option>
+))}
             </select>
           </div>
+
+          <div className="form-group">
+  <label>Comment</label>
+  <textarea
+    value={comment}
+    onChange={(e) => setComment(e.target.value)}
+    placeholder="Enter reason for transferring the ticket"
+    required
+  />
+</div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.25rem' }}>
             <button type="button" className="btn btn--secondary" onClick={onClose}>Cancel</button>

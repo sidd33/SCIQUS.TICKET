@@ -42,7 +42,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				{
 					DepartmentId = d.DepartmentId,
 					Name = d.Name,
-					EmployeeCount = count
+					EmployeeCount = count,
+					TicketAutoAssignMethod = d.TicketAutoAssignMethod,
+					W_Load = d.W_Load,
+					W_Severity = d.W_Severity,
+					W_Recency = d.W_Recency
 				});
 			}
 
@@ -91,7 +95,21 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var department = await _departmentRepository.GetByIdAsync(id)
 				?? throw new KeyNotFoundException($"Department {id} not found.");
 
-			if (request.Name != null) department.Name = request.Name;
+			if (request.Name != null)
+				department.Name = request.Name;
+
+			if (request.TicketAutoAssignMethod != null)
+				department.TicketAutoAssignMethod = request.TicketAutoAssignMethod;
+
+			if (request.W_Load.HasValue)
+				department.W_Load = request.W_Load.Value;
+
+			if (request.W_Severity.HasValue)
+				department.W_Severity = request.W_Severity.Value;
+
+			if (request.W_Recency.HasValue)
+				department.W_Recency = request.W_Recency.Value;
+
 			department.LastModifiedDate = DateTime.UtcNow;
 
 			_departmentRepository.Update(department);
@@ -115,11 +133,18 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		{
 			DepartmentId = d.DepartmentId,
 			Name = d.Name,
-			DepartmentHeadId = d.DepartmentHeadId,
+			DepartmentHeadId = Guid.TryParse(d.DepartmentHeadId, out var headId)
+		? headId
+		: null,
 			DepartmentHeadName = d.DepartmentHead?.Name,
 			EmployeeCount = employeeCount,
 			CreatedDate = d.CreatedDate,
-			LastModifiedDate = d.LastModifiedDate
+			LastModifiedDate = d.LastModifiedDate,
+
+			TicketAutoAssignMethod = d.TicketAutoAssignMethod,
+			W_Load = d.W_Load,
+			W_Severity = d.W_Severity,
+			W_Recency = d.W_Recency
 		};
 	}
 }

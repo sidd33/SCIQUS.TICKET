@@ -20,6 +20,7 @@ export default function CreateTicket({ isPortal = false }) {
   const [priorities, setPriorities] = useState([]);
   const [impacts, setImpacts] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [entitlement, setEntitlement] = useState(null);
 
   const [selectedTypeId, setSelectedTypeId] = useState('');
   const [selectedSubTypeId, setSelectedSubTypeId] = useState('');
@@ -104,25 +105,30 @@ export default function CreateTicket({ isPortal = false }) {
 
         console.log('TYPES:', typesData);
         console.log('SUBTYPES:', subTypesData);
-        console.log('PRIORITIES:', prioritiesData);
-        console.log('IMPACTS:', impactsData);
+console.table(
+  prioritiesData.map(p => ({
+    id: p.ticketPriorityId,
+    name: p.name,
+    slaInHours: p.slaInHours
+  }))
+);        console.log('IMPACTS:', impactsData);
 
         setTypes(typesData);
         setSubTypes(subTypesData);
         setPriorities(prioritiesData);
         setImpacts(impactsData);
 
-        /*
-         * Select first priority by default
-         */
-        if (prioritiesData.length > 0) {
-          const firstPriority = prioritiesData[0];
+/*
+ * Select first priority by default
+ */
+if (prioritiesData.length > 0) {
+  const firstPriority = prioritiesData[0];
 
-          setSelectedPriorityId(
-            firstPriority.ticketPriorityId ||
-            firstPriority.id
-          );
-        }
+  setSelectedPriorityId(
+    firstPriority.ticketPriorityId ||
+    firstPriority.id
+  );
+}
 
         /*
          * Select first business impact by default
@@ -148,6 +154,64 @@ export default function CreateTicket({ isPortal = false }) {
 
     loadMasterData();
   }, []);
+
+/*
+ * Load current customer's support plan entitlement
+ */
+useEffect(() => {
+  async function loadEntitlement() {
+    if (!isPortal) {
+      return;
+    }
+
+    try {
+      const user = JSON.parse(
+        localStorage.getItem('user') || 'null'
+      );
+
+      const accountId = user?.id;
+
+      if (!accountId) {
+        setEntitlement(null);
+        return;
+      }
+
+      const res = await api.get(
+        `/SupportPlan/account/${accountId}`
+      );
+
+      const plans = res.data || [];
+
+      const activePlan = plans.find(
+        plan =>
+          String(plan.status || '').toLowerCase() === 'active'
+      );
+
+      if (!activePlan) {
+        setEntitlement(null);
+        return;
+      }
+
+      setEntitlement({
+        planName: activePlan.planName,
+        totalAllowed: activePlan.ticketQuota,
+        usedCount: activePlan.consumedQuota,
+        isBlocked:
+          activePlan.ticketQuota > 0 &&
+          activePlan.remainingQuota <= 0
+      });
+    } catch (err) {
+      console.error(
+        'Failed to load support plan entitlement:',
+        err
+      );
+
+      setEntitlement(null);
+    }
+  }
+
+  loadEntitlement();
+}, [isPortal]);
 
   /*
    * Filter sub-types whenever ticket type changes

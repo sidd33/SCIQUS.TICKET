@@ -247,10 +247,10 @@ export default function Tickets() {
 
                       <td>
                         <SlaBadge
-                          dueDate={t.slaDueDate}
-                          isBreached={t.isSlaBreached}
-                          statusName={t.statusName}
-                        />
+  dueDate={t.slaDueDate}
+  isBreached={t.isBreached}
+  statusName={t.statusName}
+/>
                       </td>
 
                       {isAdmin(user) && (

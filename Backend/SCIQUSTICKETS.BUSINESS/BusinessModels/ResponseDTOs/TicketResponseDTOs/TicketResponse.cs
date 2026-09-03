@@ -68,8 +68,10 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.ResponseDTOs.TicketResponseDTOs
 
 
 		// SLA & Acceptance
+		// SLA & Acceptance
 		public DateTime? SlaDueDate { get; set; }
 		public string? SlaMetStatus { get; set; }
+		public bool IsBreached { get; set; }
 		public string? AcceptanceStatus { get; set; }
 		public DateTime? AcceptanceDeadlineAt { get; set; }
 
