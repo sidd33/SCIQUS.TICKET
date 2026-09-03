@@ -847,6 +847,13 @@ public async Task<bool> ReassignAsync(
 
 			var now = TimeHelper.GetIndianTime();
 			var oldDeptId = ticket.DepartmentId;
+
+			var targetDepartment = await _context.Departments
+				.FirstOrDefaultAsync(d => d.DepartmentId == request.DepartmentId);
+
+			if (targetDepartment == null)
+				throw new InvalidOperationException("Target department does not exist.");
+
 			ticket.DepartmentId = request.DepartmentId;
 
 			// Resolve new assignee in target department
@@ -870,8 +877,13 @@ public async Task<bool> ReassignAsync(
 				Remarks = request.Comment
 			});
 
-			await _timelineService.WriteHistoryAsync(ticket.TicketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Transferred, ticket.DepartmentId.ToString(), request.DepartmentId.ToString(), $"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}", actorUserId);
-
+			await _timelineService.WriteHistoryAsync(
+				ticket.TicketId,
+				SCIQUSTICKETS.COMMON.Enums.TicketChangeType.Transferred,
+				oldDeptId.ToString(),
+				request.DepartmentId.ToString(),
+				$"Transferred to department: {request.DepartmentId}. Comment: {request.Comment}",
+				actorUserId);
 			await _context.SaveChangesAsync();
 			return true;
 		}
@@ -1198,6 +1210,8 @@ public async Task<bool> ReassignAsync(
 				AssignedToUserName = t.AssignedToUser?.UserName,
 				SlaDueDate = t.SlaDueDate,
 				SlaMetStatus = t.SlaMetStatus,
+				IsBreached = t.IsSlaBreached == true
+	|| string.Equals(t.SlaMetStatus, "Missed", StringComparison.OrdinalIgnoreCase),
 				AcceptanceStatus = t.AcceptanceStatus,
 				AcceptanceDeadlineAt = t.AcceptanceDeadlineAt,
 

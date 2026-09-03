@@ -789,9 +789,14 @@ export default function TicketDetails() {
                   if (!reason?.trim()) return;
 
                   await api.post(
-                    `/tickets/${ticketId}/reopen`,
-                    reason.trim()
-                  );
+  `/tickets/${ticketId}/reopen`,
+  JSON.stringify(reason.trim()),
+  {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+);
 
                   await loadTicketDetails();
                 } catch (err) {
@@ -1051,7 +1056,7 @@ export default function TicketDetails() {
                     }}
                   >
                     {ticket.departmentName ||
-                      'IT Support'}
+  'Unknown Department'}
                   </strong>
                 </div>
 
@@ -1134,14 +1139,11 @@ export default function TicketDetails() {
                     }}
                   >
                     <SlaBadge
-                      dueDate={ticket.slaDueDate}
-                      isBreached={
-                        ticket.isSlaBreached
-                      }
-                      statusName={
-                        ticket.statusName
-                      }
-                    />
+  dueDate={ticket.slaDueDate}
+  isBreached={ticket.isBreached}
+  statusName={ticket.statusName}
+  isMet={ticket.slaMetStatus === 'Met'}
+/>
                   </div>
                 </div>
 
@@ -1427,15 +1429,16 @@ export default function TicketDetails() {
       )}
 
       {showTransferModal && (
-        <TransferModal
-          ticketId={ticket.id || ticketId}
-          onClose={() =>
-            setShowTransferModal(false)
-          }
-          onSuccess={loadTicketDetails}
-        />
-      )}
-
+  <TransferModal
+    ticketId={ticket.id || ticketId}
+    onClose={() =>
+      setShowTransferModal(false)
+    }
+    onSuccess={async () => {
+      await loadTicketDetails();
+    }}
+  />
+)}
       {showPriorityModal && (
         <PriorityImpactModal
           ticketId={ticket.id || ticketId}

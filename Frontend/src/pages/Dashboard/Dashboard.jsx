@@ -7,29 +7,53 @@ import './Dashboard.scss';
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState({
-    totalTickets: 42,
-    openTickets: 18,
-    resolvedTickets: 21,
-    slaBreached: 3,
-    slaComplianceRate: 92.8
-  });
+  totalTickets: 0,
+  openTickets: 0,
+  resolvedTickets: 0,
+  slaBreached: 0,
+  slaComplianceRate: 0
+});
   const [recentTickets, setRecentTickets] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const res = await api.get('/tickets', { params: { pageSize: 6 } });
-        const items = res.data.items || res.data || [];
-        setRecentTickets(items);
-      } catch {
-        // fallback
-      } finally {
-        setLoading(false);
-      }
+ useEffect(() => {
+  async function loadDashboard() {
+    try {
+      const [kpiRes, ticketsRes] = await Promise.all([
+        api.get('/TicketReport/kpi-summary'),
+        api.get('/tickets', { params: { pageSize: 6 } })
+      ]);
+
+      const kpi = kpiRes.data;
+
+      setMetrics({
+  totalTickets: (kpi.openCount ?? 0) + (kpi.closedCount ?? 0),
+  openTickets: kpi.openCount ?? 0,
+  resolvedTickets: kpi.closedCount ?? 0,
+  slaBreached: kpi.breachedCount ?? 0,
+  slaComplianceRate:
+    ((kpi.openCount ?? 0) + (kpi.closedCount ?? 0)) > 0
+      ? (
+          ((kpi.openCount ?? 0) /
+            ((kpi.openCount ?? 0) + (kpi.closedCount ?? 0))) *
+          100
+        ).toFixed(1)
+      : 0
+});
+
+      const items =
+        ticketsRes.data.items || ticketsRes.data || [];
+
+      setRecentTickets(items);
+    } catch (err) {
+      console.error('Failed to load dashboard:', err);
+    } finally {
+      setLoading(false);
     }
-    loadDashboard();
-  }, []);
+  }
+
+  loadDashboard();
+}, []);
 
   return (
     <div className="dashboard-view">
@@ -129,8 +153,11 @@ export default function Dashboard() {
 </td>
                     <td>{t.priorityName || 'Medium'}</td>
                     <td>
-                      <SlaBadge dueDate={t.slaDueDate} isBreached={t.isSlaBreached} statusName={t.statusName} />
-                    </td>
+<SlaBadge
+  dueDate={t.slaDueDate}
+  isBreached={t.isBreached}
+  statusName={t.statusName}
+/>                    </td>
                   </tr>
                 ))
               )}
