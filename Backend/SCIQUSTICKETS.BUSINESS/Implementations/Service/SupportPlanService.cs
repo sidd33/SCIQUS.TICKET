@@ -207,6 +207,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             return true;
         }
 
+        public async Task<bool> RefundQuotaAsync(Guid ticketId)
+        {
+            var consumption = await _context.SupportPlanConsumptions
+                .FirstOrDefaultAsync(c => c.TicketId == ticketId && !c.IsRefunded);
+
+            if (consumption == null) return false;
+
+            consumption.IsRefunded = true;
+            consumption.RefundedDate = TimeHelper.GetIndianTime();
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         public async Task ValidateAndExpirePlansAsync()
         {
             var now = TimeHelper.GetIndianTime();

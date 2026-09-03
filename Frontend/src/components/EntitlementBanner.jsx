@@ -12,9 +12,9 @@ export default function EntitlementBanner({ entitlement }) {
     );
   }
 
-  const { planName = 'Silver Plan', totalAllowed = 50, usedCount = 12, isBlocked = false } = entitlement;
-  const remaining = Math.max(0, totalAllowed - usedCount);
-  const percentUsed = Math.min(100, Math.round((usedCount / totalAllowed) * 100));
+  const { planName = 'Standard Plan', totalAllowed = 0, usedCount = 0, isBlocked = false } = entitlement;
+  const remaining = totalAllowed > 0 ? Math.max(0, totalAllowed - usedCount) : 999;
+  const percentUsed = totalAllowed > 0 ? Math.min(100, Math.round((usedCount / totalAllowed) * 100)) : 0;
 
   if (isBlocked || remaining === 0) {
     return (

@@ -35,9 +35,42 @@ export default function CreateTicket({ isPortal = false }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [entitlement, setEntitlement] = useState(null);
 
   // Client-side validation errors
   const [validationErrors, setValidationErrors] = useState({});
+
+  useEffect(() => {
+    async function fetchEntitlement() {
+      const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+      const targetAccountId = selectedAccountId || currentUser?.accountId;
+      if (!targetAccountId) {
+        setEntitlement(null);
+        return;
+      }
+
+      try {
+        const res = await api.get(`/SupportPlan/account/${targetAccountId}`);
+        const plans = Array.isArray(res.data) ? res.data : [];
+        const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
+        if (active) {
+          setEntitlement({
+            planName: active.planName || active.supportPlanName || active.name || 'Active Support Plan',
+            totalAllowed: active.ticketQuota || active.ticketLimit || 0,
+            usedCount: active.consumedQuota || active.usedTickets || 0,
+            isBlocked: active.blockWhenExhausted && (active.consumedQuota >= active.ticketQuota)
+          });
+        } else {
+          setEntitlement(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch entitlement:', err);
+        setEntitlement(null);
+      }
+    }
+
+    fetchEntitlement();
+  }, [selectedAccountId]);
 
   /*
    * Load ticket master data
@@ -396,13 +429,7 @@ export default function CreateTicket({ isPortal = false }) {
         </div>
       </div>
 
-      <EntitlementBanner
-        entitlement={{
-          planName: 'Silver Support Plan',
-          totalAllowed: 50,
-          usedCount: 12
-        }}
-      />
+      <EntitlementBanner entitlement={entitlement} />
 
       {/* Validation Error Banner */}
       {Object.keys(validationErrors).length > 0 && (

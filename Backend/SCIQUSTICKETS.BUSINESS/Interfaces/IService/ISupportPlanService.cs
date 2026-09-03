@@ -17,6 +17,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
         
         Task<bool> HasAvailableQuotaAsync(string accountId);
         Task<bool> ConsumeQuotaAsync(string accountId, Guid ticketId);
+        Task<bool> RefundQuotaAsync(Guid ticketId);
         
         Task ValidateAndExpirePlansAsync();
 

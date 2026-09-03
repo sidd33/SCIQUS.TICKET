@@ -1075,6 +1075,10 @@ public async Task<bool> ReassignAsync(
 			ticket.IsDeleted = true;
 			_ticketRepository.Update(ticket);
 			await _timelineService.WriteHistoryAsync(ticketId, SCIQUSTICKETS.COMMON.Enums.TicketChangeType.StatusChanged, null, null, "Ticket soft-deleted", actorUserId);
+			
+			// BUG-023 / BUG-065: Refund consumed ticket quota to customer account
+			await _supportPlanService.RefundQuotaAsync(ticketId);
+
 			await _ticketRepository.SaveChangesAsync();
 			return true;
 		}
