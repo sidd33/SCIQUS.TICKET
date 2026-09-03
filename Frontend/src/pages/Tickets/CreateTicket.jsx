@@ -36,7 +36,6 @@ export default function CreateTicket({ isPortal = false }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [entitlement, setEntitlement] = useState(null);
 
   // Client-side validation errors
   const [validationErrors, setValidationErrors] = useState({});
