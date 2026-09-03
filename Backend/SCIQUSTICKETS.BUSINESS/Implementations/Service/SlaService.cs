@@ -42,14 +42,25 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			var now = TimeHelper.GetIndianTime();
 			var clockStart = GetClockStart(ticket);
 
+			Console.WriteLine("========== SLA CLOSE DEBUG ==========");
+			Console.WriteLine($"Ticket: {ticket.TicketNumber}");
+			Console.WriteLine($"Now: {now:yyyy-MM-dd HH:mm:ss}");
+			Console.WriteLine($"SLA Due: {ticket.SlaDueDate:yyyy-MM-dd HH:mm:ss}");
+			Console.WriteLine($"Now > Due: {ticket.SlaDueDate.HasValue && now > ticket.SlaDueDate.Value}");
+			Console.WriteLine("=====================================");
+
 			ticket.ClosedDate = now;
 			ticket.ResolutionTimeInHours = (now - clockStart).TotalHours;
 			ticket.ClosureConfirmedBy = closureConfirmedBy;
 
 			if (ticket.SlaDueDate.HasValue)
 			{
-				ticket.SlaMetStatus = now <= ticket.SlaDueDate.Value ? "Met" : "Missed";
-				ticket.OverdueHours = ticket.SlaMetStatus == "Missed"
+				bool isBreached = now > ticket.SlaDueDate.Value;
+
+				ticket.IsSlaBreached = isBreached;
+				ticket.SlaMetStatus = isBreached ? "Missed" : "Met";
+
+				ticket.OverdueHours = isBreached
 					? (now - ticket.SlaDueDate.Value).TotalHours
 					: null;
 			}

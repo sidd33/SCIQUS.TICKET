@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Clock, X } from 'lucide-react';
 import api from '../api/axios';
 
-export default function PriorityImpactModal({ ticketId, currentPriorityId, currentImpactId, onClose, onSuccess }) {
+export default function PriorityImpactModal({ ticketId, currentPriorityId, currentImpactId, onClose, onSuccess }) { 
+
+  const getPriorityId = (p) => p.ticketPriorityId || p.priorityId || p.id;
+
   const [priorities, setPriorities] = useState([]);
   const [impacts, setImpacts] = useState([]);
   const [selectedPriorityId, setSelectedPriorityId] = useState(currentPriorityId || '');
   const [selectedImpactId, setSelectedImpactId] = useState(currentImpactId || '');
   const [submitting, setSubmitting] = useState(false);
+  const [reason, setReason] = useState('');
 
   useEffect(() => {
   async function loadMaster() {
@@ -26,7 +30,7 @@ export default function PriorityImpactModal({ ticketId, currentPriorityId, curre
 
   loadMaster();
 }, []);
-  const selectedPriorityObj = priorities.find(p => (p.id || p.priorityId) === selectedPriorityId);
+  const selectedPriorityObj = priorities.find(p => getPriorityId(p) === selectedPriorityId);
   const slaHours = selectedPriorityObj?.slaInHours || 24;
   const previewDueDate = new Date(Date.now() + slaHours * 60 * 60 * 1000).toLocaleString();
 
@@ -35,9 +39,10 @@ export default function PriorityImpactModal({ ticketId, currentPriorityId, curre
     setSubmitting(true);
     try {
       await api.patch(`/tickets/${ticketId}/priority-impact`, {
-        priorityId: selectedPriorityId,
-        businessImpactId: selectedImpactId
-      });
+  priorityId: selectedPriorityId,
+  businessImpactId: selectedImpactId,
+  reason: reason
+});
       if (onSuccess) onSuccess();
       onClose();
     } catch {
@@ -63,13 +68,19 @@ export default function PriorityImpactModal({ ticketId, currentPriorityId, curre
               onChange={(e) => setSelectedPriorityId(e.target.value)}
               required
             >
-              {priorities.map(p => (
-                <option key={p.id || p.priorityId} value={p.id || p.priorityId}>
-                  {p.name} ({p.slaInHours ? `${p.slaInHours}h SLA` : 'Default SLA'})
-                </option>
-              ))}
+              {priorities.map(p => {
+  const priorityId = getPriorityId(p);
+
+  return (
+    <option key={priorityId} value={priorityId}>
+      {p.name} ({p.slaInHours ? `${p.slaInHours}h SLA` : 'Default SLA'})
+    </option>
+  );
+})}
             </select>
           </div>
+
+          
 
           <div className="form-group">
             <label>Business Impact Level</label>
@@ -85,6 +96,15 @@ export default function PriorityImpactModal({ ticketId, currentPriorityId, curre
               ))}
             </select>
           </div>
+          <div className="form-group">
+  <label>Reason</label>
+  <textarea
+    value={reason}
+    onChange={(e) => setReason(e.target.value)}
+    placeholder="Enter reason for changing priority or business impact"
+    required
+  />
+</div>
 
           <div style={{ padding: '0.75rem', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.8rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Clock size={16} />

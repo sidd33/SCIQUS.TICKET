@@ -90,6 +90,7 @@ namespace SCIQUSTICKETS.DATA.Implementations.Repositories
 		{
 			return await _dbSet
 				.Include(t => t.Account)
+				.Include(t => t.Department)
 				.Include(t => t.TicketType)
 				.Include(t => t.TicketSubType)
 				.Include(t => t.Priority)
