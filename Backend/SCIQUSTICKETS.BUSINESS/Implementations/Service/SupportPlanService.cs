@@ -215,7 +215,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             if (consumption == null) return false;
 
             consumption.IsRefunded = true;
-            consumption.RefundedDate = TimeHelper.GetIndianTime();
             await _context.SaveChangesAsync();
 
             return true;
