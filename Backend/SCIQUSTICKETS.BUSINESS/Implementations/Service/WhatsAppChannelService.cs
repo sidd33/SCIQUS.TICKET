@@ -134,20 +134,20 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                     try
                     {
                         // Ensure master IDs are non-empty Guid by using dynamic fallbacks
-                        var defaultType = (config.DefaultTicketTypeId != Guid.Empty ? config.DefaultTicketTypeId : null) 
+                        var defaultType = (config.DefaultTicketTypeId != Guid.Empty ? (Guid?)config.DefaultTicketTypeId : null) 
                                           ?? (await _context.TicketTypes.FirstOrDefaultAsync())?.TicketTypeId;
 
-                        var defaultSubType = (config.DefaultTicketSubTypeId != Guid.Empty ? config.DefaultTicketSubTypeId : null) 
+                        var defaultSubType = (config.DefaultTicketSubTypeId != Guid.Empty ? (Guid?)config.DefaultTicketSubTypeId : null) 
                                              ?? (await _context.TicketSubTypes.FirstOrDefaultAsync(st => defaultType != null && st.TicketTypeId == defaultType))?.TicketSubTypeId 
                                              ?? (await _context.TicketSubTypes.FirstOrDefaultAsync())?.TicketSubTypeId;
 
-                        var defaultPriority = (config.DefaultPriorityId != Guid.Empty ? config.DefaultPriorityId : null) 
-                                              ?? (await _context.TicketPriorities.FirstOrDefaultAsync())?.PriorityId;
+                        var defaultPriority = (config.DefaultPriorityId != Guid.Empty ? (Guid?)config.DefaultPriorityId : null) 
+                                              ?? (await _context.TicketPriorities.FirstOrDefaultAsync())?.TicketPriorityId;
 
-                        var defaultImpact = (config.DefaultBusinessImpactId != Guid.Empty ? config.DefaultBusinessImpactId : null) 
-                                            ?? (await _context.BusinessImpacts.FirstOrDefaultAsync())?.BusinessImpactId;
+                        var defaultImpact = (config.DefaultBusinessImpactId != Guid.Empty ? (Guid?)config.DefaultBusinessImpactId : null) 
+                                            ?? (await _context.TicketBusinessTypeImpacts.FirstOrDefaultAsync())?.TicketBusinessTypeImpactId;
 
-                        var defaultDept = (config.DefaultDepartmentId != Guid.Empty ? config.DefaultDepartmentId : null) 
+                        var defaultDept = (config.DefaultDepartmentId != Guid.Empty ? (Guid?)config.DefaultDepartmentId : null) 
                                           ?? (await _context.Departments.FirstOrDefaultAsync())?.DepartmentId;
 
                         if (defaultType == null || defaultSubType == null || defaultPriority == null || defaultImpact == null || defaultDept == null)
