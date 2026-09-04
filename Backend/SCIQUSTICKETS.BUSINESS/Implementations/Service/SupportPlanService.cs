@@ -129,6 +129,66 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             return MapToAccountPlanResponse(accountPlan, 0);
         }
 
+        public async Task<AccountSupportPlanResponse> CreateCustomPlanForAccountAsync(CreateCustomPlanForAccountRequest request, string assignedByUserId)
+        {
+            var account = await _context.Accounts.FindAsync(request.AccountId);
+            if (account == null) throw new KeyNotFoundException("Account not found.");
+
+            // Create dedicated custom SupportPlan record
+            var customPlan = new SupportPlan
+            {
+                SupportPlanId = Guid.NewGuid(),
+                Name = string.IsNullOrWhiteSpace(request.CustomPlanName) ? "Custom Plan" : request.CustomPlanName.Trim(),
+                Description = $"Custom plan created for {account.AccountName}",
+                TicketQuota = request.TicketQuota,
+                PeriodType = "Custom",
+                ValidityDays = request.ValidityDays > 0 ? request.ValidityDays : 30,
+                BlockWhenExhausted = request.BlockWhenExhausted,
+                SupportHours = request.SupportHours ?? "StandardBusinessHours",
+                IncludesWeekendSupport = request.IncludesWeekendSupport,
+                Status = true,
+                CreatedDate = TimeHelper.GetIndianTime(),
+                LastUpdatedDate = TimeHelper.GetIndianTime(),
+                CreatedByUserId = assignedByUserId
+            };
+
+            _context.SupportPlans.Add(customPlan);
+
+            // Deactivate any existing active plans for this account
+            var activePlans = await _context.AccountSupportPlans
+                .Where(ap => ap.AccountId == request.AccountId && ap.Status == "Active")
+                .ToListAsync();
+
+            foreach (var ap in activePlans)
+            {
+                ap.Status = "Expired";
+                ap.LastUpdatedDate = TimeHelper.GetIndianTime();
+                _context.AccountSupportPlans.Update(ap);
+            }
+
+            var startDate = TimeHelper.GetIndianTime();
+            var endDate = startDate.AddDays(customPlan.ValidityDays.Value);
+
+            var accountPlan = new AccountSupportPlan
+            {
+                AccountSupportPlanId = Guid.NewGuid(),
+                AccountId = request.AccountId,
+                SupportPlanId = customPlan.SupportPlanId,
+                StartDate = startDate,
+                EndDate = endDate,
+                Status = "Active",
+                CreatedDate = TimeHelper.GetIndianTime(),
+                LastUpdatedDate = TimeHelper.GetIndianTime(),
+                CreatedByUserId = assignedByUserId
+            };
+
+            _context.AccountSupportPlans.Add(accountPlan);
+            await _context.SaveChangesAsync();
+
+            accountPlan.SupportPlan = customPlan;
+            return MapToAccountPlanResponse(accountPlan, 0);
+        }
+
         public async Task<List<AccountSupportPlanResponse>> GetAccountPlansAsync(string accountId)
         {
             var accountPlans = await _context.AccountSupportPlans

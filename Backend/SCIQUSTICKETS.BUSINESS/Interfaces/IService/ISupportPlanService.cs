@@ -13,6 +13,7 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
         Task<SupportPlanResponse?> GetPlanByIdAsync(Guid planId);
         
         Task<AccountSupportPlanResponse> AssignPlanToAccountAsync(AssignPlanRequest request, string assignedByUserId);
+        Task<AccountSupportPlanResponse> CreateCustomPlanForAccountAsync(CreateCustomPlanForAccountRequest request, string assignedByUserId);
         Task<List<AccountSupportPlanResponse>> GetAccountPlansAsync(string accountId);
         
         Task<bool> HasAvailableQuotaAsync(string accountId);

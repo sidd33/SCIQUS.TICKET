@@ -23,6 +23,17 @@ export default function Customers() {
   const [selectedPlanId, setSelectedPlanId] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
 
+  // Custom Plan State
+  const [planMode, setPlanMode] = useState('preset'); // 'preset' | 'custom'
+  const [customPlan, setCustomPlan] = useState({
+    customPlanName: 'Custom Tier',
+    ticketQuota: 100,
+    supportHours: 'ExtendedBusinessHours',
+    includesWeekendSupport: true,
+    blockWhenExhausted: true,
+    validityDays: 30
+  });
+
   const [newCompany, setNewCompany] = useState({ name: '', email: '', phone: '', address: '' });
   const [message, setMessage] = useState(null);
 
@@ -132,6 +143,30 @@ export default function Customers() {
     } catch (err) {
       console.error('Failed to assign plan:', err);
       setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to assign Support Plan.' });
+    }
+  };
+
+  const handleAssignCustomPlan = async () => {
+    if (!selectedCustomer) return;
+    try {
+      await api.post('/SupportPlan/custom-assign', {
+        accountId: selectedCustomer.accountId,
+        customPlanName: customPlan.customPlanName,
+        ticketQuota: parseInt(customPlan.ticketQuota, 10) || 100,
+        supportHours: customPlan.supportHours,
+        includesWeekendSupport: customPlan.includesWeekendSupport,
+        blockWhenExhausted: customPlan.blockWhenExhausted,
+        validityDays: parseInt(customPlan.validityDays, 10) || 30
+      });
+      // Refresh current plan
+      const planRes = await api.get(`/SupportPlan/account/${selectedCustomer.accountId}`);
+      const plans = Array.isArray(planRes.data) ? planRes.data : [];
+      const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
+      setCurrentPlan(active || null);
+      setMessage({ type: 'success', text: 'Custom Support Plan created and assigned successfully.' });
+    } catch (err) {
+      console.error('Failed to assign custom plan:', err);
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to assign Custom Support Plan.' });
     }
   };
 
@@ -322,35 +357,137 @@ export default function Customers() {
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem', fontStyle: 'italic' }}>No active support plan assigned.</div>
               )}
               
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <select
-                  className="input-field"
-                  value={selectedPlanId}
-                  onChange={(e) => setSelectedPlanId(e.target.value)}
+              {/* PLAN SELECTION MODE TOGGLE */}
+              <div style={{ display: 'flex', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '4px', marginBottom: '1.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setPlanMode('preset')}
                   style={{
                     flex: 1,
-                    background: '#1e293b',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: planMode === 'preset' ? '#3b82f6' : 'transparent',
                     color: 'white',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '8px',
-                    padding: '0.65rem 1rem',
-                    outline: 'none',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>Select plan (Basic, Silver, Gold, Platinum)...</option>
-                  {availablePlans
-                    .filter(p => !p.name.toLowerCase().includes('premium') && !p.name.toLowerCase().includes('standard'))
-                    .map(p => (
-                      <option key={p.supportPlanId} value={p.supportPlanId} style={{ background: '#0f172a', color: 'white' }}>
-                        {p.name}
-                      </option>
-                    ))}
-                </select>
-                <button className="btn btn--primary" onClick={handleAssignPlan} disabled={!selectedPlanId} style={{ padding: '0.65rem 1.5rem' }}>
-                  Assign Plan
+                  Preset Tiers (Basic/Silver/Gold/Platinum)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPlanMode('custom')}
+                  style={{
+                    flex: 1,
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: planMode === 'custom' ? '#6366f1' : 'transparent',
+                    color: 'white',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚡ Custom Plan for Corporation
                 </button>
               </div>
+
+              {planMode === 'preset' ? (
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <select
+                    className="input-field"
+                    value={selectedPlanId}
+                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: '#1e293b',
+                      color: 'white',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '8px',
+                      padding: '0.65rem 1rem',
+                      outline: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="" style={{ background: '#0f172a', color: '#94a3b8' }}>Select plan (Basic, Silver, Gold, Platinum)...</option>
+                    {availablePlans
+                      .filter(p => !p.name.toLowerCase().includes('premium') && !p.name.toLowerCase().includes('standard'))
+                      .map(p => (
+                        <option key={p.supportPlanId} value={p.supportPlanId} style={{ background: '#0f172a', color: 'white' }}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
+                  <button className="btn btn--primary" onClick={handleAssignPlan} disabled={!selectedPlanId} style={{ padding: '0.65rem 1.5rem' }}>
+                    Assign Plan
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', padding: '1.25rem', borderRadius: '10px' }}>
+                  <div>
+                    <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Custom Plan Name</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={customPlan.customPlanName}
+                      onChange={e => setCustomPlan({ ...customPlan, customPlanName: e.target.value })}
+                      style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Ticket Quota / Month</label>
+                      <input
+                        type="number"
+                        className="input-field"
+                        value={customPlan.ticketQuota}
+                        onChange={e => setCustomPlan({ ...customPlan, ticketQuota: e.target.value })}
+                        style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Support Hours</label>
+                      <select
+                        className="input-field"
+                        value={customPlan.supportHours}
+                        onChange={e => setCustomPlan({ ...customPlan, supportHours: e.target.value })}
+                        style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                      >
+                        <option value="StandardBusinessHours" style={{ background: '#0f172a' }}>Standard Business Hours</option>
+                        <option value="ExtendedBusinessHours" style={{ background: '#0f172a' }}>Extended Hours (Gold)</option>
+                        <option value="24x7" style={{ background: '#0f172a' }}>24x7 Dedicated (Platinum)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={customPlan.includesWeekendSupport}
+                        onChange={e => setCustomPlan({ ...customPlan, includesWeekendSupport: e.target.checked })}
+                      />
+                      Weekend Support
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={customPlan.blockWhenExhausted}
+                        onChange={e => setCustomPlan({ ...customPlan, blockWhenExhausted: e.target.checked })}
+                      />
+                      Block on Quota Exhaustion
+                    </label>
+                  </div>
+
+                  <button className="btn btn--primary" onClick={handleAssignCustomPlan} style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', padding: '0.65rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+                    ⚡ Create & Assign Custom Plan
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* DEDICATED EMPLOYEES SECTION */}
