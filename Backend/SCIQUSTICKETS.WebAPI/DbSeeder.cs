@@ -682,15 +682,26 @@ namespace SCIQUSTICKETS.WebAPI
                 }
             }
 
-			// 12. Seed WhatsApp Channel Config
-			if (!context.WhatsAppChannelConfigs.Any())
-			{
-				var priorityObj = context.TicketPriorities.FirstOrDefault();
-				var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
-				var deptObj = context.Departments.FirstOrDefault();
-				var subTypeObj = context.TicketSubTypes.FirstOrDefault();
-				var typeObj = context.TicketTypes.FirstOrDefault(t => subTypeObj != null && t.TicketTypeId == subTypeObj.TicketTypeId);
+			// 12. Seed / Update WhatsApp Channel Config
+			var priorityObj = context.TicketPriorities.FirstOrDefault();
+			var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
+			var deptObj = context.Departments.FirstOrDefault();
+			var subTypeObj = context.TicketSubTypes.FirstOrDefault();
+			var typeObj = context.TicketTypes.FirstOrDefault(t => subTypeObj != null && t.TicketTypeId == subTypeObj.TicketTypeId) ?? context.TicketTypes.FirstOrDefault();
 
+			var existingWaConfig = context.WhatsAppChannelConfigs.FirstOrDefault();
+			if (existingWaConfig != null)
+			{
+				existingWaConfig.IsEnabled = true;
+				existingWaConfig.AutoCreateEnabled = true;
+				if (existingWaConfig.DefaultPriorityId == Guid.Empty && priorityObj != null) existingWaConfig.DefaultPriorityId = priorityObj.TicketPriorityId;
+				if (existingWaConfig.DefaultBusinessImpactId == Guid.Empty && impactObj != null) existingWaConfig.DefaultBusinessImpactId = impactObj.TicketBusinessTypeImpactId;
+				if (existingWaConfig.DefaultDepartmentId == Guid.Empty && deptObj != null) existingWaConfig.DefaultDepartmentId = deptObj.DepartmentId;
+				if (existingWaConfig.DefaultTicketTypeId == Guid.Empty && typeObj != null) existingWaConfig.DefaultTicketTypeId = typeObj.TicketTypeId;
+				if (existingWaConfig.DefaultTicketSubTypeId == Guid.Empty && subTypeObj != null) existingWaConfig.DefaultTicketSubTypeId = subTypeObj.TicketSubTypeId;
+			}
+			else
+			{
 				var config = serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
 
 				context.WhatsAppChannelConfigs.Add(new WhatsAppChannelConfig
@@ -715,9 +726,9 @@ namespace SCIQUSTICKETS.WebAPI
 					DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
 					DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
 				});
-
-				await context.SaveChangesAsync();
 			}
+
+			await context.SaveChangesAsync();
 
 			// 13. Seed Support Plans and Contacts for Local Dev Testing
 			if (!context.SupportPlans.Any(p => p.Name == "Platinum"))
@@ -855,6 +866,21 @@ namespace SCIQUSTICKETS.WebAPI
 							PersonName = "Siddhartha Swamy (WhatsApp)",
 							Email = "siddharthaswamy_wa@apextech.com",
 							MobileNumber = "+919022343601",
+							IsDeleted = false,
+							CreatedDate = DateTime.UtcNow,
+							LastUpdatedDate = DateTime.UtcNow
+						});
+					}
+
+					if (!context.AccountContacts.Any(c => c.MobileNumber != null && c.MobileNumber.Contains("7000887868")))
+					{
+						context.AccountContacts.Add(new AccountContacts
+						{
+							AccountContactsId = Guid.NewGuid(),
+							AccountId = apexAccount.AccountId,
+							PersonName = "WhatsApp User (+917000887868)",
+							Email = "wa_7000887868@apextech.com",
+							MobileNumber = "+917000887868",
 							IsDeleted = false,
 							CreatedDate = DateTime.UtcNow,
 							LastUpdatedDate = DateTime.UtcNow

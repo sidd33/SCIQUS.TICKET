@@ -35,10 +35,13 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             }
 
             var phone = message.FromPhone.Trim();
-            if (!phone.StartsWith("+")) phone = "+" + phone;
+            var digitsOnly = new string(phone.Where(char.IsDigit).ToArray());
 
             var accountContact = await _context.AccountContacts
-                .FirstOrDefaultAsync(c => c.MobileNumber == phone || c.AlternateMobileNumber == phone);
+                .FirstOrDefaultAsync(c => c.MobileNumber == phone ||
+                                          c.AlternateMobileNumber == phone ||
+                                          (digitsOnly.Length >= 10 && c.MobileNumber != null && c.MobileNumber.Contains(digitsOnly.Substring(digitsOnly.Length - 10))) ||
+                                          (digitsOnly.Length >= 10 && c.AlternateMobileNumber != null && c.AlternateMobileNumber.Contains(digitsOnly.Substring(digitsOnly.Length - 10))));
 
             var now = SCIQUSTICKETS.COMMON.Helpers.TimeHelper.GetIndianTime();
 
@@ -65,7 +68,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 var guestAccount = new SCIQUSTICKETS.DATA.DomainModels.Account
                 {
                     AccountId = newUserId,
-                    AccountName = "WhatsApp Guest",
+                    AccountName = "WhatsApp Guest (" + phone + ")",
                     Email = user.Email,
                     RegisteredMobileNumber = phone,
                     Status = true,
@@ -78,7 +81,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 {
                     AccountContactsId = Guid.NewGuid(),
                     AccountId = guestAccount.AccountId,
-                    PersonName = "WhatsApp User",
+                    PersonName = "WhatsApp User (" + phone + ")",
                     MobileNumber = phone,
                     CreatedDate = now,
                     LastUpdatedDate = now
@@ -130,6 +133,28 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 {
                     try
                     {
+                        // Ensure master IDs are non-empty Guid by using dynamic fallbacks
+                        var defaultType = (config.DefaultTicketTypeId != Guid.Empty ? config.DefaultTicketTypeId : null) 
+                                          ?? (await _context.TicketTypes.FirstOrDefaultAsync())?.TicketTypeId;
+
+                        var defaultSubType = (config.DefaultTicketSubTypeId != Guid.Empty ? config.DefaultTicketSubTypeId : null) 
+                                             ?? (await _context.TicketSubTypes.FirstOrDefaultAsync(st => defaultType != null && st.TicketTypeId == defaultType))?.TicketSubTypeId 
+                                             ?? (await _context.TicketSubTypes.FirstOrDefaultAsync())?.TicketSubTypeId;
+
+                        var defaultPriority = (config.DefaultPriorityId != Guid.Empty ? config.DefaultPriorityId : null) 
+                                              ?? (await _context.TicketPriorities.FirstOrDefaultAsync())?.PriorityId;
+
+                        var defaultImpact = (config.DefaultBusinessImpactId != Guid.Empty ? config.DefaultBusinessImpactId : null) 
+                                            ?? (await _context.BusinessImpacts.FirstOrDefaultAsync())?.BusinessImpactId;
+
+                        var defaultDept = (config.DefaultDepartmentId != Guid.Empty ? config.DefaultDepartmentId : null) 
+                                          ?? (await _context.Departments.FirstOrDefaultAsync())?.DepartmentId;
+
+                        if (defaultType == null || defaultSubType == null || defaultPriority == null || defaultImpact == null || defaultDept == null)
+                        {
+                            throw new InvalidOperationException("Master data for ticket auto-creation is missing.");
+                        }
+
                         // Create new ticket using core TicketService
                         var createReq = new SCIQUSTICKETS.BUSINESS.BusinessModels.RequestDTOs.TicketRequestDTOs.CreateTicketRequest
                         {
@@ -137,11 +162,11 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                             Description = message.Body ?? "[Media]",
                             AccountId = accountContact.AccountId,
                             SourceType = "WhatsApp",
-                            TicketTypeId = config.DefaultTicketTypeId,
-                            TicketSubTypeId = config.DefaultTicketSubTypeId,
-                            PriorityId = config.DefaultPriorityId,
-                            BusinessImpactId = config.DefaultBusinessImpactId,
-                            DepartmentId = config.DefaultDepartmentId,
+                            TicketTypeId = defaultType.Value,
+                            TicketSubTypeId = defaultSubType.Value,
+                            PriorityId = defaultPriority.Value,
+                            BusinessImpactId = defaultImpact.Value,
+                            DepartmentId = defaultDept.Value,
                             AssignedToUserId = config.DefaultAssigneeId,
                             IsInternal = true // Bypass support plan checks for auto-created tickets
                         };
