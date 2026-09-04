@@ -683,22 +683,22 @@ namespace SCIQUSTICKETS.WebAPI
             }
 
 			// 12. Seed / Update WhatsApp Channel Config
-			var priorityObj = context.TicketPriorities.FirstOrDefault();
-			var impactObj = context.TicketBusinessTypeImpacts.FirstOrDefault();
-			var deptObj = context.Departments.FirstOrDefault();
-			var subTypeObj = context.TicketSubTypes.FirstOrDefault();
-			var typeObj = context.TicketTypes.FirstOrDefault(t => subTypeObj != null && t.TicketTypeId == subTypeObj.TicketTypeId) ?? context.TicketTypes.FirstOrDefault();
+			var waPriority = context.TicketPriorities.FirstOrDefault();
+			var waImpact = context.TicketBusinessTypeImpacts.FirstOrDefault();
+			var waDept = context.Departments.FirstOrDefault();
+			var waSubType = context.TicketSubTypes.FirstOrDefault();
+			var waType = context.TicketTypes.FirstOrDefault(t => waSubType != null && t.TicketTypeId == waSubType.TicketTypeId) ?? context.TicketTypes.FirstOrDefault();
 
 			var existingWaConfig = context.WhatsAppChannelConfigs.FirstOrDefault();
 			if (existingWaConfig != null)
 			{
 				existingWaConfig.IsEnabled = true;
 				existingWaConfig.AutoCreateEnabled = true;
-				if (existingWaConfig.DefaultPriorityId == Guid.Empty && priorityObj != null) existingWaConfig.DefaultPriorityId = priorityObj.TicketPriorityId;
-				if (existingWaConfig.DefaultBusinessImpactId == Guid.Empty && impactObj != null) existingWaConfig.DefaultBusinessImpactId = impactObj.TicketBusinessTypeImpactId;
-				if (existingWaConfig.DefaultDepartmentId == Guid.Empty && deptObj != null) existingWaConfig.DefaultDepartmentId = deptObj.DepartmentId;
-				if (existingWaConfig.DefaultTicketTypeId == Guid.Empty && typeObj != null) existingWaConfig.DefaultTicketTypeId = typeObj.TicketTypeId;
-				if (existingWaConfig.DefaultTicketSubTypeId == Guid.Empty && subTypeObj != null) existingWaConfig.DefaultTicketSubTypeId = subTypeObj.TicketSubTypeId;
+				if (existingWaConfig.DefaultPriorityId == Guid.Empty && waPriority != null) existingWaConfig.DefaultPriorityId = waPriority.TicketPriorityId;
+				if (existingWaConfig.DefaultBusinessImpactId == Guid.Empty && waImpact != null) existingWaConfig.DefaultBusinessImpactId = waImpact.TicketBusinessTypeImpactId;
+				if (existingWaConfig.DefaultDepartmentId == Guid.Empty && waDept != null) existingWaConfig.DefaultDepartmentId = waDept.DepartmentId;
+				if (existingWaConfig.DefaultTicketTypeId == Guid.Empty && waType != null) existingWaConfig.DefaultTicketTypeId = waType.TicketTypeId;
+				if (existingWaConfig.DefaultTicketSubTypeId == Guid.Empty && waSubType != null) existingWaConfig.DefaultTicketSubTypeId = waSubType.TicketSubTypeId;
 			}
 			else
 			{
@@ -720,11 +720,11 @@ namespace SCIQUSTICKETS.WebAPI
 					IsEnabled = true,
 					AutoCreateEnabled = true,
 
-					DefaultPriorityId = priorityObj?.TicketPriorityId ?? Guid.Empty,
-					DefaultBusinessImpactId = impactObj?.TicketBusinessTypeImpactId ?? Guid.Empty,
-					DefaultDepartmentId = deptObj?.DepartmentId ?? Guid.Empty,
-					DefaultTicketTypeId = typeObj?.TicketTypeId ?? Guid.Empty,
-					DefaultTicketSubTypeId = subTypeObj?.TicketSubTypeId ?? Guid.Empty
+					DefaultPriorityId = waPriority?.TicketPriorityId ?? Guid.Empty,
+					DefaultBusinessImpactId = waImpact?.TicketBusinessTypeImpactId ?? Guid.Empty,
+					DefaultDepartmentId = waDept?.DepartmentId ?? Guid.Empty,
+					DefaultTicketTypeId = waType?.TicketTypeId ?? Guid.Empty,
+					DefaultTicketSubTypeId = waSubType?.TicketSubTypeId ?? Guid.Empty
 				});
 			}
 
