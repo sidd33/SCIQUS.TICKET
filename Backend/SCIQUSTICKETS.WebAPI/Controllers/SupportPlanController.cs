@@ -55,6 +55,15 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             return Ok(result);
         }
 
+        [HttpPost("custom-assign")]
+        [Authorize(Policy = "supportplan.manage")]
+        public async Task<ActionResult<AccountSupportPlanResponse>> CustomAssignPlan(CreateCustomPlanForAccountRequest request)
+        {
+            var userId = User.Identity?.Name ?? "SYSTEM";
+            var result = await _supportPlanService.CreateCustomPlanForAccountAsync(request, userId);
+            return Ok(result);
+        }
+
         [HttpGet("account/{accountId}")]
         public async Task<ActionResult<List<AccountSupportPlanResponse>>> GetAccountPlans(string accountId)
         {
