@@ -493,10 +493,15 @@ export default function Customers() {
             {/* DEDICATED EMPLOYEES SECTION */}
             {(() => {
               const planName = (currentPlan?.planName || currentPlan?.supportPlanName || currentPlan?.name || '').toLowerCase();
-              const isPlatinum = planName.includes('platinum');
-              const isGold = planName.includes('gold');
-              const isTierAllowed = isPlatinum || isGold;
-              const maxAllowed = isPlatinum ? 1 : isGold ? 3 : 0;
+              const periodType = (currentPlan?.periodType || currentPlan?.supportPlan?.periodType || '').toLowerCase();
+              const supportHours = (currentPlan?.supportHours || currentPlan?.supportPlan?.supportHours || '');
+              const isCustom = periodType === 'custom';
+              
+              const isPlatinum = planName.includes('platinum') || (isCustom && supportHours === '24x7');
+              const isGold = planName.includes('gold') || (isCustom && supportHours === 'ExtendedBusinessHours');
+              const isCustomStandard = isCustom && !isPlatinum && !isGold;
+              const isTierAllowed = isPlatinum || isGold || isCustomStandard;
+              const maxAllowed = isPlatinum ? 1 : isGold ? 3 : isCustomStandard ? 5 : 0;
               const isLimitReached = isTierAllowed && dedicatedEmployees.length >= maxAllowed;
 
               return (
@@ -515,11 +520,16 @@ export default function Customers() {
                         {dedicatedEmployees.length} / 3 Dedicated Agents
                       </span>
                     )}
+                    {isCustomStandard && (
+                      <span className="badge badge--resolved" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
+                        {dedicatedEmployees.length} / {maxAllowed} Custom Dedicated Agents
+                      </span>
+                    )}
                   </div>
 
                   {!isTierAllowed && (
                     <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.2)', color: '#fef08a', padding: '0.85rem 1rem', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                      ⚠️ Dedicated agents are exclusive to <strong>Gold</strong> (up to 3 agents) and <strong>Platinum</strong> (1 dedicated 24/7 agent) plans. Upgrade the plan above to assign dedicated staff.
+                      ⚠️ Dedicated agents are exclusive to <strong>Gold</strong>, <strong>Platinum</strong>, or <strong>Custom</strong> plans. Upgrade or assign a custom plan above to assign dedicated staff.
                     </div>
                   )}
 
