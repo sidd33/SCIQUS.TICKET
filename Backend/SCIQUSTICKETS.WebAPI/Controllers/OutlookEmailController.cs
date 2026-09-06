@@ -23,7 +23,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             _configuration = configuration;
         }
 
-        // GET: /api/OutlookEmail/Login
+        
         [HttpGet("Login")]
         public IActionResult Login()
         {
@@ -37,7 +37,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             return Redirect(oauthUrl);
         }
 
-        // GET: /api/OutlookEmail/outlook/callback
+
         [HttpGet("outlook/callback")]
         public async Task<IActionResult> Callback([FromQuery] string code, [FromQuery] string error, [FromQuery] string error_description)
         {
@@ -87,7 +87,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                     return BadRequest("Access token was missing in Microsoft response.");
                 }
 
-                // Fetch actual email address from Microsoft Graph API
+                
                 string authenticatedEmail = "unknown_microsoft_account@outlook.com";
                 try
                 {
@@ -109,7 +109,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
                     Console.WriteLine("Failed to fetch profile from Graph API: " + ex.Message);
                 }
 
-                // Query database items to set as defaults (avoid foreign key validation failures)
+                
                 var priorityObj = await _context.TicketPriorities.FirstOrDefaultAsync();
                 var impactObj = await _context.TicketBusinessTypeImpacts.FirstOrDefaultAsync();
                 var deptObj = await _context.Departments.FirstOrDefaultAsync();
@@ -152,7 +152,7 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // Redirect back to frontend on success
+                
                 return Redirect("http://localhost:5174/admin/email-ticket-config?outlook_linked=true");
             }
             catch (Exception ex)

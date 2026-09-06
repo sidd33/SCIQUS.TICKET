@@ -568,8 +568,12 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 						activeEmployees = planEmployees;
 					}
 
-					// 2. Account Dedicated Routing
-					if (activePlan.AssignmentStrategy == "AllocatedGroup" || activePlan.AssignmentStrategy == "DedicatedPrimary")
+					// 2. Account Dedicated Routing (Applies to AllocatedGroup, DedicatedPrimary, or Custom plans)
+					bool isDedicatedStrategy = activePlan.AssignmentStrategy == "AllocatedGroup" || 
+											   activePlan.AssignmentStrategy == "DedicatedPrimary" || 
+											   activePlan.PeriodType == "Custom";
+
+					if (isDedicatedStrategy)
 					{
 						var dedicatedEmployeeIds = await _context.AccountDedicatedEmployees
 							.AsNoTracking()

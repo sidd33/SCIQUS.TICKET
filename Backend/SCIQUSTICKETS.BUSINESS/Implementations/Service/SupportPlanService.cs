@@ -145,7 +145,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 ValidityDays = request.ValidityDays > 0 ? request.ValidityDays : 30,
                 BlockWhenExhausted = request.BlockWhenExhausted,
                 SupportHours = request.SupportHours ?? "StandardBusinessHours",
-                IncludesWeekendSupport = request.IncludesWeekendSupport,
+                AssignmentStrategy = request.SupportHours == "24x7" ? "DedicatedPrimary" : "AllocatedGroup",
                 Status = true,
                 CreatedDate = TimeHelper.GetIndianTime(),
                 LastUpdatedDate = TimeHelper.GetIndianTime(),
@@ -367,21 +367,31 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             }
 
             var planName = activeAccountPlan.SupportPlan.Name?.ToLower() ?? "";
+            bool isCustom = activeAccountPlan.SupportPlan.PeriodType == "Custom";
+            bool isPlatinum = planName.Contains("platinum") || (isCustom && activeAccountPlan.SupportPlan.SupportHours == "24x7");
+            bool isGold = planName.Contains("gold") || (isCustom && activeAccountPlan.SupportPlan.SupportHours == "ExtendedBusinessHours");
+            bool isCustomStandard = isCustom && !isPlatinum && !isGold;
+
             if (planName.Contains("basic") || planName.Contains("silver"))
             {
-                throw new InvalidOperationException($"Dedicated employees are not available on the {activeAccountPlan.SupportPlan.Name} plan. Upgrade to Gold or Platinum.");
+                throw new InvalidOperationException($"Dedicated employees are not available on the {activeAccountPlan.SupportPlan.Name} plan. Upgrade to Gold, Platinum, or a Custom plan.");
             }
 
             var currentDedicatedCount = await _context.AccountDedicatedEmployees.CountAsync(ade => ade.AccountId == request.AccountId);
 
-            if (planName.Contains("platinum") && currentDedicatedCount >= 1)
+            if (isPlatinum && currentDedicatedCount >= 1)
             {
-                throw new InvalidOperationException("Platinum plan allows a maximum of 1 dedicated 24/7 employee.");
+                throw new InvalidOperationException("24x7 / Platinum plan allows a maximum of 1 dedicated 24/7 employee.");
             }
 
-            if (planName.Contains("gold") && currentDedicatedCount >= 3)
+            if (isGold && currentDedicatedCount >= 3)
             {
-                throw new InvalidOperationException("Gold plan allows a maximum of 3 dedicated employees.");
+                throw new InvalidOperationException("Extended Hours / Gold plan allows a maximum of 3 dedicated employees.");
+            }
+
+            if (isCustomStandard && currentDedicatedCount >= 5)
+            {
+                throw new InvalidOperationException("Custom Standard plan allows a maximum of 5 dedicated employees.");
             }
 
             var existing = await _context.AccountDedicatedEmployees
