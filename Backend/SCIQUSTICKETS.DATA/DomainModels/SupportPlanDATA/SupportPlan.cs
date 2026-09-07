@@ -17,9 +17,11 @@ namespace SCIQUSTICKETS.DATA.DomainModels.SupportPlanDATA
         public int? ValidityDays { get; set; }
         
         public bool BlockWhenExhausted { get; set; } = true;
-        
-        // --- Advanced CRM Features (Tiers) ---
-        public Guid? DefaultPriorityId { get; set; }
+
+		public bool EmailNotificationsEnabled { get; set; } = false;
+
+		// --- Advanced CRM Features (Tiers) ---
+		public Guid? DefaultPriorityId { get; set; }
         
         // "StandardBusinessHours", "ExtendedBusinessHours", "24x7"
         public string SupportHours { get; set; } = "StandardBusinessHours";

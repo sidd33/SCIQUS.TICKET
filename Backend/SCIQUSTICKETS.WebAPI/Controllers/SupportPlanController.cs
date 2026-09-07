@@ -102,5 +102,18 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
             if (!result) return NotFound();
             return NoContent();
         }
-    }
+
+		[HttpGet("debug-email/{id:guid}")]
+		[Authorize(Policy = "supportplan.manage")]
+		public async Task<IActionResult> DebugEmail(Guid id)
+		{
+			var result = await _supportPlanService.GetPlanByIdAsync(id);
+			return Ok(new
+			{
+				result.SupportPlanId,
+				result.Name,
+				result.EmailNotificationsEnabled
+			});
+		}
+	}
 }

@@ -22,47 +22,57 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         public async Task<SupportPlanResponse> CreatePlanAsync(CreateSupportPlanRequest request, string createdByUserId)
         {
-            var plan = new SupportPlan
-            {
-                SupportPlanId = Guid.NewGuid(),
-                Name = request.Name,
-                Description = request.Description,
-                TicketQuota = request.TicketQuota,
-                PeriodType = request.PeriodType,
-                ValidityDays = request.ValidityDays,
-                BlockWhenExhausted = request.BlockWhenExhausted,
-                CreatedDate = TimeHelper.GetIndianTime(),
-                LastUpdatedDate = TimeHelper.GetIndianTime(),
-                CreatedByUserId = createdByUserId
-            };
+			var plan = new SupportPlan
+			{
+				SupportPlanId = Guid.NewGuid(),
+				Name = request.Name,
+				Description = request.Description,
+				TicketQuota = request.TicketQuota,
+				PeriodType = request.PeriodType,
+				ValidityDays = request.ValidityDays,
+				BlockWhenExhausted = request.BlockWhenExhausted,
+				EmailNotificationsEnabled = request.EmailNotificationsEnabled,
+				CreatedDate = TimeHelper.GetIndianTime(),
+				LastUpdatedDate = TimeHelper.GetIndianTime(),
+				CreatedByUserId = createdByUserId
+			};
 
-            _context.SupportPlans.Add(plan);
+			_context.SupportPlans.Add(plan);
             await _context.SaveChangesAsync();
 
             return MapToResponse(plan);
         }
 
-        public async Task<SupportPlanResponse> UpdatePlanAsync(Guid planId, UpdateSupportPlanRequest request, string updatedByUserId)
-        {
-            var plan = await _context.SupportPlans.FindAsync(planId);
-            if (plan == null) throw new KeyNotFoundException("Support Plan not found");
+		public async Task<SupportPlanResponse> UpdatePlanAsync(
+	 Guid planId,
+	 UpdateSupportPlanRequest request,
+	 string updatedByUserId)
+		{
+			var plan = await _context.SupportPlans.FindAsync(planId);
 
-            plan.Name = request.Name;
-            plan.Description = request.Description;
-            plan.TicketQuota = request.TicketQuota;
-            plan.PeriodType = request.PeriodType;
-            plan.ValidityDays = request.ValidityDays;
-            plan.BlockWhenExhausted = request.BlockWhenExhausted;
-            plan.Status = request.Status;
-            plan.LastUpdatedDate = TimeHelper.GetIndianTime();
+			if (plan == null)
+				throw new KeyNotFoundException("Support Plan not found");
 
-            _context.SupportPlans.Update(plan);
-            await _context.SaveChangesAsync();
+			plan.Name = request.Name;
+			plan.Description = request.Description;
+			plan.TicketQuota = request.TicketQuota;
+			plan.PeriodType = request.PeriodType;
+			plan.ValidityDays = request.ValidityDays;
+			plan.BlockWhenExhausted = request.BlockWhenExhausted;
+			plan.EmailNotificationsEnabled = request.EmailNotificationsEnabled;
+			plan.Status = request.Status;
+			plan.LastUpdatedDate = TimeHelper.GetIndianTime();
 
-            return MapToResponse(plan);
-        }
+			await _context.SaveChangesAsync();
 
-        public async Task<List<SupportPlanResponse>> GetAllPlansAsync()
+			var updatedPlan = await _context.SupportPlans
+				.AsNoTracking()
+				.FirstAsync(p => p.SupportPlanId == planId);
+
+			return MapToResponse(updatedPlan);
+		}
+
+		public async Task<List<SupportPlanResponse>> GetAllPlansAsync()
         {
             var plans = await _context.SupportPlans.ToListAsync();
             return plans.Select(MapToResponse).ToList();
@@ -148,6 +158,7 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                 PeriodType = "Custom",
                 ValidityDays = request.ValidityDays > 0 ? request.ValidityDays : 365,
                 BlockWhenExhausted = isUnlimited ? false : request.BlockWhenExhausted,
+                EmailNotificationsEnabled = request.EmailNotificationsEnabled,
                 SupportHours = isUnlimited ? "24x7" : (request.SupportHours ?? "StandardBusinessHours"),
                 IncludesWeekendSupport = isUnlimited ? true : request.IncludesWeekendSupport,
                 AssignmentStrategy = isUnlimited || request.SupportHours == "24x7" ? "DedicatedPrimary" : "AllocatedGroup",
@@ -437,18 +448,19 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 
         private static SupportPlanResponse MapToResponse(SupportPlan plan)
         {
-            return new SupportPlanResponse
-            {
-                SupportPlanId = plan.SupportPlanId,
-                Name = plan.Name,
-                Description = plan.Description,
-                TicketQuota = plan.TicketQuota,
-                PeriodType = plan.PeriodType,
-                ValidityDays = plan.ValidityDays,
-                BlockWhenExhausted = plan.BlockWhenExhausted,
-                Status = plan.Status
-            };
-        }
+			return new SupportPlanResponse
+			{
+				SupportPlanId = plan.SupportPlanId,
+				Name = plan.Name,
+				Description = plan.Description,
+				TicketQuota = plan.TicketQuota,
+				PeriodType = plan.PeriodType,
+				ValidityDays = plan.ValidityDays,
+				BlockWhenExhausted = plan.BlockWhenExhausted,
+				Status = plan.Status,
+				EmailNotificationsEnabled = plan.EmailNotificationsEnabled
+			};
+		}
 
         private static AccountSupportPlanResponse MapToAccountPlanResponse(AccountSupportPlan accountPlan, int consumedCount)
         {

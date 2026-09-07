@@ -13,7 +13,9 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public string PeriodType { get; set; } = "Monthly";
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; } = true;
-    }
+
+		public bool EmailNotificationsEnabled { get; set; } = false;
+	}
 
     public class UpdateSupportPlanRequest
     {
@@ -26,7 +28,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; } = true;
         public bool Status { get; set; } = true;
-    }
+		public bool EmailNotificationsEnabled { get; set; } = false;
+	}
 
     public class SupportPlanResponse
     {
@@ -38,7 +41,9 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; }
         public bool Status { get; set; }
-    }
+
+		public bool EmailNotificationsEnabled { get; set; }
+	}
 
     public class AssignPlanRequest
     {
@@ -60,9 +65,10 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public bool BlockWhenExhausted { get; set; } = true;
         public bool IsUnlimited { get; set; } = false;
         public int ValidityDays { get; set; } = 30;
+        public bool EmailNotificationsEnabled { get; set; } = false;
     }
 
-    public class AccountSupportPlanResponse
+	public class AccountSupportPlanResponse
     {
         public Guid AccountSupportPlanId { get; set; }
         public string AccountId { get; set; } = null!;
