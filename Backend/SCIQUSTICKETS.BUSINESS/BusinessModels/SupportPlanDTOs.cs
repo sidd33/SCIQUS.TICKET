@@ -58,6 +58,7 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public string SupportHours { get; set; } = "StandardBusinessHours";
         public bool IncludesWeekendSupport { get; set; } = false;
         public bool BlockWhenExhausted { get; set; } = true;
+        public bool IsUnlimited { get; set; } = false;
         public int ValidityDays { get; set; } = 30;
     }
 

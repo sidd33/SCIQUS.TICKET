@@ -134,18 +134,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
             var account = await _context.Accounts.FindAsync(request.AccountId);
             if (account == null) throw new KeyNotFoundException("Account not found.");
 
-            // Create dedicated custom SupportPlan record
+            bool isUnlimited = request.IsUnlimited;
             var customPlan = new SupportPlan
             {
                 SupportPlanId = Guid.NewGuid(),
-                Name = string.IsNullOrWhiteSpace(request.CustomPlanName) ? "Custom Plan" : request.CustomPlanName.Trim(),
-                Description = $"Custom plan created for {account.AccountName}",
-                TicketQuota = request.TicketQuota,
+                Name = isUnlimited 
+                    ? (string.IsNullOrWhiteSpace(request.CustomPlanName) || request.CustomPlanName == "Custom Plan" ? "Unlimited Enterprise Plan" : request.CustomPlanName.Trim()) 
+                    : (string.IsNullOrWhiteSpace(request.CustomPlanName) ? "Custom Plan" : request.CustomPlanName.Trim()),
+                Description = isUnlimited 
+                    ? $"Unlimited Enterprise Support Plan created for {account.AccountName}"
+                    : $"Custom plan created for {account.AccountName}",
+                TicketQuota = isUnlimited ? 999999 : request.TicketQuota,
                 PeriodType = "Custom",
-                ValidityDays = request.ValidityDays > 0 ? request.ValidityDays : 30,
-                BlockWhenExhausted = request.BlockWhenExhausted,
-                SupportHours = request.SupportHours ?? "StandardBusinessHours",
-                AssignmentStrategy = request.SupportHours == "24x7" ? "DedicatedPrimary" : "AllocatedGroup",
+                ValidityDays = request.ValidityDays > 0 ? request.ValidityDays : 365,
+                BlockWhenExhausted = isUnlimited ? false : request.BlockWhenExhausted,
+                SupportHours = isUnlimited ? "24x7" : (request.SupportHours ?? "StandardBusinessHours"),
+                IncludesWeekendSupport = isUnlimited ? true : request.IncludesWeekendSupport,
+                AssignmentStrategy = isUnlimited || request.SupportHours == "24x7" ? "DedicatedPrimary" : "AllocatedGroup",
                 Status = true,
                 CreatedDate = TimeHelper.GetIndianTime(),
                 LastUpdatedDate = TimeHelper.GetIndianTime(),
