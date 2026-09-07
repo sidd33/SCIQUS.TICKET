@@ -370,7 +370,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 		public async Task<TicketResponse> CreateAsync(string userId, CreateTicketRequest request)
 		{
-			Console.WriteLine("========== BUG-057 CREATEASYNC REACHED ==========");
 			// Resolve the customer's AccountId when it is not supplied by the frontend.
 			// In this project, the customer AspNetUsers.Id matches Accounts.AccountId.
 			if (!request.IsInternal && string.IsNullOrWhiteSpace(request.AccountId))
@@ -393,18 +392,6 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				{
 					throw new InvalidOperationException(
 						"Ticket creation failed: Support plan quota exhausted or no active plan found.");
-				}
-
-				var activePlan = await _context.AccountSupportPlans
-					.Include(asp => asp.SupportPlan)
-					.Where(asp => asp.AccountId == request.AccountId && asp.Status == "Active" && 
-								  asp.StartDate <= DateTime.UtcNow && asp.EndDate >= DateTime.UtcNow)
-					.Select(asp => asp.SupportPlan)
-					.FirstOrDefaultAsync();
-
-				if (activePlan != null && activePlan.DefaultPriorityId.HasValue)
-				{
-					request.PriorityId = activePlan.DefaultPriorityId.Value;
 				}
 			}
 

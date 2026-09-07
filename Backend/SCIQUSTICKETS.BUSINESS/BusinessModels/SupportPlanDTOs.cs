@@ -13,7 +13,9 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public string PeriodType { get; set; } = "Monthly";
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; } = true;
-    }
+
+		public bool EmailNotificationsEnabled { get; set; } = false;
+	}
 
     public class UpdateSupportPlanRequest
     {
@@ -26,7 +28,8 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; } = true;
         public bool Status { get; set; } = true;
-    }
+		public bool EmailNotificationsEnabled { get; set; } = false;
+	}
 
     public class SupportPlanResponse
     {
@@ -38,7 +41,9 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         public int? ValidityDays { get; set; }
         public bool BlockWhenExhausted { get; set; }
         public bool Status { get; set; }
-    }
+
+		public bool EmailNotificationsEnabled { get; set; }
+	}
 
     public class AssignPlanRequest
     {
@@ -47,21 +52,23 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         // The service will automatically set StartDate to UTC now, and EndDate based on ValidityDays or a default (e.g. 1 year if monthly/yearly without validity days).
     }
 
-    public class CreateCustomPlanForAccountRequest
-    {
-        public string AccountId { get; set; } = null!;
-        public string CustomPlanName { get; set; } = "Custom Plan";
-        
-        [Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
-        public int TicketQuota { get; set; } = 100;
-        
-        public string SupportHours { get; set; } = "StandardBusinessHours";
-        public bool IncludesWeekendSupport { get; set; } = false;
-        public bool BlockWhenExhausted { get; set; } = true;
-        public int ValidityDays { get; set; } = 30;
-    }
+	public class CreateCustomPlanForAccountRequest
+	{
+		public string AccountId { get; set; } = null!;
+		public string CustomPlanName { get; set; } = "Custom Plan";
 
-    public class AccountSupportPlanResponse
+		[Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
+		public int TicketQuota { get; set; } = 100;
+
+		public string SupportHours { get; set; } = "StandardBusinessHours";
+		public bool IncludesWeekendSupport { get; set; } = false;
+		public bool BlockWhenExhausted { get; set; } = true;
+		public int ValidityDays { get; set; } = 30;
+
+		public bool EmailNotificationsEnabled { get; set; } = false;
+	}
+
+	public class AccountSupportPlanResponse
     {
         public Guid AccountSupportPlanId { get; set; }
         public string AccountId { get; set; } = null!;
