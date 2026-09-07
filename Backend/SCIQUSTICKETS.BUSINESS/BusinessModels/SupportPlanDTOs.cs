@@ -52,21 +52,21 @@ namespace SCIQUSTICKETS.BUSINESS.BusinessModels.SupportPlanDTOs
         // The service will automatically set StartDate to UTC now, and EndDate based on ValidityDays or a default (e.g. 1 year if monthly/yearly without validity days).
     }
 
-	public class CreateCustomPlanForAccountRequest
-	{
-		public string AccountId { get; set; } = null!;
-		public string CustomPlanName { get; set; } = "Custom Plan";
-
-		[Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
-		public int TicketQuota { get; set; } = 100;
-
-		public string SupportHours { get; set; } = "StandardBusinessHours";
-		public bool IncludesWeekendSupport { get; set; } = false;
-		public bool BlockWhenExhausted { get; set; } = true;
-		public int ValidityDays { get; set; } = 30;
-
-		public bool EmailNotificationsEnabled { get; set; } = false;
-	}
+    public class CreateCustomPlanForAccountRequest
+    {
+        public string AccountId { get; set; } = null!;
+        public string CustomPlanName { get; set; } = "Custom Plan";
+        
+        [Range(0, int.MaxValue, ErrorMessage = "Ticket Quota cannot be negative.")]
+        public int TicketQuota { get; set; } = 100;
+        
+        public string SupportHours { get; set; } = "StandardBusinessHours";
+        public bool IncludesWeekendSupport { get; set; } = false;
+        public bool BlockWhenExhausted { get; set; } = true;
+        public bool IsUnlimited { get; set; } = false;
+        public int ValidityDays { get; set; } = 30;
+        public bool EmailNotificationsEnabled { get; set; } = false;
+    }
 
 	public class AccountSupportPlanResponse
     {

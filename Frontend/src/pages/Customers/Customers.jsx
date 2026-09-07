@@ -26,7 +26,8 @@ export default function Customers() {
   // Custom Plan State
   const [planMode, setPlanMode] = useState('preset'); // 'preset' | 'custom'
   const [customPlan, setCustomPlan] = useState({
-    customPlanName: 'Custom Tier',
+    customPlanName: 'Custom Enterprise Plan',
+    isUnlimited: false,
     ticketQuota: 100,
     supportHours: 'ExtendedBusinessHours',
     includesWeekendSupport: true,
@@ -75,43 +76,44 @@ export default function Customers() {
 
   const fetchConfigData = async () => {
     try {
-      const plansRes = await api.get('/SupportPlan');
-      const empsRes = await api.get('/Employees');
-      setAvailablePlans(plansRes.data || []);
+      const [plansRes, empsRes] = await Promise.all([
+        api.get('/SupportPlan'),
+        api.get('/Employees?pageSize=100')
+      ]);
+      setAvailablePlans(Array.isArray(plansRes.data) ? plansRes.data : []);
       setAvailableEmployees(empsRes.data?.items || empsRes.data || []);
     } catch (err) {
-      console.error('Failed to fetch config static data:', err);
+      console.error('Failed to fetch config data:', err);
     }
   };
 
-  const handleManageConfig = async (customer) => {
+  const handleOpenConfigModal = async (customer) => {
     setSelectedCustomer(customer);
-    setCurrentPlan(null);
-    setDedicatedEmployees([]);
+    setShowConfigModal(true);
+    setMessage(null);
     setSelectedPlanId('');
     setSelectedEmployeeId('');
-    
+
+    // Fetch existing account plans & dedicated employees
     try {
-      // Fetch current plan
-      const planRes = await api.get(`/SupportPlan/account/${customer.accountId}`);
+      const [planRes, empsRes] = await Promise.all([
+        api.get(`/SupportPlan/account/${customer.accountId}`),
+        api.get(`/SupportPlan/dedicated-employees/${customer.accountId}`)
+      ]);
+
       const plans = Array.isArray(planRes.data) ? planRes.data : [];
       const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
       setCurrentPlan(active || null);
-
-      // Fetch dedicated employees
-      const empsRes = await api.get(`/SupportPlan/dedicated-employees/${customer.accountId}`);
-      setDedicatedEmployees(empsRes.data || []);
-      
-      setShowConfigModal(true);
+      setDedicatedEmployees(Array.isArray(empsRes.data) ? empsRes.data : []);
     } catch (err) {
-      console.error('Failed to fetch customer config:', err);
-      setMessage({ type: 'error', text: 'Failed to load customer configuration.' });
+      console.error('Failed to fetch customer plan/dedicated employees:', err);
+      setCurrentPlan(null);
+      setDedicatedEmployees([]);
     }
   };
 
-  const handleCustomerClick = async (customer) => {
+  const handleViewCustomerDetails = async (customer) => {
     setDrawerCustomer(customer);
-    setActivePlan(null);
     setLoadingPlan(true);
     try {
       const accountId = customer.accountId || customer.id;
@@ -155,10 +157,11 @@ export default function Customers() {
       await api.post('/SupportPlan/custom-assign', {
         accountId: selectedCustomer.accountId,
         customPlanName: customPlan.customPlanName,
-        ticketQuota: parseInt(customPlan.ticketQuota, 10) || 100,
-        supportHours: customPlan.supportHours,
-        includesWeekendSupport: customPlan.includesWeekendSupport,
-        blockWhenExhausted: customPlan.blockWhenExhausted,
+        isUnlimited: customPlan.isUnlimited,
+        ticketQuota: customPlan.isUnlimited ? 999999 : (parseInt(customPlan.ticketQuota, 10) || 100),
+        supportHours: customPlan.isUnlimited ? '24x7' : customPlan.supportHours,
+        includesWeekendSupport: customPlan.isUnlimited ? true : customPlan.includesWeekendSupport,
+        blockWhenExhausted: customPlan.isUnlimited ? false : customPlan.blockWhenExhausted,
         validityDays: parseInt(customPlan.validityDays, 10) || 30,
         emailNotificationsEnabled: customPlan.emailNotificationsEnabled
       });
@@ -168,11 +171,15 @@ export default function Customers() {
       const plans = Array.isArray(planRes.data) ? planRes.data : [];
       const active = plans.find(p => p.isActive === true || p.status?.toLowerCase() === 'active');
       setCurrentPlan(active || null);
+<<<<<<< HEAD
+      setMessage({ type: 'success', text: customPlan.isUnlimited ? 'Unlimited Enterprise Support Plan assigned successfully!' : 'Custom Support Plan created and assigned successfully.' });
+=======
 
       setMessage({
         type: 'success',
         text: 'Custom Support Plan created and assigned successfully.'
       });
+>>>>>>> fec1dea83c4fd88c042431277790735cc040cc67
     } catch (err) {
       console.error('Failed to assign custom plan:', err);
       setMessage({
@@ -801,6 +808,55 @@ export default function Customers() {
                   </button>
                 </div>
               ) : (
+<<<<<<< HEAD
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.08)', padding: '1.25rem', borderRadius: '10px' }}>
+                  
+                  {/* UNLIMITED VS CUSTOMIZABLE TOGGLE SWITCH */}
+                  <div style={{ background: 'rgba(30, 41, 59, 0.7)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '0.85rem 1rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {customPlan.isUnlimited ? '🚀 Unlimited Enterprise Plan' : '⚙️ Custom Parameters Plan'}
+                      </div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '2px' }}>
+                        {customPlan.isUnlimited 
+                          ? 'Unlimited tickets, 24x7 priority support & weekend coverage active' 
+                          : 'Manually configure ticket quota, support hours, and rules'}
+                      </div>
+                    </div>
+
+                    <label style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={!customPlan.isUnlimited}
+                        onChange={e => setCustomPlan({ ...customPlan, isUnlimited: !e.target.checked })}
+                        style={{ opacity: 0, width: 0, height: 0 }}
+                      />
+                      <span style={{
+                        position: 'absolute',
+                        cursor: 'pointer',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: customPlan.isUnlimited ? '#10b981' : '#6366f1',
+                        transition: '.3s',
+                        borderRadius: '34px'
+                      }}>
+                        <span style={{
+                          position: 'absolute',
+                          content: '""',
+                          height: '20px',
+                          width: '20px',
+                          left: customPlan.isUnlimited ? '4px' : '26px',
+                          bottom: '3px',
+                          backgroundColor: 'white',
+                          transition: '.3s',
+                          borderRadius: '50%'
+                        }} />
+                      </span>
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Plan Name</label>
+=======
                 <div
                   style={{
                     display: 'flex',
@@ -825,10 +881,74 @@ export default function Customers() {
                       Custom Plan Name
                     </label>
 
+>>>>>>> fec1dea83c4fd88c042431277790735cc040cc67
                     <input
                       type="text"
                       className="input-field"
                       value={customPlan.customPlanName}
+<<<<<<< HEAD
+                      onChange={e => setCustomPlan({ ...customPlan, customPlanName: e.target.value })}
+                      placeholder={customPlan.isUnlimited ? "Unlimited Enterprise Plan" : "Custom Plan Name"}
+                      style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                    />
+                  </div>
+
+                  {!customPlan.isUnlimited ? (
+                    <>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                          <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Ticket Quota / Month</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={customPlan.ticketQuota}
+                            onChange={e => setCustomPlan({ ...customPlan, ticketQuota: e.target.value })}
+                            style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                          />
+                        </div>
+                        <div>
+                          <label className="field-label" style={{ color: '#cbd5e1', fontSize: '0.82rem', marginBottom: '4px', display: 'block' }}>Support Hours</label>
+                          <select
+                            className="input-field"
+                            value={customPlan.supportHours}
+                            onChange={e => setCustomPlan({ ...customPlan, supportHours: e.target.value })}
+                            style={{ background: '#1e293b', color: 'white', border: '1px solid rgba(255,255,255,0.15)', width: '100%', borderRadius: '8px', padding: '0.5rem 0.85rem' }}
+                          >
+                            <option value="StandardBusinessHours" style={{ background: '#0f172a' }}>Standard Business Hours</option>
+                            <option value="ExtendedBusinessHours" style={{ background: '#0f172a' }}>Extended Hours (Gold)</option>
+                            <option value="24x7" style={{ background: '#0f172a' }}>24x7 Dedicated (Platinum)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={customPlan.includesWeekendSupport}
+                            onChange={e => setCustomPlan({ ...customPlan, includesWeekendSupport: e.target.checked })}
+                          />
+                          Weekend Support
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#cbd5e1', fontSize: '0.85rem', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={customPlan.blockWhenExhausted}
+                            onChange={e => setCustomPlan({ ...customPlan, blockWhenExhausted: e.target.checked })}
+                          />
+                          Block on Quota Exhaustion
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.85rem 1rem', borderRadius: '8px', color: '#6ee7b7', fontSize: '0.85rem' }}>
+                      🌟 <strong>Unlimited Plan Active:</strong> Corporation will enjoy unlimited monthly tickets, 24/7 priority SLA support, weekend coverage, and zero quota restrictions.
+                    </div>
+                  )}
+
+                  <button className="btn btn--primary" onClick={handleAssignCustomPlan} style={{ background: customPlan.isUnlimited ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #6366f1, #4f46e5)', padding: '0.65rem', marginTop: '0.5rem', justifyContent: 'center' }}>
+                    {customPlan.isUnlimited ? '🚀 Assign Unlimited Enterprise Plan' : '⚡ Create & Assign Custom Plan'}
+=======
                       onChange={e =>
                         setCustomPlan({
                           ...customPlan,
@@ -1032,6 +1152,7 @@ export default function Customers() {
                     }}
                   >
                     ⚡ Create & Assign Custom Plan
+>>>>>>> fec1dea83c4fd88c042431277790735cc040cc67
                   </button>
                 </div>
               )}
