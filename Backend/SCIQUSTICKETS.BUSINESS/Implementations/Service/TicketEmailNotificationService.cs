@@ -47,6 +47,23 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				return;
 			}
 
+			var isPlanEmailEnabled = await _context.AccountSupportPlans
+	.Include(ap => ap.SupportPlan)
+	.Where(ap =>
+		ap.AccountId == ticket.AccountId &&
+		ap.Status == "Active")
+	.Select(ap => (bool?)ap.SupportPlan.EmailNotificationsEnabled)
+	.FirstOrDefaultAsync();
+
+			if (isPlanEmailEnabled != true)
+			{
+				_logger.LogInformation(
+					"Customer status email disabled by Support Plan for ticket {TicketId}. Skipping email.",
+					ticketId);
+
+				return;
+			}
+
 			var isCustomerEmailEnabled = await _context.CustomerNotificationPreferences
 				.Where(p => p.Category == EmailNotificationCategory.StatusChange)
 				.Select(p => (bool?)p.IsEnabled)
