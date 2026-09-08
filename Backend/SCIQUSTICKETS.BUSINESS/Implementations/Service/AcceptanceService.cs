@@ -209,7 +209,6 @@ reason);
 				{
 					ClearAcceptanceAndQueue(ticket);
 				}
-				// NOTE: Module 5 manager-escalation notification hook goes here.
 			}
 
 			if (expiredTickets.Count > 0)
@@ -236,15 +235,39 @@ reason);
 			if (ticket.CurrentFallbackAttempt >= maxAttempts)
 			{
 				ClearAcceptanceAndQueue(ticket);
-				// NOTE: Module 5 manager-escalation notification hook goes here (fallback limit reached).
+
+				try
+				{
+					await _employeeEmailNotificationService
+						.SendManagerEscalationNotificationAsync(ticket.TicketId);
+				}
+				catch
+				{
+					// Don't let notification failure block escalation flow.
+				}
+
 				return;
 			}
 
-			var nextAgent = await _assignmentEngine.ResolveAssigneeAsync(ticket, null, excludedSet);
+			var nextAgent = await _assignmentEngine.ResolveAssigneeAsync(
+				ticket,
+				null,
+				excludedSet);
 
 			if (nextAgent == null)
 			{
 				ClearAcceptanceAndQueue(ticket);
+
+				try
+				{
+					await _employeeEmailNotificationService
+						.SendManagerEscalationNotificationAsync(ticket.TicketId);
+				}
+				catch
+				{
+					// Don't let notification failure block escalation flow.
+				}
+
 				return;
 			}
 

@@ -185,6 +185,8 @@ namespace SCIQUSTICKETS.WebAPI
                 new { Email = "kevin.hr@sciqustickets.com", Name = "Kevin Thomas", DeptId = dept5Id, EmpCode = "EMP-5002", IsHead = false }
             };
 
+
+
 			foreach (var empData in employeeSeedData)
 			{
 				var empUser = await userManager.FindByEmailAsync(empData.Email);
@@ -260,6 +262,75 @@ namespace SCIQUSTICKETS.WebAPI
 					}
 				}
 			}
+
+			// 4b. Seed Employee Working Hours — vary shifts so employees in the same department don't overlap
+			var shiftTemplates = new[]
+			{
+	new { Start = new TimeSpan(7, 0, 0),  End = new TimeSpan(15, 0, 0) },  // Early shift
+    new { Start = new TimeSpan(9, 0, 0),  End = new TimeSpan(17, 0, 0) },  // Standard shift
+    new { Start = new TimeSpan(10, 0, 0), End = new TimeSpan(18, 0, 0) },  // Mid shift
+    new { Start = new TimeSpan(11, 0, 0), End = new TimeSpan(19, 0, 0) },  // Late shift
+    new { Start = new TimeSpan(13, 0, 0), End = new TimeSpan(21, 0, 0) },  // Evening shift
+};
+
+			var workingDays = new[]
+			{
+	DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday
+};
+			var nonWorkingDays = new[] { DayOfWeek.Saturday, DayOfWeek.Sunday };
+
+			// Per-department counter — ensures each employee in a department gets a different shift template
+			var deptShiftCounters = new Dictionary<Guid, int>();
+
+			var allSeededEmployees = await context.Employees
+				.Where(e => !e.IsDeleted)
+				.OrderBy(e => e.EmployeeId) // deterministic ordering so re-runs are stable
+				.ToListAsync();
+
+			foreach (var emp in allSeededEmployees)
+			{
+				if (await context.EmployeeWorkingHours.AnyAsync(w => w.EmployeeId == emp.Id))
+					continue; // already has working hours seeded
+
+				if (!deptShiftCounters.ContainsKey(emp.DepartmentId))
+					deptShiftCounters[emp.DepartmentId] = 0;
+
+				var shiftIndex = deptShiftCounters[emp.DepartmentId] % shiftTemplates.Length;
+				deptShiftCounters[emp.DepartmentId]++;
+
+				var shift = shiftTemplates[shiftIndex];
+				var hoursToAdd = new List<EmployeeWorkingHour>();
+
+				foreach (var day in workingDays)
+				{
+					hoursToAdd.Add(new EmployeeWorkingHour
+					{
+						Id = Guid.NewGuid(),
+						EmployeeId = emp.Id,
+						DayOfWeek = day,
+						StartTime = shift.Start,
+						EndTime = shift.End,
+						IsWorkingDay = true
+					});
+				}
+
+				foreach (var day in nonWorkingDays)
+				{
+					hoursToAdd.Add(new EmployeeWorkingHour
+					{
+						Id = Guid.NewGuid(),
+						EmployeeId = emp.Id,
+						DayOfWeek = day,
+						StartTime = TimeSpan.Zero,
+						EndTime = TimeSpan.Zero,
+						IsWorkingDay = false
+					});
+				}
+
+				context.EmployeeWorkingHours.AddRange(hoursToAdd);
+			}
+
+			await context.SaveChangesAsync();
 
 			// 5. Seed 10 Customer Companies with CRM Details
 			var customerSeedData = new[]
