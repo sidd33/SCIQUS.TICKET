@@ -28,10 +28,10 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 		}
 
 		public async Task SendTicketNotificationAsync(
-	Guid ticketId,
-	string eventType,
-	string? actorUserId = null,
-	string? remarks = null)
+			Guid ticketId,
+			string eventType,
+			string? actorUserId = null,
+			string? remarks = null)
 		{
 			var ticket = await _context.Tickets
 				.Include(t => t.Account)
@@ -109,6 +109,87 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 					// Email failure for one employee must not
 					// prevent notifications to other employees.
 				}
+			}
+		}
+
+
+		public async Task SendManagerEscalationNotificationAsync(Guid ticketId)
+		{
+			var ticket = await _context.Tickets
+				.Include(t => t.Department)
+				.Include(t => t.TicketType)
+				.Include(t => t.TicketSubType)
+				.Include(t => t.Priority)
+				.Include(t => t.Status)
+				.FirstOrDefaultAsync(t => t.TicketId == ticketId);
+
+			if (ticket == null)
+			{
+				_logger.LogWarning(
+					"Cannot send manager escalation notification. Ticket {TicketId} was not found.",
+					ticketId);
+
+				return;
+			}
+
+			if (ticket.Department == null ||
+				string.IsNullOrWhiteSpace(ticket.Department.DepartmentHeadId))
+			{
+				_logger.LogWarning(
+					"Cannot send manager escalation notification for ticket {TicketId}. Department manager is not configured.",
+					ticketId);
+
+				return;
+			}
+
+			var manager = await _context.Employees
+				.FirstOrDefaultAsync(e =>
+					e.Id == ticket.Department.DepartmentHeadId &&
+					!e.IsDeleted &&
+					!string.IsNullOrWhiteSpace(e.Email));
+
+			if (manager == null)
+			{
+				_logger.LogWarning(
+					"Cannot send manager escalation notification for ticket {TicketId}. Department manager was not found or has no email.",
+					ticketId);
+
+				return;
+			}
+
+			var ticketNumber =
+				ticket.TicketNumber ?? ticket.TicketId.ToString();
+
+			var subject =
+				$"Ticket {ticketNumber} - Manager Escalation";
+
+			var body = BuildManagerEscalationEmail(
+				ticketNumber,
+				ticket.Title,
+				ticket.Status?.Name ?? "Unknown",
+				ticket.Priority?.Name,
+				ticket.TicketType?.Name,
+				ticket.TicketSubType?.Name);
+
+			try
+			{
+				await SendEmailAsync(
+					manager.Email,
+					subject,
+					body);
+
+				_logger.LogInformation(
+					"Manager escalation notification sent for ticket {TicketId} to {Email}.",
+					ticketId,
+					manager.Email);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(
+					ex,
+					"Failed to send manager escalation notification for ticket {TicketId} to {Email}.",
+					ticketId,
+					manager.Email);
 			}
 		}
 
@@ -364,6 +445,94 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 				</body>
 				</html>
 				""";
+		}
+
+
+		private static string BuildManagerEscalationEmail(
+	string ticketNumber,
+	string title,
+	string status,
+	string? priority,
+	string? ticketType,
+	string? ticketSubType)
+		{
+			var safeTicketNumber =
+				WebUtility.HtmlEncode(ticketNumber);
+
+			var safeTitle =
+				WebUtility.HtmlEncode(title);
+
+			var safeStatus =
+				WebUtility.HtmlEncode(status);
+
+			var safePriority =
+				WebUtility.HtmlEncode(priority ?? "N/A");
+
+			var safeType =
+				WebUtility.HtmlEncode(ticketType ?? "N/A");
+
+			var safeSubType =
+				WebUtility.HtmlEncode(ticketSubType ?? "N/A");
+
+			return $"""
+		<!DOCTYPE html>
+		<html>
+		<body style="font-family: Arial, sans-serif;">
+
+			<h2>Ticket Manager Escalation</h2>
+
+			<p>Hello,</p>
+
+			<p>
+				The following ticket has been escalated to you because
+				no eligible employee was available to accept the ticket
+				after the configured fallback attempts.
+			</p>
+
+			<table cellpadding="8" cellspacing="0">
+				<tr>
+					<td><strong>Ticket</strong></td>
+					<td>{safeTicketNumber}</td>
+				</tr>
+
+				<tr>
+					<td><strong>Subject</strong></td>
+					<td>{safeTitle}</td>
+				</tr>
+
+				<tr>
+					<td><strong>Ticket Type</strong></td>
+					<td>{safeType}</td>
+				</tr>
+
+				<tr>
+					<td><strong>Sub-Type</strong></td>
+					<td>{safeSubType}</td>
+				</tr>
+
+				<tr>
+					<td><strong>Priority</strong></td>
+					<td>{safePriority}</td>
+				</tr>
+
+				<tr>
+					<td><strong>Current Status</strong></td>
+					<td><strong>{safeStatus}</strong></td>
+				</tr>
+			</table>
+
+			<p>
+				Please review this ticket and take the required action.
+			</p>
+
+			<p>
+				Regards,<br/>
+				SCIQUS Support Team
+			</p>
+
+		</body>
+		</html>
+		""";
 		}
 	}
 }
