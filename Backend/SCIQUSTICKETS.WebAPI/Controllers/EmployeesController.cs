@@ -89,12 +89,18 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		[HttpGet("{id}/working-hours")]
 		public async Task<IActionResult> GetWorkingHours(string id)
 		{
-			var workingHours =
-				await _employeeService.GetWorkingHoursAsync(id);
+			try
+			{
+				var workingHours =
+					await _employeeService.GetWorkingHoursAsync(id);
 
-			return Ok(workingHours);
+				return Ok(workingHours);
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound();
+			}
 		}
-
 
 		[HttpPost("{id}/working-hours")]
 		public async Task<IActionResult> AddWorkingHour(
@@ -210,14 +216,20 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		// ============================================================
 		// LEAVE
 		// ============================================================
-
 		[HttpGet("{id}/leaves")]
 		public async Task<IActionResult> GetLeaves(string id)
 		{
-			var leaves =
-				await _employeeService.GetLeavesAsync(id);
+			try
+			{
+				var leaves =
+					await _employeeService.GetLeavesAsync(id);
 
-			return Ok(leaves);
+				return Ok(leaves);
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound();
+			}
 		}
 
 
