@@ -557,7 +557,7 @@ namespace SCIQUSTICKETS.WebAPI
 			// 10. Ensure Ticket Sub-Types Exist
 
 			var subTypeSeedData = new[]
-			{
+{
     // Hardware & Devices
     new
 	{
@@ -602,7 +602,35 @@ namespace SCIQUSTICKETS.WebAPI
 		Description = "Access or permission issue for an application",
 		TicketTypeId = softwareType.TicketTypeId,
 		DepartmentId = dept1Id
-	}
+	},
+
+    // Other
+    // Hardware & Devices - Other
+new
+{
+	Name = "Other",
+	Description = "Other issue related to Hardware & Devices that does not match the available sub-types",
+	TicketTypeId = hardwareType.TicketTypeId,
+	DepartmentId = dept1Id
+},
+
+// Software & Apps - Other
+new
+{
+	Name = "Other",
+	Description = "Other issue related to Software & Apps that does not match the available sub-types",
+	TicketTypeId = softwareType.TicketTypeId,
+	DepartmentId = dept1Id
+},
+
+// Other - Other
+new
+{
+	Name = "Other",
+	Description = "General support request that does not fall under the available ticket types",
+	TicketTypeId = otherType.TicketTypeId,
+	DepartmentId = dept1Id
+}
 };
 
 			foreach (var data in subTypeSeedData)

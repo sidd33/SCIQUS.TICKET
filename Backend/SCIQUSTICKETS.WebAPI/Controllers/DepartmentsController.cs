@@ -52,8 +52,15 @@ namespace SCIQUSTICKETS.WebAPI.Controllers
 		{
 			if (!ModelState.IsValid) return BadRequest(ModelState);
 
-			var updated = await _departmentService.UpdateAsync(id, request);
-			return Ok(updated);
+			try
+			{
+				var updated = await _departmentService.UpdateAsync(id, request);
+				return Ok(updated);
+			}
+			catch (KeyNotFoundException)
+			{
+				return NotFound();
+			}
 		}
 
 		[HttpPatch("{id}/head")]
