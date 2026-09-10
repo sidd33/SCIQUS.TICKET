@@ -137,6 +137,81 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
 			}
 		}
 
+		public async Task SendAutoCreateFailureNotificationAsync(
+	string toEmail,
+	string originalSubject,
+	string reason)
+		{
+			if (string.IsNullOrWhiteSpace(toEmail))
+			{
+				_logger.LogWarning(
+					"Cannot send auto-create failure notification because sender email is empty.");
+
+				return;
+			}
+
+			var subject =
+				$"Support request could not be created: {originalSubject}";
+
+			var body = $"""
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+
+            <h2>Support Request Could Not Be Created</h2>
+
+            <p>Hello,</p>
+
+            <p>
+                We were unable to create a support ticket from your recent email.
+            </p>
+
+            <table cellpadding="8" cellspacing="0">
+                <tr>
+                    <td><strong>Subject</strong></td>
+                    <td>{WebUtility.HtmlEncode(originalSubject)}</td>
+                </tr>
+
+                <tr>
+                    <td><strong>Reason</strong></td>
+                    <td>{WebUtility.HtmlEncode(reason)}</td>
+                </tr>
+            </table>
+
+            <p>
+                Please contact your account manager or support team if you
+                believe this is an error.
+            </p>
+
+            <p>
+                Regards,<br/>
+                SCIQUS Support Team
+            </p>
+
+        </body>
+        </html>
+        """;
+
+			try
+			{
+				await SendEmailAsync(
+					toEmail,
+					subject,
+					body);
+
+				_logger.LogInformation(
+					"Auto-create failure notification sent to {Email}.",
+					toEmail);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(
+					ex,
+					"Failed to send auto-create failure notification to {Email}.",
+					toEmail);
+			}
+		}
+
 		private async Task SendEmailAsync(
 			string recipientEmail,
 			string subject,

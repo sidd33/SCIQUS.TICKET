@@ -24,24 +24,27 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
         private readonly ISlaService _slaService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailChannelService> _logger;
+		private readonly ITicketEmailNotificationService _ticketEmailNotificationService;
 
-        public EmailChannelService(
-            AppDbContext context,
-            ITicketTimelineService timelineService,
-            ITicketService ticketService,
-            ISlaService slaService,
-            IConfiguration configuration,
-            ILogger<EmailChannelService> logger)
-        {
-            _context = context;
-            _timelineService = timelineService;
-            _ticketService = ticketService;
-            _slaService = slaService;
-            _configuration = configuration;
-            _logger = logger;
-        }
+		public EmailChannelService(
+	        AppDbContext context,
+	        ITicketTimelineService timelineService,
+	        ITicketService ticketService,
+	        ISlaService slaService,
+	        IConfiguration configuration,
+	        ILogger<EmailChannelService> logger,
+	        ITicketEmailNotificationService ticketEmailNotificationService)
+		{
+			_context = context;
+			_timelineService = timelineService;
+			_ticketService = ticketService;
+			_slaService = slaService;
+			_configuration = configuration;
+			_logger = logger;
+			_ticketEmailNotificationService = ticketEmailNotificationService;
+		}
 
-        public async Task ProcessInboxMessageAsync(EmailInboxMessage message)
+		public async Task ProcessInboxMessageAsync(EmailInboxMessage message)
         {
             var config = await _context.EmailTicketConfigs.FirstOrDefaultAsync();
             if (config == null || !config.IsEnabled)
@@ -167,12 +170,18 @@ namespace SCIQUSTICKETS.BUSINESS.Implementations.Service
                         message.ProcessingStatus = "Processed";
                         message.ProcessedDate = now;
                     }
-                    catch (Exception ex)
-                    {
-                        message.ProcessingStatus = "Failed";
-                        message.FailureReason = $"Auto-create failed: {ex.Message}";
-                    }
-                }
+					catch (Exception ex)
+					{
+						message.ProcessingStatus = "Failed";
+						message.FailureReason = $"Auto-create failed: {ex.Message}";
+
+						await _ticketEmailNotificationService
+							.SendAutoCreateFailureNotificationAsync(
+								message.FromEmail,
+								message.Subject,
+								message.FailureReason);
+					}
+				}
                 else
                 {
                     message.ProcessingStatus = "Failed";
