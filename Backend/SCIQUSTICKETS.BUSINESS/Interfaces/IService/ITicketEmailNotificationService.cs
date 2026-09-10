@@ -8,5 +8,10 @@ namespace SCIQUSTICKETS.BUSINESS.Interfaces.IService
 		Task SendCustomerStatusEmailAsync(
 			Guid ticketId,
 			string statusName);
+
+		Task SendAutoCreateFailureNotificationAsync(
+			string toEmail,
+			string originalSubject,
+			string reason);
 	}
 }
